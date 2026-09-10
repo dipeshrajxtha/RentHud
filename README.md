@@ -2,91 +2,95 @@
 
 A complete digital tenancy management platform — not just a listing site.
 
-## Architecture
+## Architecture (Modular Domain Monolith)
 
-| Codebase | Stack | Path |
-|----------|-------|------|
-| **API** | Node.js, Express, PostgreSQL + PostGIS | `server/` |
-| **Web** | React, TypeScript, Vite | `web/` |
-| **Mobile** | Flutter | `mobile/` |
-| **Shared** | Cross-platform contracts | `shared/` |
+RentHub uses a domain-driven modular structure where backend, web, and mobile share symmetric domain boundaries.
+
+```
+RentHub/
+├── server/                     # Node.js + Express + PostgreSQL (PostGIS)
+│   ├── config/                 # Env & database connection pooling
+│   ├── db/                     # PostGIS migrations & seeds
+│   ├── src/
+│   │   ├── common/             # Middleware (JWT/RBAC), utils, error handlers
+│   │   └── modules/            # Core Domain Hubs
+│   │       ├── auth/           # Google OAuth, JWT, sessions
+│   │       ├── users/          # Tenant/Landlord/Admin profiles & lease limits
+│   │       ├── properties/     # Properties, multi-floor, amenities, PostGIS geosearch, badges
+│   │       ├── tenancy/        # Listings, applications, agreements, active tenancies
+│   │       ├── finance/        # Rent payments, receipts, utility meter tracking
+│   │       ├── maintenance/    # Request lifecycles, contractor dispatch
+│   │       ├── disputes/       # Listing disputes & tenancy disputes (separate DB tables)
+│   │       ├── communication/  # Real-time WebSocket notifications, document vault, BANT bot
+│   │       └── admin/          # Platform metrics, moderation, audit logs
+│   └── tests/                  # Integration tests & fixtures
+│
+├── web/                        # React + TypeScript + Vite
+│   └── src/
+│       ├── components/         # Reusable UI (Forms, Map, Layout, Feedback)
+│       ├── features/           # Feature slices matching backend domains
+│       ├── hooks/              # Custom hooks (auth, location, etc.)
+│       ├── services/           # API clients
+│       └── store/              # Global state (Zustand)
+│
+├── mobile/                     # Flutter mobile application
+│   └── lib/
+│       ├── core/               # Theme, network, route guards
+│       ├── widgets/            # Shared mobile components
+│       └── features/           # Mobile screens matching backend domains
+│
+├── shared/                     # Shared cross-platform contracts (enums, types, schemas)
+├── infra/                      # Docker, Nginx, CI/CD pipelines
+├── docs/                       # Architecture decisions, ERDs, API specs, phase plans
+└── docker-compose.yml          # PostgreSQL 16 with PostGIS + Redis
+```
 
 ## Core Features
 
-- Google-only authentication with JWT + RBAC (tenant / landlord / admin)
-- Multi-floor property system with normalized amenities
-- PostGIS geospatial search with exponential radius visualization
-- Rental lifecycle: listings → applications → agreements → tenancies
-- One active tenancy per tenant (enforced at DB level)
-- Payments, utility meter tracking, digital document vault
-- Maintenance request dashboards (request → assign → resolve)
-- Separate dispute flows: listing disputes & tenancy disputes
-- Real-time notifications via WebSocket
-- Rule-based BANT-style chatbot for soft leads
-
-## Prerequisites
-
-- Node.js >= 20 (see `.nvmrc`)
-- PostgreSQL 16+ with PostGIS extension
-- Flutter SDK >= 3.x
-- Docker & Docker Compose (for local dev)
+- **Google-Only Auth & Multi-Role**: Google OAuth, JWT with refresh tokens, RBAC (`tenant`, `landlord`, `admin`), dynamic role switching without re-login.
+- **Strict Tenancy Integrity**: Enforce exactly one active tenancy per tenant at the database constraint level.
+- **Property System**: Multi-floor mapping, normalized amenities, landlord verification badges.
+- **PostGIS Geospatial Engine**: Spatial indexing (`ST_DWithin`), exponential radius visualization, map pins with availability filtering.
+- **Rental Lifecycle**: Listing publication → Tenant application → Digital rental agreement → Active tenancy state machine.
+- **Finance & Utilities**: Rent payments, transaction history, digital receipts, utility meter logging (water/electric/gas).
+- **Maintenance Dashboards**: Maintenance requests with photos, severity status, and contractor assignment.
+- **Dual Dispute Resolution**: Dedicated database records and flows for **listing disputes** vs. **tenancy disputes**.
+- **Digital Document Vault**: Encrypted cloud storage for lease contracts, ID verification, and payment receipts.
+- **Communication & Lead Capture**: Real-time notifications via WebSockets, rule-based BANT qualification chatbot.
 
 ## Getting Started
 
 ```bash
-# Clone the repo
-git clone https://github.com/<your-username>/RentHub.git
-cd RentHub
-
-# Start infrastructure (Postgres + PostGIS, Redis)
+# 1. Start database and cache
 docker compose up -d
 
-# API server
+# 2. Start Backend API
 cd server
-cp .env.example .env    # configure your env vars
+cp .env.example .env
 npm install
 npm run migrate
 npm run dev
 
-# Web client
-cd web
+# 3. Start Web Client
+cd ../web
 npm install
 npm run dev
 
-# Mobile
-cd mobile
+# 4. Start Mobile App
+cd ../mobile
 flutter pub get
 flutter run
 ```
 
-## Project Structure
+## Phased Implementation Roadmap
 
-```
-RentHub/
-├── docs/           # Architecture, API specs, ERDs, phase plans
-├── scripts/        # Dev/deploy automation
-├── server/         # Node + Express API (20 domain modules)
-├── web/            # React + TypeScript + Vite frontend
-├── mobile/         # Flutter mobile app
-├── shared/         # Cross-platform enums, types, schemas
-└── infra/          # Docker, Nginx, CI configs
-```
-
-## Development Phases
-
-| Phase | Scope |
-|-------|-------|
-| 1 | Auth, Users, RBAC |
-| 2 | Properties, Floors, Amenities, Verification |
-| 3 | PostGIS Search, Map UI, Radius Visualization |
-| 4 | Listings, Applications, Agreements, Tenancies |
-| 5 | Payments, Utilities |
-| 6 | Maintenance Dashboards |
-| 7 | Disputes (Listing + Tenancy) |
-| 8 | Notifications, Chatbot, Document Vault |
-| 9 | Admin Panel, Rules Engine |
-| 10 | Mobile Feature Parity |
-
-## License
-
-Private — All rights reserved.
+- **Phase 1**: Environment, Shared Contracts, Database Setup (PostGIS), Auth & Users (Google OAuth, JWT, RBAC)
+- **Phase 2**: Properties, Multi-floor, Normalized Amenities, Verification Badges
+- **Phase 3**: PostGIS Geospatial Search, Map UI, Exponential Radius Visualization
+- **Phase 4**: Rental Lifecycle (Listings, Applications, Agreements, One Active Tenancy Enforcement)
+- **Phase 5**: Payments & Utility Meter Tracking
+- **Phase 6**: Maintenance Request Dashboards & Assignment Flow
+- **Phase 7**: Dual Dispute Resolution (Listing vs. Tenancy)
+- **Phase 8**: Real-time Notifications, Digital Document Vault, BANT Chatbot
+- **Phase 9**: Admin Control Panel, Analytics, Business Rules
+- **Phase 10**: Flutter Mobile Feature Parity
