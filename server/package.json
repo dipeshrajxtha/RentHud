@@ -1,0 +1,32 @@
+{
+  "name": "@renthub/server",
+  "version": "0.1.0",
+  "description": "RentHub Backend API - Modular Domain Monolith",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "migrate": "tsx db/cli.ts latest",
+    "migrate:down": "tsx db/cli.ts down",
+    "migrate:status": "tsx db/cli.ts status",
+    "verify:db": "tsx scripts/verify-foundation.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "kysely": "^0.27.5",
+    "pg": "^8.13.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-postgis": "^0.2.8",
+    "@types/node": "^22.13.1",
+    "@types/pg": "^8.11.11",
+    "kysely-pglite": "^0.6.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.6"
+  }
+}
