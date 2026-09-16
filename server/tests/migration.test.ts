@@ -11,7 +11,9 @@ describe('Database Migrations: Foundation', () => {
   });
 
   afterAll(async () => {
-    await testDb.destroy();
+    if (testDb) {
+      await testDb.destroy();
+    }
   });
 
   it('successfully executes up() migration to enable PostGIS extension', async () => {

@@ -27,7 +27,9 @@ describe('PostGIS Spatial Functions & Geographic Indexing Verification', () => {
   });
 
   afterAll(async () => {
-    await testDb.destroy();
+    if (testDb) {
+      await testDb.destroy();
+    }
   });
 
   describe('PostGIS Engine Verification', () => {

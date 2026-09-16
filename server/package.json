@@ -11,6 +11,7 @@
     "migrate:down": "tsx db/cli.ts down",
     "migrate:status": "tsx db/cli.ts status",
     "verify:db": "tsx scripts/verify-foundation.ts",
+    "verify:day3": "tsx scripts/verify-day3.ts",
     "test": "vitest run"
   },
   "dependencies": {
