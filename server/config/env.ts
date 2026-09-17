@@ -15,6 +15,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(5000),
 
   // Database (PostgreSQL + PostGIS)
+  // DATABASE_URL takes precedence over discrete DB_* variables when provided.
+  DATABASE_URL: z.string().url().optional(),
   DB_HOST: z.string().default('localhost'),
   DB_PORT: z.coerce.number().int().positive().default(5432),
   DB_NAME: z.string().default('renthub_dev'),
@@ -33,18 +35,24 @@ const envSchema = z.object({
   MIN_RESULTS_THRESHOLD: z.coerce.number().int().positive().default(3),
   RADIUS_MULTIPLIER: z.coerce.number().positive().default(2),
 
-  // Google OAuth
-  GOOGLE_CLIENT_ID: z.string().default('mock_google_client_id'),
+  // Google OAuth — must be the intended RentHub OAuth Client ID.
+  // Used as the audience (aud) value when verifying incoming Google ID tokens.
+  GOOGLE_CLIENT_ID: z.string().min(1).default('mock_google_client_id'),
   GOOGLE_CLIENT_SECRET: z.string().default('mock_google_client_secret'),
   GOOGLE_CALLBACK_URL: z.string().url().default('http://localhost:5000/api/auth/google/callback'),
 
   // JWT
+  // JWT_EXPIRES_IN controls access token lifespan. Default is 15m (short-lived).
   JWT_SECRET: z.string().min(16).default('dev_jwt_secret_key_at_least_16_characters'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().default('15m'),
+  // JWT_REFRESH_EXPIRES_IN controls stateless refresh token lifespan.
+  // NOTE: Stateless refresh tokens cannot be individually revoked before expiry.
+  // Deactivating the user account (is_active = false) is the authoritative kill-switch.
+  // Refresh token rotation is NOT implemented in Day 4. See Phase 8 roadmap.
   JWT_REFRESH_SECRET: z.string().min(16).default('dev_refresh_secret_key_at_least_16_chars'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
 
-  // Redis
+  // Redis (reserved for Phase 8 — session revocation, rate limiting, chatbot state)
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
 
@@ -52,7 +60,8 @@ const envSchema = z.object({
   UPLOAD_DIR: z.string().default('./uploads'),
   MAX_FILE_SIZE: z.coerce.number().int().positive().default(10485760),
 
-  // Client
+  // CORS — allowed client origin. CORS_ORIGIN takes precedence over CLIENT_URL.
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
 });
 
@@ -82,6 +91,7 @@ export const config = {
     isDevelopment: env.NODE_ENV === 'development',
   },
   database: {
+    connectionString: env.DATABASE_URL,
     host: env.DB_HOST,
     port: env.DB_PORT,
     database: env.DB_NAME,
@@ -122,7 +132,8 @@ export const config = {
     maxFileSize: env.MAX_FILE_SIZE,
   },
   cors: {
-    clientUrl: env.CLIENT_URL,
+    // CORS_ORIGIN takes precedence over CLIENT_URL
+    origin: env.CORS_ORIGIN !== 'http://localhost:5173' ? env.CORS_ORIGIN : env.CLIENT_URL,
   },
 } as const;
 

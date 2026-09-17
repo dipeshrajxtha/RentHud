@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "../",
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
@@ -28,7 +28,8 @@
     "config/**/*",
     "db/**/*",
     "tests/**/*",
-    "scripts/**/*"
+    "scripts/**/*",
+    "../shared/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }

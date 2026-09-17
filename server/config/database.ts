@@ -6,6 +6,7 @@ import type { Database } from '../src/types/database.js';
 const { Pool } = pg;
 
 export interface DatabasePoolConfig {
+  connectionString?: string;
   host?: string;
   port?: number;
   database?: string;
@@ -18,8 +19,21 @@ export interface DatabasePoolConfig {
 
 /**
  * Creates a configured PostgreSQL connection pool.
+ * If connectionString (DATABASE_URL) is present, it takes precedence over discrete options.
  */
 export function createPgPool(customConfig?: Partial<DatabasePoolConfig>): pg.Pool {
+  const connectionString = customConfig?.connectionString ?? config.database.connectionString;
+  if (connectionString) {
+    return new Pool({
+      connectionString,
+      min: customConfig?.min ?? config.database.pool.min,
+      max: customConfig?.max ?? config.database.pool.max,
+      ssl: customConfig?.ssl ?? config.database.ssl,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    });
+  }
+
   return new Pool({
     host: customConfig?.host ?? config.database.host,
     port: customConfig?.port ?? config.database.port,

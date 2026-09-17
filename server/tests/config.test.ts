@@ -38,4 +38,33 @@ describe('Central Config Management', () => {
     expect(sslSchema.parse('false')).toBe(false);
     expect(sslSchema.parse('0')).toBe(false);
   });
+
+  // ── Day 4 additions ─────────────────────────────────────────────────────────
+
+  it('access token expiry defaults to 15m (short-lived)', () => {
+    expect(config.auth.jwt.expiresIn).toBe('15m');
+  });
+
+  it('refresh token expiry defaults to 30d', () => {
+    expect(config.auth.jwt.refreshExpiresIn).toBe('30d');
+  });
+
+  it('GOOGLE_CLIENT_ID is accessible for audience verification', () => {
+    expect(config.auth.google.clientId).toBeDefined();
+    expect(typeof config.auth.google.clientId).toBe('string');
+    expect(config.auth.google.clientId.length).toBeGreaterThan(0);
+  });
+
+  it('JWT_SECRET meets minimum length requirement of 16 characters', () => {
+    expect(config.auth.jwt.secret.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('JWT_REFRESH_SECRET meets minimum length requirement of 16 characters', () => {
+    expect(config.auth.jwt.refreshSecret.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it('CORS origin is configured', () => {
+    expect(config.cors.origin).toBeDefined();
+    expect(typeof config.cors.origin).toBe('string');
+  });
 });
