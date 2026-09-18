@@ -53,3 +53,9 @@ docker-compose.override.yml
 *.tgz
 .cache/
 .parcel-cache/
+
+# ── Agent artifacts ──
+.agents/
+
+# ── Generated Architecture / Graphify ──
+graphify-out/

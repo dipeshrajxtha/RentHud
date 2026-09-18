@@ -22,13 +22,13 @@ describe('Users API', () => {
     expect(res.status).toBe(401);
   });
 
-  it('PATCH /api/users/me returns 422 on invalid avatar_url', async () => {
+  it('PATCH /api/users/me returns 400 on invalid avatar_url', async () => {
     const token = signAccessToken(userId, ['tenant']);
     const res = await request(app)
       .patch('/api/users/me')
       .set('Authorization', `Bearer ${token}`)
       .send({ avatar_url: 'not-a-url' });
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.error.fields).toHaveProperty('avatar_url');
   });

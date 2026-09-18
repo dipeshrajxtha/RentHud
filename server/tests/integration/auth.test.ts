@@ -35,9 +35,9 @@ import { UnauthorizedError } from '../../src/common/errors/index.js';
 describe('POST /api/auth/google', () => {
   const app = createTestApp();
 
-  it('returns 422 when idToken is missing', async () => {
+  it('returns 400 when idToken is missing', async () => {
     const res = await request(app).post('/api/auth/google').send({});
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
     expect(res.body.error.fields).toHaveProperty('idToken');
   });
@@ -96,10 +96,10 @@ describe('POST /api/auth/dev-login', () => {
     }
   });
 
-  it('returns 422 when email is missing in dev mode', async () => {
+  it('returns 400 when email is missing in dev mode', async () => {
     const app = createTestApp();
     const res = await request(app).post('/api/auth/dev-login').send({});
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(400);
   });
 });
 

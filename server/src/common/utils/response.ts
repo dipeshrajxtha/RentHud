@@ -24,6 +24,13 @@ export function sendError(
   statusCode = 500,
   fields?: Record<string, string[]>
 ): void {
-  const envelope: ErrorEnvelope = { success: false, error: { message, ...(fields && { fields }) } };
+  const hasFields = fields !== undefined && Object.keys(fields).length > 0;
+  const envelope: ErrorEnvelope = {
+    success: false,
+    error: {
+      message,
+      ...(hasFields ? { fields } : {}),
+    },
+  };
   res.status(statusCode).json(envelope);
 }

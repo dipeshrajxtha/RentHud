@@ -6,6 +6,7 @@ import type { Kysely } from 'kysely';
 
 import config from '../config/env.js';
 import { pingDatabase } from '../config/database.js';
+import { NotFoundError } from './common/errors/index.js';
 import { errorHandler } from './common/middleware/errorHandler.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createUsersRouter } from './modules/users/users.routes.js';
@@ -54,9 +55,9 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/auth', createAuthRouter());
   app.use('/api/users', createUsersRouter());
 
-  // ── 404 for unmatched routes
-  app.use((_req: Request, res: Response) => {
-    res.status(404).json({ success: false, error: { message: 'Not found' } });
+  // ── 404 for unmatched routes — forwarded to centralized error handler
+  app.use((_req: Request, _res: Response, next) => {
+    next(new NotFoundError('Resource not found'));
   });
 
   // ── Centralized error handler (must be last)
