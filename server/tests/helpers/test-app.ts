@@ -7,6 +7,6 @@ import type { Database } from '../../src/types/database.js';
  * Creates an Express test application.
  * All tests use this factory to get a clean app instance.
  */
-export function createTestApp(): Application {
-  return createApp();
+export function createTestApp(overrideDb?: Kysely<Database>): Application {
+  return createApp(overrideDb);
 }

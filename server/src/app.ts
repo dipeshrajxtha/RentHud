@@ -10,10 +10,15 @@ import { NotFoundError } from './common/errors/index.js';
 import { errorHandler } from './common/middleware/errorHandler.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createUsersRouter } from './modules/users/users.routes.js';
+import { createLandlordsRouter } from './modules/landlords/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
   const app = express();
+
+  if (overrideDb) {
+    app.locals.db = overrideDb;
+  }
 
   // ── Security headers
   app.use(helmet());
@@ -54,6 +59,7 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   // ── Domain routers
   app.use('/api/auth', createAuthRouter());
   app.use('/api/users', createUsersRouter());
+  app.use('/api/landlords', createLandlordsRouter(overrideDb));
 
   // ── 404 for unmatched routes — forwarded to centralized error handler
   app.use((_req: Request, _res: Response, next) => {

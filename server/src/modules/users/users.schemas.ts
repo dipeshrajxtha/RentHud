@@ -8,3 +8,12 @@ export const updateProfileSchema = z.object({
 });
 
 export type UpdateProfileBody = z.infer<typeof updateProfileSchema>;
+
+export {
+  createLandlordProfileSchema,
+  updateLandlordProfileSchema,
+  landlordIdParamSchema,
+  type CreateLandlordProfileBody,
+  type UpdateLandlordProfileBody,
+  type LandlordIdParam,
+} from '../landlords/landlords.schemas.js';

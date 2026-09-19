@@ -1,11 +1,17 @@
 import type { Request, Response, NextFunction } from 'express';
-import { db } from '../../../config/database.js';
+import type { Kysely } from 'kysely';
+import type { Database } from '../../types/database.js';
+import { db as defaultDb } from '../../../config/database.js';
 import { findActiveUserById, updateUserProfile, addLandlordRole } from './users.service.js';
 import { signAccessToken } from '../../common/utils/jwt.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import { NotFoundError } from '../../common/errors/index.js';
 import type { UpdateProfileBody } from './users.schemas.js';
 import type { UserRole } from '../../../../shared/enums/roles.js';
+
+function getDb(req: Request): Kysely<Database> {
+  return (req.app?.locals?.db as Kysely<Database>) ?? defaultDb;
+}
 
 /**
  * GET /api/users/me
@@ -18,6 +24,7 @@ export async function getMe(
   next: NextFunction
 ): Promise<void> {
   try {
+    const db = getDb(req);
     const user = await findActiveUserById(db, req.user!.id);
     if (!user) {
       throw new NotFoundError('User not found or deactivated');
@@ -47,6 +54,7 @@ export async function updateMe(
   next: NextFunction
 ): Promise<void> {
   try {
+    const db = getDb(req);
     const user = await updateUserProfile(db, req.user!.id, req.body);
     sendSuccess(res, {
       id: user.id,
@@ -72,6 +80,7 @@ export async function becomeLandlord(
   next: NextFunction
 ): Promise<void> {
   try {
+    const db = getDb(req);
     const user = await addLandlordRole(db, req.user!.id);
     const roles = user.roles as UserRole[];
     const accessToken = signAccessToken(user.id, roles);
