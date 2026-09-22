@@ -11,6 +11,8 @@ import { errorHandler } from './common/middleware/errorHandler.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createUsersRouter } from './modules/users/users.routes.js';
 import { createLandlordsRouter } from './modules/landlords/index.js';
+import { createPropertiesRouter } from './modules/properties/index.js';
+import { createTenancyRouter } from './modules/tenancy/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
@@ -60,6 +62,8 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/auth', createAuthRouter());
   app.use('/api/users', createUsersRouter());
   app.use('/api/landlords', createLandlordsRouter(overrideDb));
+  app.use('/api/properties', createPropertiesRouter(overrideDb));
+  app.use('/api/tenancy', createTenancyRouter(overrideDb));
 
   // ── 404 for unmatched routes — forwarded to centralized error handler
   app.use((_req: Request, _res: Response, next) => {
