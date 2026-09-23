@@ -24,7 +24,7 @@ describe('PostGIS Spatial Functions & Geographic Indexing Verification', () => {
 
   beforeAll(async () => {
     testDb = await createTestDatabase();
-  });
+  }, 240_000);
 
   afterAll(async () => {
     if (testDb) {

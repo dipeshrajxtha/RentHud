@@ -575,6 +575,8 @@ export async function approveRentalRequest(
       endDate: String(tenancy.end_date),
       agreedMonthlyRent: Number(tenancy.agreed_monthly_rent),
       agreedDeposit: Number(tenancy.agreed_deposit),
+      tenantSignedAt: tenancy.tenant_signed_at ?? null,
+      landlordSignedAt: tenancy.landlord_signed_at ?? null,
       signedAt: tenancy.signed_at,
       terminatedAt: tenancy.terminated_at,
       createdAt: tenancy.created_at,
@@ -587,3 +589,311 @@ export async function approveRentalRequest(
     };
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lease / Digital Agreement operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { LeaseQuery, TerminateLeaseInput } from './tenancy.lease.schemas.js';
+import type { TenancyStatus } from '../../types/database.js';
+
+/**
+ * Internal helper — maps a raw tenancy DB row to PublicTenancySummary.
+ * Avoids duplicating the shape mapping across list/get/sign functions.
+ */
+function mapTenancyRow(row: {
+  id: string;
+  unit_id: string;
+  tenant_id: string;
+  landlord_id: string;
+  rental_request_id: string | null;
+  status: string;
+  start_date: Date;
+  end_date: Date;
+  agreed_monthly_rent: number;
+  agreed_deposit: number;
+  tenant_signed_at: Date | null;
+  landlord_signed_at: Date | null;
+  signed_at: Date | null;
+  terminated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}): PublicTenancySummary {
+  return {
+    id: row.id,
+    unitId: row.unit_id,
+    tenantId: row.tenant_id,
+    landlordId: row.landlord_id,
+    rentalRequestId: row.rental_request_id,
+    status: row.status as PublicTenancySummary['status'],
+    startDate: String(row.start_date),
+    endDate: String(row.end_date),
+    agreedMonthlyRent: Number(row.agreed_monthly_rent),
+    agreedDeposit: Number(row.agreed_deposit),
+    tenantSignedAt: row.tenant_signed_at,
+    landlordSignedAt: row.landlord_signed_at,
+    signedAt: row.signed_at,
+    terminatedAt: row.terminated_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/**
+ * Lists tenancies for the authenticated user (RBAC-scoped).
+ * Tenants see only their own. Landlords see only theirs.
+ * Multi-role / admin see both sides.
+ */
+export async function listLeases(
+  db: Kysely<Database>,
+  userId: string,
+  roles: UserRole[],
+  query: LeaseQuery
+): Promise<{ leases: PublicTenancySummary[]; total: number }> {
+  const page = query.page ?? 1;
+  const limit = query.limit ?? 20;
+  const offset = (page - 1) * limit;
+
+  let base = db.selectFrom('tenancies as t');
+
+  if (roles.includes('tenant') && !roles.includes('landlord')) {
+    base = base.where('t.tenant_id', '=', userId);
+  } else if (roles.includes('landlord') && !roles.includes('tenant')) {
+    base = base.where('t.landlord_id', '=', userId);
+  } else {
+    base = base.where((eb) =>
+      eb.or([eb('t.tenant_id', '=', userId), eb('t.landlord_id', '=', userId)])
+    );
+  }
+
+  if (query.status) {
+    base = base.where('t.status', '=', query.status as TenancyStatus);
+  }
+
+  const countResult = await base
+    .select(sql<number>`COUNT(t.id)`.as('count'))
+    .executeTakeFirst();
+
+  const rows = await base
+    .selectAll('t')
+    .orderBy('t.created_at', 'desc')
+    .limit(limit)
+    .offset(offset)
+    .execute();
+
+  return {
+    leases: rows.map(mapTenancyRow),
+    total: Number(countResult?.count ?? 0),
+  };
+}
+
+/**
+ * Retrieves a single tenancy by ID.
+ * Access restricted to the tenant, landlord, or admin of that tenancy.
+ */
+export async function getLeaseById(
+  db: Kysely<Database>,
+  leaseId: string,
+  userId: string,
+  roles: UserRole[]
+): Promise<PublicTenancySummary> {
+  const row = await db
+    .selectFrom('tenancies')
+    .selectAll()
+    .where('id', '=', leaseId)
+    .executeTakeFirst();
+
+  if (!row) {
+    throw new NotFoundError('Lease agreement not found');
+  }
+
+  const isParty = row.tenant_id === userId || row.landlord_id === userId;
+  const isAdmin = roles.includes('admin');
+
+  if (!isParty && !isAdmin) {
+    throw new ForbiddenError('You do not have permission to view this lease agreement');
+  }
+
+  return mapTenancyRow(row);
+}
+
+/**
+ * Atomically records a party's digital signature on a pending lease.
+ *
+ * Transition table:
+ *   pending_signature + tenant signs  → pending_signature (tenantSignedAt set)
+ *   pending_signature + landlord signs → pending_signature (landlordSignedAt set)
+ *   pending_signature + both signed   → active (signedAt set, unit → ON_RENT)
+ *
+ * Idempotency: calling sign twice by the same party returns 409.
+ */
+export async function signLease(
+  db: Kysely<Database>,
+  leaseId: string,
+  userId: string,
+  roles: UserRole[]
+): Promise<PublicTenancySummary> {
+  return await db.transaction().execute(async (trx) => {
+    // 1. Lock the tenancy row
+    const tenancy = await trx
+      .selectFrom('tenancies')
+      .selectAll()
+      .where('id', '=', leaseId)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!tenancy) {
+      throw new NotFoundError('Lease agreement not found');
+    }
+
+    // 2. Only the tenant or landlord of this specific tenancy may sign
+    const isTenant = tenancy.tenant_id === userId;
+    const isLandlord = tenancy.landlord_id === userId;
+
+    if (!isTenant && !isLandlord) {
+      throw new ForbiddenError('You are not a party to this lease agreement');
+    }
+
+    // 3. Can only sign a lease that is awaiting signatures
+    if (tenancy.status !== 'pending_signature') {
+      throw new BadRequestError(
+        `Cannot sign a lease with status "${tenancy.status}"`
+      );
+    }
+
+    // 4. Idempotency guard — prevent signing twice
+    if (isTenant && tenancy.tenant_signed_at) {
+      throw new ConflictError('You have already signed this lease agreement');
+    }
+    if (isLandlord && tenancy.landlord_signed_at) {
+      throw new ConflictError('You have already signed this lease agreement');
+    }
+
+    // 5. Record this party's signature
+    const signatureUpdate = isTenant
+      ? { tenant_signed_at: sql`NOW()` as any }
+      : { landlord_signed_at: sql`NOW()` as any };
+
+    await trx
+      .updateTable('tenancies')
+      .set({ ...signatureUpdate, updated_at: sql`NOW()` })
+      .where('id', '=', leaseId)
+      .execute();
+
+    // 6. Re-read to get fresh timestamps for both-parties check
+    const refreshed = await trx
+      .selectFrom('tenancies')
+      .selectAll()
+      .where('id', '=', leaseId)
+      .executeTakeFirstOrThrow();
+
+    // 7. If both parties have now signed, activate the lease
+    if (refreshed.tenant_signed_at && refreshed.landlord_signed_at) {
+      await trx
+        .updateTable('tenancies')
+        .set({
+          status: 'active',
+          signed_at: sql`NOW()`,
+          updated_at: sql`NOW()`,
+        })
+        .where('id', '=', leaseId)
+        .execute();
+
+      await trx
+        .updateTable('property_units')
+        .set({
+          availability_status: 'ON_RENT',
+          updated_at: sql`NOW()`,
+        })
+        .where('id', '=', refreshed.unit_id)
+        .execute();
+    }
+
+    const final = await trx
+      .selectFrom('tenancies')
+      .selectAll()
+      .where('id', '=', leaseId)
+      .executeTakeFirstOrThrow();
+
+    return mapTenancyRow(final);
+  });
+}
+
+/**
+ * Initiates early termination of an active tenancy.
+ * Allowed by either party (tenant or landlord) of the tenancy.
+ * Sets status to 'terminated_early', records terminated_at,
+ * creates an early_termination_records audit log entry, and
+ * returns the unit availability_status to 'AVAILABLE'.
+ */
+export async function terminateLease(
+  db: Kysely<Database>,
+  leaseId: string,
+  userId: string,
+  input?: TerminateLeaseInput
+): Promise<PublicTenancySummary> {
+  return await db.transaction().execute(async (trx) => {
+    const tenancy = await trx
+      .selectFrom('tenancies')
+      .selectAll()
+      .where('id', '=', leaseId)
+      .forUpdate()
+      .executeTakeFirst();
+
+    if (!tenancy) {
+      throw new NotFoundError('Lease agreement not found');
+    }
+
+    const isParty = tenancy.tenant_id === userId || tenancy.landlord_id === userId;
+    if (!isParty) {
+      throw new ForbiddenError('You are not a party to this lease agreement');
+    }
+
+    if (tenancy.status !== 'active') {
+      throw new BadRequestError(
+        `Cannot terminate a lease with status "${tenancy.status}". Only active leases can be terminated early.`
+      );
+    }
+
+    await trx
+      .updateTable('tenancies')
+      .set({
+        status: 'terminated_early',
+        terminated_at: sql`NOW()`,
+        updated_at: sql`NOW()`,
+      })
+      .where('id', '=', leaseId)
+      .execute();
+
+    // Persist to early_termination_records
+    await trx
+      .insertInto('early_termination_records')
+      .values({
+        tenancy_id: leaseId,
+        initiator_id: userId,
+        reason_code: input?.reasonCode || 'EARLY_TERMINATION',
+        narrative: input?.narrative || 'Lease terminated early by party request',
+        dispute_id: input?.disputeId || null,
+      })
+      .execute();
+
+    // Return the unit to available status
+    await trx
+      .updateTable('property_units')
+      .set({
+        availability_status: 'AVAILABLE',
+        updated_at: sql`NOW()`,
+      })
+      .where('id', '=', tenancy.unit_id)
+      .execute();
+
+    const updated = await trx
+      .selectFrom('tenancies')
+      .selectAll()
+      .where('id', '=', leaseId)
+      .executeTakeFirstOrThrow();
+
+    return mapTenancyRow(updated);
+  });
+}
+

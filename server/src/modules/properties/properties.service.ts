@@ -5,12 +5,24 @@ import {
   getNextRadiusStep,
   stDistanceMeters,
   stDWithin,
+  stMakePointGeography,
   validateCoordinates,
   RADIUS_PROGRESSION_KM,
 } from '../../common/gis.js';
 import config from '../../../config/env.js';
-import { NotFoundError, BadRequestError } from '../../common/errors/index.js';
-import type { PropertySearchQuery } from './properties.schemas.js';
+import {
+  NotFoundError,
+  BadRequestError,
+  ForbiddenError,
+  ConflictError,
+} from '../../common/errors/index.js';
+import type {
+  PropertySearchQuery,
+  CreatePropertyInput,
+  UpdatePropertyInput,
+  CreateUnitInput,
+  UpdateUnitInput,
+} from './properties.schemas.js';
 import type {
   PublicPropertySummary,
   PublicPropertyDetail,
@@ -244,7 +256,7 @@ async function fetchMatchingProperties(
   q = applyPropertyFilters(q, query, radiusMeters);
 
   // Safe columns selection: ST_X, ST_Y for clean coordinates, no raw WKB hex leaks
-  let selectQuery = q.select([
+  let selectQuery: any = q.select([
     'p.id as id',
     'p.title as title',
     'p.description as description',
@@ -270,11 +282,11 @@ async function fetchMatchingProperties(
 
   // Sorting
   if (query.sortBy === 'distance' && query.latitude !== undefined && query.longitude !== undefined) {
-    selectQuery = selectQuery.orderBy('distance_meters', 'asc');
+    selectQuery = selectQuery.orderBy(sql`distance_meters`, 'asc');
   } else if (query.sortBy === 'newest') {
     selectQuery = selectQuery.orderBy('p.created_at', 'desc');
   } else if (query.latitude !== undefined && query.longitude !== undefined) {
-    selectQuery = selectQuery.orderBy('distance_meters', 'asc');
+    selectQuery = selectQuery.orderBy(sql`distance_meters`, 'asc');
   } else {
     selectQuery = selectQuery.orderBy('p.created_at', 'desc');
   }
@@ -288,7 +300,7 @@ async function fetchMatchingProperties(
     return [];
   }
 
-  const propertyIds = rawProperties.map((p) => p.id);
+  const propertyIds = rawProperties.map((p: any) => p.id as string);
 
   // Fetch units for these properties
   const units = await db
@@ -356,7 +368,9 @@ async function fetchMatchingProperties(
       },
       totalFloors: raw.total_floors,
       distanceMeters:
-        raw.distance_meters !== undefined ? Math.round(Number(raw.distance_meters)) : undefined,
+        (raw as any).distance_meters !== undefined && (raw as any).distance_meters !== null
+          ? Math.round(Number((raw as any).distance_meters))
+          : undefined,
       landlord: {
         id: raw.landlord_id,
         name: raw.landlord_name,
@@ -604,3 +618,593 @@ export async function getPropertyById(
     },
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Landlord Property & Unit Management Operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new property owned by the authenticated landlord.
+ */
+export async function createProperty(
+  db: Kysely<Database>,
+  landlordId: string,
+  input: CreatePropertyInput
+) {
+  const validCheck = validateCoordinates({
+    latitude: input.latitude,
+    longitude: input.longitude,
+  });
+  if (!validCheck.valid) {
+    throw new BadRequestError(validCheck.reason ?? 'Invalid coordinates');
+  }
+
+  const [row] = await db
+    .insertInto('properties')
+    .values({
+      landlord_id: landlordId,
+      title: input.title,
+      description: input.description ?? null,
+      address: input.address,
+      city: input.city,
+      postal_code: input.postalCode ?? null,
+      location: stMakePointGeography(input.longitude, input.latitude),
+      total_floors: input.totalFloors ?? 1,
+      is_active: true,
+    })
+    .returningAll()
+    .execute();
+
+  return {
+    id: row.id,
+    landlordId: row.landlord_id,
+    title: row.title,
+    description: row.description,
+    address: row.address,
+    city: row.city,
+    postalCode: row.postal_code,
+    location: {
+      latitude: input.latitude,
+      longitude: input.longitude,
+    },
+    totalFloors: row.total_floors,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/**
+ * Lists all properties owned by the authenticated landlord, including unit counts.
+ */
+export async function getLandlordProperties(
+  db: Kysely<Database>,
+  landlordId: string
+) {
+  const rows = await db
+    .selectFrom('properties as p')
+    .select([
+      'p.id',
+      'p.landlord_id',
+      'p.title',
+      'p.description',
+      'p.address',
+      'p.city',
+      'p.postal_code',
+      'p.total_floors',
+      'p.is_active',
+      'p.created_at',
+      'p.updated_at',
+      sql<number>`ST_Y(p.location::geometry)`.as('latitude'),
+      sql<number>`ST_X(p.location::geometry)`.as('longitude'),
+    ])
+    .where('p.landlord_id', '=', landlordId)
+    .orderBy('p.created_at', 'desc')
+    .execute();
+
+  const propertyIds = rows.map((r) => r.id);
+
+  const unitsByProperty: Record<string, any[]> = {};
+  if (propertyIds.length > 0) {
+    const units = await db
+      .selectFrom('property_units')
+      .selectAll()
+      .where('property_id', 'in', propertyIds)
+      .execute();
+    for (const u of units) {
+      if (!unitsByProperty[u.property_id]) {
+        unitsByProperty[u.property_id] = [];
+      }
+      unitsByProperty[u.property_id].push({
+        id: u.id,
+        propertyId: u.property_id,
+        unitIdentifier: u.unit_identifier,
+        floorNumber: u.floor_number,
+        bedrooms: u.bedrooms,
+        bathrooms: u.bathrooms,
+        areaSqft: u.area_sqft ? Number(u.area_sqft) : null,
+        monthlyRent: Number(u.monthly_rent),
+        securityDeposit: Number(u.security_deposit),
+        availabilityStatus: u.availability_status,
+        createdAt: u.created_at,
+        updatedAt: u.updated_at,
+      });
+    }
+  }
+
+  return rows.map((r) => {
+    const propUnits = unitsByProperty[r.id] ?? [];
+    return {
+      id: r.id,
+      landlordId: r.landlord_id,
+      title: r.title,
+      description: r.description,
+      address: r.address,
+      city: r.city,
+      postalCode: r.postal_code,
+      location: {
+        latitude: Number(r.latitude),
+        longitude: Number(r.longitude),
+      },
+      totalFloors: r.total_floors,
+      isActive: r.is_active,
+      unitsCount: propUnits.length,
+      availableUnitsCount: propUnits.filter((u) => u.availabilityStatus === 'AVAILABLE').length,
+      units: propUnits,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    };
+  });
+}
+
+/**
+ * Updates a property owned by the authenticated landlord with ownership check.
+ */
+export async function updateProperty(
+  db: Kysely<Database>,
+  propertyId: string,
+  landlordId: string,
+  input: UpdatePropertyInput
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to manage this property');
+  }
+
+  const updates: Record<string, any> = {
+    updated_at: sql`NOW()`,
+  };
+
+  if (input.title !== undefined) updates.title = input.title;
+  if (input.description !== undefined) updates.description = input.description;
+  if (input.address !== undefined) updates.address = input.address;
+  if (input.city !== undefined) updates.city = input.city;
+  if (input.postalCode !== undefined) updates.postal_code = input.postalCode;
+  if (input.totalFloors !== undefined) updates.total_floors = input.totalFloors;
+  if (input.isActive !== undefined) updates.is_active = input.isActive;
+
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    const validCheck = validateCoordinates({
+      latitude: input.latitude,
+      longitude: input.longitude,
+    });
+    if (!validCheck.valid) {
+      throw new BadRequestError(validCheck.reason ?? 'Invalid coordinates');
+    }
+    updates.location = stMakePointGeography(input.longitude, input.latitude);
+  }
+
+  await db
+    .updateTable('properties')
+    .set(updates)
+    .where('id', '=', propertyId)
+    .execute();
+
+  const refreshed = await db
+    .selectFrom('properties as p')
+    .select([
+      'p.id',
+      'p.landlord_id',
+      'p.title',
+      'p.description',
+      'p.address',
+      'p.city',
+      'p.postal_code',
+      'p.total_floors',
+      'p.is_active',
+      'p.created_at',
+      'p.updated_at',
+      sql<number>`ST_Y(p.location::geometry)`.as('latitude'),
+      sql<number>`ST_X(p.location::geometry)`.as('longitude'),
+    ])
+    .where('p.id', '=', propertyId)
+    .executeTakeFirstOrThrow();
+
+  return {
+    id: refreshed.id,
+    landlordId: refreshed.landlord_id,
+    title: refreshed.title,
+    description: refreshed.description,
+    address: refreshed.address,
+    city: refreshed.city,
+    postalCode: refreshed.postal_code,
+    location: {
+      latitude: Number(refreshed.latitude),
+      longitude: Number(refreshed.longitude),
+    },
+    totalFloors: refreshed.total_floors,
+    isActive: refreshed.is_active,
+    createdAt: refreshed.created_at,
+    updatedAt: refreshed.updated_at,
+  };
+}
+
+/**
+ * Soft deactivates a property owned by the landlord. Ensures no active/pending tenancies exist.
+ */
+export async function deleteProperty(
+  db: Kysely<Database>,
+  propertyId: string,
+  landlordId: string
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to manage this property');
+  }
+
+  // Check if any unit in the property has active or pending tenancies
+  const activeTenancy = await db
+    .selectFrom('tenancies as t')
+    .innerJoin('property_units as u', 'u.id', 't.unit_id')
+    .select('t.id')
+    .where('u.property_id', '=', propertyId)
+    .where('t.status', 'in', ['active', 'pending_signature'])
+    .executeTakeFirst();
+
+  if (activeTenancy) {
+    throw new ConflictError('Cannot deactivate property with active or pending tenancies');
+  }
+
+  // Soft-deactivate property
+  await db
+    .updateTable('properties')
+    .set({
+      is_active: false,
+      updated_at: sql`NOW()`,
+    })
+    .where('id', '=', propertyId)
+    .execute();
+
+  return { message: 'Property successfully deactivated' };
+}
+
+/**
+ * Adds a new unit to a landlord's property.
+ */
+export async function createUnit(
+  db: Kysely<Database>,
+  propertyId: string,
+  landlordId: string,
+  input: CreateUnitInput
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to manage this property');
+  }
+
+  if (!property.is_active) {
+    throw new BadRequestError('Cannot add units to an inactive property');
+  }
+
+  const existing = await db
+    .selectFrom('property_units')
+    .select('id')
+    .where('property_id', '=', propertyId)
+    .where('unit_identifier', '=', input.unitIdentifier)
+    .executeTakeFirst();
+
+  if (existing) {
+    throw new ConflictError(
+      `Unit identifier "${input.unitIdentifier}" already exists in this property`
+    );
+  }
+
+  const [unit] = await db
+    .insertInto('property_units')
+    .values({
+      property_id: propertyId,
+      unit_identifier: input.unitIdentifier,
+      floor_number: input.floorNumber ?? 1,
+      bedrooms: input.bedrooms ?? 1,
+      bathrooms: input.bathrooms ?? 1,
+      area_sqft: input.areaSqft ?? null,
+      monthly_rent: input.monthlyRent,
+      security_deposit: input.securityDeposit ?? 0,
+      availability_status: input.availabilityStatus ?? 'AVAILABLE',
+    })
+    .returningAll()
+    .execute();
+
+  return {
+    id: unit.id,
+    propertyId: unit.property_id,
+    unitIdentifier: unit.unit_identifier,
+    floorNumber: unit.floor_number,
+    bedrooms: unit.bedrooms,
+    bathrooms: unit.bathrooms,
+    areaSqft: unit.area_sqft ? Number(unit.area_sqft) : null,
+    monthlyRent: Number(unit.monthly_rent),
+    securityDeposit: Number(unit.security_deposit),
+    availabilityStatus: unit.availability_status,
+    createdAt: unit.created_at,
+    updatedAt: unit.updated_at,
+  };
+}
+
+/**
+ * Retrieves all units for a given property.
+ */
+export async function getUnitsByProperty(
+  db: Kysely<Database>,
+  propertyId: string,
+  landlordId?: string
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (landlordId && property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to view units for this property');
+  }
+
+  const units = await db
+    .selectFrom('property_units')
+    .selectAll()
+    .where('property_id', '=', propertyId)
+    .orderBy('floor_number', 'asc')
+    .orderBy('unit_identifier', 'asc')
+    .execute();
+
+  return units.map((u) => ({
+    id: u.id,
+    propertyId: u.property_id,
+    unitIdentifier: u.unit_identifier,
+    floorNumber: u.floor_number,
+    bedrooms: u.bedrooms,
+    bathrooms: u.bathrooms,
+    areaSqft: u.area_sqft ? Number(u.area_sqft) : null,
+    monthlyRent: Number(u.monthly_rent),
+    securityDeposit: Number(u.security_deposit),
+    availabilityStatus: u.availability_status,
+    createdAt: u.created_at,
+    updatedAt: u.updated_at,
+  }));
+}
+
+/**
+ * Updates a unit in a landlord's property with state transition verification.
+ */
+export async function updateUnit(
+  db: Kysely<Database>,
+  propertyId: string,
+  unitId: string,
+  landlordId: string,
+  input: UpdateUnitInput
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to manage this property');
+  }
+
+  const unit = await db
+    .selectFrom('property_units')
+    .selectAll()
+    .where('id', '=', unitId)
+    .where('property_id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!unit) {
+    throw new NotFoundError('Unit not found in this property');
+  }
+
+  // Check unique identifier if changed
+  if (input.unitIdentifier && input.unitIdentifier !== unit.unit_identifier) {
+    const existing = await db
+      .selectFrom('property_units')
+      .select('id')
+      .where('property_id', '=', propertyId)
+      .where('unit_identifier', '=', input.unitIdentifier)
+      .where('id', '!=', unitId)
+      .executeTakeFirst();
+
+    if (existing) {
+      throw new ConflictError(
+        `Unit identifier "${input.unitIdentifier}" already exists in this property`
+      );
+    }
+  }
+
+  // State transition guards
+  if (input.availabilityStatus && input.availabilityStatus !== unit.availability_status) {
+    if (unit.availability_status === 'ON_RENT' && input.availabilityStatus !== 'ON_RENT') {
+      const activeLease = await db
+        .selectFrom('tenancies')
+        .select('id')
+        .where('unit_id', '=', unitId)
+        .where('status', '=', 'active')
+        .executeTakeFirst();
+      if (activeLease) {
+        throw new ConflictError(
+          'Cannot change status of a unit with an active lease. Terminate the lease first.'
+        );
+      }
+    }
+    if (
+      unit.availability_status === 'PENDING_SIGNATURE' &&
+      input.availabilityStatus !== 'PENDING_SIGNATURE'
+    ) {
+      const pendingLease = await db
+        .selectFrom('tenancies')
+        .select('id')
+        .where('unit_id', '=', unitId)
+        .where('status', '=', 'pending_signature')
+        .executeTakeFirst();
+      if (pendingLease) {
+        throw new ConflictError(
+          'Cannot change status of a unit with a pending lease agreement.'
+        );
+      }
+    }
+  }
+
+  const updates: Record<string, any> = {
+    updated_at: sql`NOW()`,
+  };
+
+  if (input.unitIdentifier !== undefined) updates.unit_identifier = input.unitIdentifier;
+  if (input.floorNumber !== undefined) updates.floor_number = input.floorNumber;
+  if (input.bedrooms !== undefined) updates.bedrooms = input.bedrooms;
+  if (input.bathrooms !== undefined) updates.bathrooms = input.bathrooms;
+  if (input.areaSqft !== undefined) updates.area_sqft = input.areaSqft;
+  if (input.monthlyRent !== undefined) updates.monthly_rent = input.monthlyRent;
+  if (input.securityDeposit !== undefined) updates.security_deposit = input.securityDeposit;
+  if (input.availabilityStatus !== undefined) updates.availability_status = input.availabilityStatus;
+
+  const [updated] = await db
+    .updateTable('property_units')
+    .set(updates)
+    .where('id', '=', unitId)
+    .returningAll()
+    .execute();
+
+  return {
+    id: updated.id,
+    propertyId: updated.property_id,
+    unitIdentifier: updated.unit_identifier,
+    floorNumber: updated.floor_number,
+    bedrooms: updated.bedrooms,
+    bathrooms: updated.bathrooms,
+    areaSqft: updated.area_sqft ? Number(updated.area_sqft) : null,
+    monthlyRent: Number(updated.monthly_rent),
+    securityDeposit: Number(updated.security_deposit),
+    availabilityStatus: updated.availability_status,
+    createdAt: updated.created_at,
+    updatedAt: updated.updated_at,
+  };
+}
+
+/**
+ * Deletes or sets unit to UNAVAILABLE with ownership and active tenancy checks.
+ */
+export async function deleteUnit(
+  db: Kysely<Database>,
+  propertyId: string,
+  unitId: string,
+  landlordId: string
+) {
+  const property = await db
+    .selectFrom('properties')
+    .selectAll()
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!property) {
+    throw new NotFoundError('Property not found');
+  }
+
+  if (property.landlord_id !== landlordId) {
+    throw new ForbiddenError('You do not have permission to manage this property');
+  }
+
+  const unit = await db
+    .selectFrom('property_units')
+    .selectAll()
+    .where('id', '=', unitId)
+    .where('property_id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!unit) {
+    throw new NotFoundError('Unit not found in this property');
+  }
+
+  // Active or pending tenancies check
+  const activeTenancy = await db
+    .selectFrom('tenancies')
+    .select('id')
+    .where('unit_id', '=', unitId)
+    .where('status', 'in', ['active', 'pending_signature'])
+    .executeTakeFirst();
+
+  if (activeTenancy) {
+    throw new ConflictError('Cannot delete unit with an active or pending lease binding');
+  }
+
+  // Check if historical requests or tenancies exist
+  const hasHistory = await db
+    .selectFrom('rental_requests')
+    .select('id')
+    .where('unit_id', '=', unitId)
+    .executeTakeFirst();
+
+  if (hasHistory) {
+    await db
+      .updateTable('property_units')
+      .set({
+        availability_status: 'UNAVAILABLE',
+        updated_at: sql`NOW()`,
+      })
+      .where('id', '=', unitId)
+      .execute();
+    return { message: 'Unit has existing history and was set to UNAVAILABLE' };
+  }
+
+  await db
+    .deleteFrom('property_units')
+    .where('id', '=', unitId)
+    .execute();
+
+  return { message: 'Unit successfully deleted' };
+}
+

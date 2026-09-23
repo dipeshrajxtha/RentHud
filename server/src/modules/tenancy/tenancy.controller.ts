@@ -9,7 +9,16 @@ import {
   cancelRentalRequest,
   rejectRentalRequest,
   approveRentalRequest,
+  listLeases,
+  getLeaseById,
+  signLease,
+  terminateLease,
 } from './tenancy.service.js';
+import type {
+  LeaseIdParam,
+  LeaseQuery,
+  TerminateLeaseInput,
+} from './tenancy.lease.schemas.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import type {
   CreateRentalRequestInput,
@@ -45,17 +54,18 @@ export async function createRentalApplication(
  * Lists rental applications for the authenticated user (as tenant or landlord).
  */
 export async function getRentalApplications(
-  req: Request<{}, {}, {}, RentalRequestQuery>,
+  req: Request<any, any, any, any>,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
     const db = getDb(req);
+    const query = req.query as unknown as RentalRequestQuery;
     const result = await listRentalRequests(
       db,
       req.user!.id,
       req.user!.roles as UserRole[],
-      req.query
+      query
     );
     sendSuccess(res, result, 200);
   } catch (err) {
@@ -134,6 +144,95 @@ export async function approveApplication(
   try {
     const db = getDb(req);
     const result = await approveRentalRequest(db, req.params.id, req.user!.id);
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/tenancy/leases
+ * Lists lease agreements for the authenticated user (RBAC-scoped).
+ */
+export async function getLeases(
+  req: Request<any, any, any, any>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const query = req.query as unknown as LeaseQuery;
+    const result = await listLeases(
+      db,
+      req.user!.id,
+      req.user!.roles as UserRole[],
+      query
+    );
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/tenancy/leases/:id
+ * Retrieves a lease agreement by ID (restricted to parties + admin).
+ */
+export async function getLeaseAgreementById(
+  req: Request<LeaseIdParam>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await getLeaseById(
+      db,
+      req.params.id,
+      req.user!.id,
+      req.user!.roles as UserRole[]
+    );
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/tenancy/leases/:id/sign
+ * Records the authenticated party's digital signature on a pending lease.
+ * Activates the lease atomically when both parties have signed.
+ */
+export async function signLeaseAgreement(
+  req: Request<LeaseIdParam>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await signLease(
+      db,
+      req.params.id,
+      req.user!.id,
+      req.user!.roles as UserRole[]
+    );
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/tenancy/leases/:id/terminate
+ * Initiates early termination of an active lease (either party may call this).
+ */
+export async function terminateLeaseAgreement(
+  req: Request<LeaseIdParam, any, TerminateLeaseInput>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await terminateLease(db, req.params.id, req.user!.id, req.body);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);

@@ -3,6 +3,8 @@ import type {
   TenancyStatus,
 } from '../../server/src/types/database.js';
 
+export type { TenancyStatus, RentalRequestStatus };
+
 export interface CreateRentalRequestBody {
   unitId: string;
   proposedMoveIn: string;
@@ -55,6 +57,8 @@ export interface PublicTenancySummary {
   endDate: string;
   agreedMonthlyRent: number;
   agreedDeposit: number;
+  tenantSignedAt: Date | null;
+  landlordSignedAt: Date | null;
   signedAt: Date | null;
   terminatedAt: Date | null;
   createdAt: Date;

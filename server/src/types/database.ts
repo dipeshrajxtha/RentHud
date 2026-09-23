@@ -172,6 +172,11 @@ export interface TenanciesTable {
   end_date: Date;
   agreed_monthly_rent: number;
   agreed_deposit: Generated<number>;
+  /** Set when the tenant calls POST /leases/:id/sign. */
+  tenant_signed_at: Date | null;
+  /** Set when the landlord calls POST /leases/:id/sign. */
+  landlord_signed_at: Date | null;
+  /** Sealed timestamp — written only when both parties have signed. */
   signed_at: Date | null;
   terminated_at: Date | null;
   created_at: Generated<Date>;

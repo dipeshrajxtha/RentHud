@@ -10,6 +10,11 @@ import {
   rentalRequestIdParamSchema,
   rentalRequestQuerySchema,
 } from './tenancy.schemas.js';
+import {
+  leaseIdParamSchema,
+  leaseQuerySchema,
+  terminateLeaseSchema,
+} from './tenancy.lease.schemas.js';
 
 export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
   const router = Router();
@@ -69,6 +74,37 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
     requireLandlord,
     validate(rentalRequestIdParamSchema, 'params'),
     tenancyController.approveApplication
+  );
+
+  // ── Lease / Digital Agreement endpoints ──────────────────────────────────
+
+  // List leases for authenticated user (RBAC-scoped)
+  router.get(
+    '/leases',
+    validate(leaseQuerySchema, 'query'),
+    tenancyController.getLeases
+  );
+
+  // Retrieve a specific lease agreement
+  router.get(
+    '/leases/:id',
+    validate(leaseIdParamSchema, 'params'),
+    tenancyController.getLeaseAgreementById
+  );
+
+  // Sign a pending lease (tenant or landlord; second signature activates it)
+  router.post(
+    '/leases/:id/sign',
+    validate(leaseIdParamSchema, 'params'),
+    tenancyController.signLeaseAgreement
+  );
+
+  // Early termination of an active lease
+  router.post(
+    '/leases/:id/terminate',
+    validate(leaseIdParamSchema, 'params'),
+    validate(terminateLeaseSchema, 'body'),
+    tenancyController.terminateLeaseAgreement
   );
 
   return router;
