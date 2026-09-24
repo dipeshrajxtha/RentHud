@@ -1,5 +1,5 @@
 import { sql, type Kysely } from 'kysely';
-import type { Database, UnitAvailabilityStatus } from '../../types/database.js';
+import type { Database, PropertyUnit, UnitAvailabilityStatus } from '../../types/database.js';
 import {
   getRadiusStepInfo,
   getNextRadiusStep,
@@ -175,6 +175,23 @@ function applyPropertyFilters(
       uq = uq.where('u.bathrooms', '>=', query.bathrooms);
     }
 
+    // When searching for AVAILABLE units, exclude any that have an active or
+    // pending_signature tenancy – these are occupied even if status hasn't
+    // been updated yet (belt-and-suspenders guard).
+    if (!query.availability || query.availability === 'AVAILABLE') {
+      uq = uq.where((subEb: any) =>
+        subEb.not(
+          subEb.exists(
+            subEb
+              .selectFrom('tenancies as t')
+              .select('t.id')
+              .whereRef('t.unit_id', '=', 'u.id')
+              .where('t.status', 'in', ['active', 'pending_signature'])
+          )
+        )
+      );
+    }
+
     return eb.exists(uq);
   });
 
@@ -280,12 +297,22 @@ async function fetchMatchingProperties(
     );
   }
 
-  // Sorting
-  if (query.sortBy === 'distance' && query.latitude !== undefined && query.longitude !== undefined) {
+  // Sorting — rent sorts use a SQL subquery for database-level ordering so
+  // pagination is correct across large result sets.
+  if (query.sortBy === 'rent_asc') {
+    selectQuery = selectQuery.orderBy(
+      sql`(SELECT MIN(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE') ASC NULLS LAST`
+    );
+  } else if (query.sortBy === 'rent_desc') {
+    selectQuery = selectQuery.orderBy(
+      sql`(SELECT MAX(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE') DESC NULLS LAST`
+    );
+  } else if (query.sortBy === 'distance' && query.latitude !== undefined && query.longitude !== undefined) {
     selectQuery = selectQuery.orderBy(sql`distance_meters`, 'asc');
   } else if (query.sortBy === 'newest') {
     selectQuery = selectQuery.orderBy('p.created_at', 'desc');
   } else if (query.latitude !== undefined && query.longitude !== undefined) {
+    // Default spatial order: nearest first
     selectQuery = selectQuery.orderBy(sql`distance_meters`, 'asc');
   } else {
     selectQuery = selectQuery.orderBy('p.created_at', 'desc');
@@ -302,13 +329,30 @@ async function fetchMatchingProperties(
 
   const propertyIds = rawProperties.map((p: any) => p.id as string);
 
-  // Fetch units for these properties
-  const units = await db
+  // Fetch units for these properties — exclude units with active/pending
+  // tenancies when the search is for AVAILABLE units (safe public exposure).
+  const requestedAvailability = query.availability ?? 'AVAILABLE';
+  let unitsQ: any = db
     .selectFrom('property_units as pu')
     .selectAll('pu')
     .where('pu.property_id', 'in', propertyIds)
-    .orderBy('pu.monthly_rent', 'asc')
-    .execute();
+    .where('pu.availability_status', '=', requestedAvailability);
+
+  if (requestedAvailability === 'AVAILABLE') {
+    unitsQ = unitsQ.where((eb: any) =>
+      eb.not(
+        eb.exists(
+          eb
+            .selectFrom('tenancies as t')
+            .select('t.id')
+            .whereRef('t.unit_id', '=', 'pu.id')
+            .where('t.status', 'in', ['active', 'pending_signature'])
+        )
+      )
+    );
+  }
+
+  const units: PropertyUnit[] = await unitsQ.orderBy('pu.monthly_rent', 'asc').execute();
 
   // Fetch cover photos
   const photos = await db
@@ -336,10 +380,14 @@ async function fetchMatchingProperties(
   const results: PublicPropertySummary[] = [];
 
   for (const raw of rawProperties) {
-    const propUnits = units.filter((u) => u.property_id === raw.id);
-    const availableUnits = propUnits.filter(
-      (u) => u.availability_status === 'AVAILABLE'
-    );
+    // propUnits already filtered to requestedAvailability (and no active tenancies for AVAILABLE)
+    const propUnits: PropertyUnit[] = units.filter((u: PropertyUnit) => u.property_id === raw.id);
+    // availableUnitsCount always reflects truly AVAILABLE units (may differ from propUnits
+    // when caller requested a different availability filter)
+    const availableUnitsCount = requestedAvailability === 'AVAILABLE'
+      ? propUnits.length
+      : propUnits.filter((u: PropertyUnit) => u.availability_status === 'AVAILABLE').length;
+
     const coverPhoto = photos.find((ph) => ph.property_id === raw.id);
     const amenities = buildingAmenities
       .filter((ba) => ba.property_id === raw.id)
@@ -351,7 +399,8 @@ async function fetchMatchingProperties(
         icon: ba.icon,
       }));
 
-    const rents = propUnits.map((u) => Number(u.monthly_rent));
+    // Rent bounds derived from eligible (returned) units only, not all property units
+    const rents = propUnits.map((u: PropertyUnit) => Number(u.monthly_rent));
     const minRent = rents.length > 0 ? Math.min(...rents) : null;
     const maxRent = rents.length > 0 ? Math.max(...rents) : null;
 
@@ -369,19 +418,19 @@ async function fetchMatchingProperties(
       totalFloors: raw.total_floors,
       distanceMeters:
         (raw as any).distance_meters !== undefined && (raw as any).distance_meters !== null
-          ? Math.round(Number((raw as any).distance_meters))
+          ? Math.round(Number((raw as any).distance_meters) * 10) / 10
           : undefined,
       landlord: {
         id: raw.landlord_id,
         name: raw.landlord_name,
         avatarUrl: raw.landlord_avatar_url,
       },
-      availableUnitsCount: availableUnits.length,
+      availableUnitsCount,
       minMonthlyRent: minRent,
       maxMonthlyRent: maxRent,
       coverPhotoUrl: coverPhoto?.url ?? null,
       amenities,
-      units: propUnits.map((u) => ({
+      units: propUnits.map((u: PropertyUnit) => ({
         id: u.id,
         propertyId: u.property_id,
         unitIdentifier: u.unit_identifier,
@@ -396,13 +445,6 @@ async function fetchMatchingProperties(
         photos: [],
       })),
     });
-  }
-
-  // Handle client-requested sort by rent if requested
-  if (query.sortBy === 'rent_asc') {
-    results.sort((a, b) => (a.minMonthlyRent ?? 0) - (b.minMonthlyRent ?? 0));
-  } else if (query.sortBy === 'rent_desc') {
-    results.sort((a, b) => (b.maxMonthlyRent ?? 0) - (a.maxMonthlyRent ?? 0));
   }
 
   return results;

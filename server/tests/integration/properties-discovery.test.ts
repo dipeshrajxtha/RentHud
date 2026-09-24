@@ -285,6 +285,168 @@ describe('Rental Listing Details & Property Discovery Backend (/api/properties)'
       expect(prop.location.longitude).toBeGreaterThan(80);
       expect(typeof (prop as any).location).not.toBe('string');
     });
+
+    it('returns 400 when latitude is out of bounds (>90 or <-90)', async () => {
+      const res = await request(app).get(
+        `/api/properties?latitude=95&longitude=${ktmCenter.longitude}`
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('returns 400 when longitude is out of bounds (>180 or <-180)', async () => {
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=195`
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('returns 400 when radiusKm is zero or negative', async () => {
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=-5`
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('returns 400 when sortBy=distance is requested without coordinates', async () => {
+      const res = await request(app).get('/api/properties?sortBy=distance');
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('accepts lat, lng, and radius aliases and executes spatial search accurately', async () => {
+      // Using lat, lng, and radius aliases
+      const res = await request(app).get(
+        `/api/properties?lat=${ktmCenter.latitude}&lng=${ktmCenter.longitude}&radius=2&expandRadius=false`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyKtmId);
+      expect(res.body.data.properties[0].distanceMeters).toBeGreaterThan(1000);
+    });
+
+    it('excludes properties outside the explicit search radius', async () => {
+      // Thamel is ~1.5km from KTM center. Searching with explicit radius 1km should return 0
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=1&expandRadius=false`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(0);
+      expect(res.body.data.totalProperties).toBe(0);
+    });
+
+    it('respects spatial radius boundary (1.2km excludes, 1.8km includes Thamel property)', async () => {
+      // 1.2km: Thamel (~1.5km) is outside
+      const resOutside = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=1.2&expandRadius=false`
+      );
+      expect(resOutside.status).toBe(200);
+      expect(resOutside.body.data.properties).toHaveLength(0);
+
+      // 1.8km: Thamel (~1.5km) is inside
+      const resInside = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=1.8&expandRadius=false`
+      );
+      expect(resInside.status).toBe(200);
+      expect(resInside.body.data.properties).toHaveLength(1);
+      expect(resInside.body.data.properties[0].id).toBe(propertyKtmId);
+    });
+
+    it('combines location search with rent budget filter', async () => {
+      // Both Thamel (~1.5km, rent 25000) and Patan (~3.8km, rent 40000) are within 5km
+      // Filter with maxRent=30000: only Thamel should be returned
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&maxRent=30000`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyKtmId);
+    });
+
+    it('combines location search with area filter', async () => {
+      // Within 5km: Thamel has 800 sqft, Patan has 1200 sqft
+      // Filter with minArea=1000: only Patan should be returned
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&minArea=1000`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('combines location search with bedrooms and bathrooms filter', async () => {
+      // Within 5km: Patan has 3 beds, 2 baths; Thamel has 2 beds, 2 baths
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&bedrooms=3&bathrooms=2`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('combines location search with amenity filter', async () => {
+      // Within 5km: only Patan has dedicated-parking
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&amenities=dedicated-parking`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('combines location search with specific availability filter', async () => {
+      // Within 2km: Thamel has Unit 101 (AVAILABLE) and Unit 102 (ON_RENT)
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=2&expandRadius=false&availability=ON_RENT`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyKtmId);
+    });
+
+    it('combines location search with multiple filters simultaneously', async () => {
+      // Location within 5km + minRent=30000 + bedrooms=3 + amenity=dedicated-parking
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&minRent=30000&bedrooms=3&amenities=dedicated-parking`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('never returns inactive or delisted properties in spatial search even if physically closer', async () => {
+      // Inactive property is in Thamel (very close to center)
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=15&expandRadius=false`
+      );
+      expect(res.status).toBe(200);
+      const returnedIds = res.body.data.properties.map((p: any) => p.id);
+      expect(returnedIds).not.toContain(inactivePropertyId);
+    });
+
+    it('ensures public listing search results never leak sensitive landlord credentials or internal fields', async () => {
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5`
+      );
+      expect(res.status).toBe(200);
+      for (const p of res.body.data.properties) {
+        expect(p.landlord).toBeDefined();
+        expect(p.landlord.id).toBeDefined();
+        expect(p.landlord.name).toBeDefined();
+        expect((p.landlord as any).email).toBeUndefined();
+        expect((p.landlord as any).google_id).toBeUndefined();
+        expect((p.landlord as any).roles).toBeUndefined();
+        expect((p.landlord as any).phone).toBeUndefined();
+        expect((p.landlord as any).password_hash).toBeUndefined();
+      }
+    });
   });
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -338,6 +500,126 @@ describe('Rental Listing Details & Property Discovery Backend (/api/properties)'
       const res = await request(app).get('/api/properties/not-a-uuid');
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 4. NEW STRENGTHENING TESTS
+  // ──────────────────────────────────────────────────────────────────────────
+  describe('GET /api/properties - Strengthening & New Coverage', () => {
+    // ── 4a. rooms alias ────────────────────────────────────────────────────
+    it('accepts rooms as an alias for bedrooms filter', async () => {
+      // Patan has 3 bedrooms; rooms=3 should return only Patan
+      const res = await request(app).get('/api/properties?rooms=3');
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('accepts sort as an alias for sortBy', async () => {
+      // sort=newest should return properties in created_at desc order without error
+      const res = await request(app).get('/api/properties?sort=newest');
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties.length).toBeGreaterThan(0);
+    });
+
+    // ── 4b. Unit exposure strict safety ────────────────────────────────────
+    it('excludes ON_RENT units from the public units list in discovery results', async () => {
+      // Thamel property has Unit 101 (AVAILABLE) and Unit 102 (ON_RENT)
+      const res = await request(app).get('/api/properties?city=Kathmandu');
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      const thamel = res.body.data.properties[0];
+
+      // availableUnitsCount must only count AVAILABLE units
+      expect(thamel.availableUnitsCount).toBe(1);
+
+      // units array in public response must NOT contain the ON_RENT unit
+      const unitStatuses: string[] = thamel.units.map((u: any) => u.availabilityStatus);
+      expect(unitStatuses).not.toContain('ON_RENT');
+      expect(unitStatuses.every((s: string) => s === 'AVAILABLE')).toBe(true);
+    });
+
+    it('minMonthlyRent reflects only AVAILABLE unit rents, not ON_RENT units', async () => {
+      // Thamel has Unit 101 (AVAILABLE, rent 25000) and Unit 102 (ON_RENT, rent 15000)
+      // minMonthlyRent must be 25000 (AVAILABLE unit), not 15000 (rented unit)
+      const res = await request(app).get('/api/properties?city=Kathmandu');
+      expect(res.status).toBe(200);
+      const thamel = res.body.data.properties[0];
+      expect(thamel.minMonthlyRent).toBe(25000);
+    });
+
+    // ── 4c. Validation: spatial params require coordinates ─────────────────
+    it('returns 400 when radiusKm is supplied without latitude/longitude', async () => {
+      const res = await request(app).get('/api/properties?radiusKm=5');
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('returns 400 when radius alias is supplied without latitude/longitude', async () => {
+      const res = await request(app).get('/api/properties?radius=10');
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    it('returns 400 when stepLevel is supplied without latitude/longitude', async () => {
+      const res = await request(app).get('/api/properties?stepLevel=2');
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/validation failed/i);
+    });
+
+    // ── 4d. SQL-level rent sorting ─────────────────────────────────────────
+    it('sorts results rent_asc by lowest AVAILABLE unit rent across properties', async () => {
+      // Bhaktapur: 12000, Thamel: 25000, Patan: 40000
+      const res = await request(app).get('/api/properties?sortBy=rent_asc');
+      expect(res.status).toBe(200);
+      const props = res.body.data.properties;
+      expect(props.length).toBe(3);
+      const minRents: number[] = props.map((p: any) => p.minMonthlyRent);
+      // Verify ascending order
+      expect(minRents[0]).toBeLessThanOrEqual(minRents[1]);
+      expect(minRents[1]).toBeLessThanOrEqual(minRents[2]);
+      // First result should be Bhaktapur (cheapest at 12000)
+      expect(props[0].id).toBe(propertyBhaktapurId);
+    });
+
+    it('sorts results rent_desc by highest AVAILABLE unit rent across properties', async () => {
+      // Patan: 40000, Thamel: 25000, Bhaktapur: 12000
+      const res = await request(app).get('/api/properties?sortBy=rent_desc');
+      expect(res.status).toBe(200);
+      const props = res.body.data.properties;
+      expect(props.length).toBe(3);
+      const maxRents: number[] = props.map((p: any) => p.maxMonthlyRent);
+      // Verify descending order
+      expect(maxRents[0]).toBeGreaterThanOrEqual(maxRents[1]);
+      expect(maxRents[1]).toBeGreaterThanOrEqual(maxRents[2]);
+      // First result should be Patan (most expensive at 40000)
+      expect(props[0].id).toBe(propertyPatanId);
+    });
+
+    it('combines rooms filter with spatial search', async () => {
+      // Within 5km: Patan has 3 rooms, Thamel has 2 rooms
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&radiusKm=5&expandRadius=false&rooms=3`
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.properties).toHaveLength(1);
+      expect(res.body.data.properties[0].id).toBe(propertyPatanId);
+    });
+
+    it('spatial metadata totalAvailableUnits reflects only AVAILABLE units, not rented ones', async () => {
+      // 3 properties: Thamel(1 AVAILABLE), Patan(1 AVAILABLE), Bhaktapur(1 AVAILABLE) = 3 total
+      const res = await request(app).get(
+        `/api/properties?latitude=${ktmCenter.latitude}&longitude=${ktmCenter.longitude}&expandRadius=true`
+      );
+      expect(res.status).toBe(200);
+      const spatial = res.body.data.spatial;
+      expect(spatial).toBeDefined();
+      // totalAvailableUnits must NOT include the ON_RENT Unit 102 in Thamel
+      expect(spatial.totalAvailableUnits).toBe(3);
     });
   });
 });
