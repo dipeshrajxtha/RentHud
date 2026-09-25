@@ -119,6 +119,16 @@ describe('PostGIS Spatial Functions & Geographic Indexing Verification', () => {
       expect(validateCoordinates({ latitude: NaN, longitude: 85.3240 }).valid).toBe(false);
     });
 
+    it('validates extreme coordinate boundaries accurately', () => {
+      expect(validateCoordinates({ latitude: 90, longitude: 180 }).valid).toBe(true);
+      expect(validateCoordinates({ latitude: -90, longitude: -180 }).valid).toBe(true);
+      expect(validateCoordinates({ latitude: 0, longitude: 0 }).valid).toBe(true);
+      expect(validateCoordinates({ latitude: 90.0001, longitude: 0 }).valid).toBe(false);
+      expect(validateCoordinates({ latitude: 0, longitude: 180.0001 }).valid).toBe(false);
+      expect(validateCoordinates({ latitude: 0, longitude: -180.0001 }).valid).toBe(false);
+      expect(validateCoordinates({ latitude: -90.0001, longitude: 0 }).valid).toBe(false);
+    });
+
     it('progresses through exponential radius stages [1, 2, 4, 8, 16, 32] km', () => {
       expect(RADIUS_PROGRESSION_KM).toEqual([1, 2, 4, 8, 16, 32]);
 
@@ -139,6 +149,44 @@ describe('PostGIS Spatial Functions & Geographic Indexing Verification', () => {
       expect(step6.radiusKm).toBe(32);
       expect(step6.radiusMeters).toBe(32000);
       expect(step6.maxRadiusReached).toBe(true);
+    });
+
+    it('handles out-of-range step levels by safely clamping to boundaries', () => {
+      // Step <= 0 clamped to step 1 (1 km)
+      const stepLow = getRadiusStepInfo(0);
+      expect(stepLow.stepLevel).toBe(1);
+      expect(stepLow.radiusKm).toBe(1);
+      expect(stepLow.maxRadiusReached).toBe(false);
+
+      // Step > 6 clamped to step 6 (32 km)
+      const stepHigh = getRadiusStepInfo(10);
+      expect(stepHigh.stepLevel).toBe(6);
+      expect(stepHigh.radiusKm).toBe(32);
+      expect(stepHigh.maxRadiusReached).toBe(true);
+
+      // getNextRadiusStep from max step level remains clamped at step 6
+      const nextFromMax = getNextRadiusStep(6);
+      expect(nextFromMax.stepLevel).toBe(6);
+      expect(nextFromMax.radiusKm).toBe(32);
+      expect(nextFromMax.maxRadiusReached).toBe(true);
+    });
+
+    it('accurately evaluates ST_DWithin at exact boundary threshold', async () => {
+      const p1 = stMakePointGeography(ktmDurbar.longitude, ktmDurbar.latitude);
+      const p2 = stMakePointGeography(patanDurbar.longitude, patanDurbar.latitude);
+
+      // Distance between Ktm Durbar and Patan is ~3850m
+      // Exactly 3800m is too small (false)
+      const res3800 = await sql<{ is_within: boolean }>`
+        SELECT ST_DWithin(${p1}, ${p2}, 3800) as is_within;
+      `.execute(testDb.db);
+      expect(res3800.rows[0].is_within).toBe(false);
+
+      // 4000m includes Patan (true)
+      const res4000 = await sql<{ is_within: boolean }>`
+        SELECT ST_DWithin(${p1}, ${p2}, 4000) as is_within;
+      `.execute(testDb.db);
+      expect(res4000.rows[0].is_within).toBe(true);
     });
   });
 });

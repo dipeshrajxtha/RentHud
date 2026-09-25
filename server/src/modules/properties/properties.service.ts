@@ -297,16 +297,30 @@ async function fetchMatchingProperties(
     );
   }
 
+  const requestedAvailability = query.availability ?? 'AVAILABLE';
+
   // Sorting — rent sorts use a SQL subquery for database-level ordering so
   // pagination is correct across large result sets.
   if (query.sortBy === 'rent_asc') {
-    selectQuery = selectQuery.orderBy(
-      sql`(SELECT MIN(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE') ASC NULLS LAST`
-    );
+    if (requestedAvailability === 'AVAILABLE') {
+      selectQuery = selectQuery.orderBy(
+        sql`(SELECT MIN(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE' AND NOT EXISTS (SELECT 1 FROM tenancies t WHERE t.unit_id = pu2.id AND t.status IN ('active', 'pending_signature'))) ASC NULLS LAST`
+      );
+    } else {
+      selectQuery = selectQuery.orderBy(
+        sql`(SELECT MIN(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = ${requestedAvailability}) ASC NULLS LAST`
+      );
+    }
   } else if (query.sortBy === 'rent_desc') {
-    selectQuery = selectQuery.orderBy(
-      sql`(SELECT MAX(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE') DESC NULLS LAST`
-    );
+    if (requestedAvailability === 'AVAILABLE') {
+      selectQuery = selectQuery.orderBy(
+        sql`(SELECT MAX(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = 'AVAILABLE' AND NOT EXISTS (SELECT 1 FROM tenancies t WHERE t.unit_id = pu2.id AND t.status IN ('active', 'pending_signature'))) DESC NULLS LAST`
+      );
+    } else {
+      selectQuery = selectQuery.orderBy(
+        sql`(SELECT MAX(pu2.monthly_rent) FROM property_units pu2 WHERE pu2.property_id = p.id AND pu2.availability_status = ${requestedAvailability}) DESC NULLS LAST`
+      );
+    }
   } else if (query.sortBy === 'distance' && query.latitude !== undefined && query.longitude !== undefined) {
     selectQuery = selectQuery.orderBy(sql`distance_meters`, 'asc');
   } else if (query.sortBy === 'newest') {
@@ -331,7 +345,6 @@ async function fetchMatchingProperties(
 
   // Fetch units for these properties — exclude units with active/pending
   // tenancies when the search is for AVAILABLE units (safe public exposure).
-  const requestedAvailability = query.availability ?? 'AVAILABLE';
   let unitsQ: any = db
     .selectFrom('property_units as pu')
     .selectAll('pu')
@@ -616,8 +629,23 @@ export async function getPropertyById(
     }));
 
   const coverPhoto = propertyPhotos.find((ph) => ph.isCover) ?? propertyPhotos[0] ?? null;
-  const rents = rawUnits.map((u) => Number(u.monthly_rent));
-  const availableUnits = rawUnits.filter((u) => u.availability_status === 'AVAILABLE');
+
+  const activeTenancies = unitIds.length > 0
+    ? await db
+        .selectFrom('tenancies')
+        .select('unit_id')
+        .where('unit_id', 'in', unitIds)
+        .where('status', 'in', ['active', 'pending_signature'])
+        .execute()
+    : [];
+
+  const occupiedUnitIds = new Set(activeTenancies.map((t) => t.unit_id));
+  const eligibleUnits = rawUnits.filter(
+    (u) => u.availability_status === 'AVAILABLE' && !occupiedUnitIds.has(u.id)
+  );
+  const eligibleRents = eligibleUnits.map((u) => Number(u.monthly_rent));
+  const minRent = eligibleRents.length > 0 ? Math.min(...eligibleRents) : null;
+  const maxRent = eligibleRents.length > 0 ? Math.max(...eligibleRents) : null;
 
   return {
     id: property.id,
@@ -636,9 +664,9 @@ export async function getPropertyById(
       name: property.landlord_name,
       avatarUrl: property.landlord_avatar_url,
     },
-    availableUnitsCount: availableUnits.length,
-    minMonthlyRent: rents.length > 0 ? Math.min(...rents) : null,
-    maxMonthlyRent: rents.length > 0 ? Math.max(...rents) : null,
+    availableUnitsCount: eligibleUnits.length,
+    minMonthlyRent: minRent,
+    maxMonthlyRent: maxRent,
     coverPhotoUrl: coverPhoto?.url ?? null,
     amenities: buildingAmenities.map((a) => ({
       id: a.id,
