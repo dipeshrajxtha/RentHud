@@ -5,6 +5,8 @@
  * Shown to prevent incorrect redirect flashes.
  */
 
+import { RentHubIcon } from '@/components/common/RentHubLogo';
+
 export function AppLoadingScreen() {
   return (
     <div
@@ -13,8 +15,8 @@ export function AppLoadingScreen() {
       aria-label="Loading RentHub"
     >
       {/* Logo mark */}
-      <div className="mb-6">
-        <RentHubLogoMark className="w-12 h-12 text-brand-600" />
+      <div className="mb-6 animate-pulse">
+        <RentHubIcon variant="original" className="w-14 h-14" />
       </div>
 
       {/* Animated dot loader */}
@@ -41,35 +43,5 @@ export function AppLoadingScreen() {
         }
       `}</style>
     </div>
-  );
-}
-
-/** Minimal RentHub logo mark SVG (home + key motif) */
-function RentHubLogoMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      {/* House silhouette */}
-      <path
-        d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z"
-        fill="currentColor"
-        fillOpacity="0.15"
-      />
-      <path
-        d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      {/* Key hole */}
-      <circle cx="24" cy="22" r="3" fill="currentColor" />
-      <path d="M22 25V29H26V25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { motion } from 'motion/react';
 import { InView } from '@/components/core';
+import { RentHubLogo } from '@/components/common/RentHubLogo';
 
 export function DashboardPage() {
   const { user, signOut } = useAuth();
@@ -26,14 +27,8 @@ export function DashboardPage() {
       {/* Top nav */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5">
-            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-brand-600" aria-hidden="true">
-              <path d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z" fill="currentColor" fillOpacity="0.15"/>
-              <path d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-              <circle cx="24" cy="22" r="3" fill="currentColor"/>
-              <path d="M22 25V29H26V25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="font-display text-lg font-semibold text-slate-900 tracking-tight">RentHub</span>
+          <div className="flex items-center">
+            <RentHubLogo variant="original" size="md" className="h-7" />
           </div>
 
           <div className="flex items-center gap-4">

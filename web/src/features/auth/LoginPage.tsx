@@ -22,6 +22,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { AnimatedGroup } from '@/components/core';
+import { RentHubLogo, RentHubIcon } from '@/components/common/RentHubLogo';
 import authBg from '@/assets/svg/haikei/auth-background.svg';
 
 /* ── Motion variants ───────────────────────────────────────────────────── */
@@ -108,7 +109,7 @@ export function LoginPage() {
 
         {/* Top — Logo */}
         <div className="relative">
-          <RentHubLogo className="text-white" />
+          <RentHubLogo variant="white" className="h-9" />
         </div>
 
         {/* Center — Headline & trust points */}
@@ -169,7 +170,7 @@ export function LoginPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="lg:hidden mb-8"
         >
-          <RentHubLogo className="text-brand-700" />
+          <RentHubLogo variant="original" className="h-9" />
         </motion.div>
 
         {/* Auth card */}
@@ -181,8 +182,8 @@ export function LoginPage() {
         >
           {/* Card header */}
           <div className="mb-8">
-            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 border border-brand-100">
-              <RentHubLogoMark className="w-6 h-6 text-brand-600" />
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 border border-brand-100 shadow-xs">
+              <RentHubIcon variant="original" className="w-7 h-7" />
             </div>
 
             <h2 className="font-display text-2xl font-semibold text-slate-900 tracking-tight">
@@ -333,43 +334,6 @@ function GoogleLoadingState() {
   );
 }
 
-/* ── RentHub Logo (full wordmark) ── */
-function RentHubLogo({ className }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-2.5 ${className ?? ''}`}>
-      <RentHubLogoMark className="w-8 h-8" />
-      <span className="font-display text-xl font-semibold tracking-tight">RentHub</span>
-    </div>
-  );
-}
-
-/* ── RentHub Logo Mark SVG ── */
-function RentHubLogoMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-hidden="true"
-    >
-      <path
-        d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z"
-        fill="currentColor"
-        fillOpacity="0.15"
-      />
-      <path
-        d="M24 4L6 18V44H20V32H28V44H42V18L24 4Z"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      <circle cx="24" cy="22" r="3" fill="currentColor" />
-      <path d="M22 25V29H26V25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 /* ── Icon components (Lucide-style inline SVGs) ── */
 function ShieldCheckIcon({ className }: { className?: string }) {
