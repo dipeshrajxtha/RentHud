@@ -9,10 +9,12 @@ build/
 out/
 *.tsbuildinfo
 
-# ── Environment ──
+# ── Environment / Secrets ──
 .env
 .env.local
 .env.*.local
+*.env
+*.env.local
 
 # ── Logs ──
 logs/
@@ -59,3 +61,30 @@ docker-compose.override.yml
 
 # ── Generated Architecture / Graphify ──
 graphify-out/
+
+# ── UI/UX Pro Max resources ──
+docs/ui-ux/
+
+# ── Local UI/UX tooling ──
+ui-ux/
+uiux/
+ui-ux-pro-max/
+uiux-pro-max/
+
+# ── Motion / local design tooling ──
+motion/
+motion-primitives/
+motion-primitives-local/
+
+# ── HAIKEI local/generated resources ──
+# Keep actual application assets under web/src/assets/
+# ignored only if these are local tooling folders:
+haikei/
+haikei-out/
+haikei-generated/
+
+# ── Temporary files ──
+*.tmp
+*.temp
+*.bak
+*.swp
