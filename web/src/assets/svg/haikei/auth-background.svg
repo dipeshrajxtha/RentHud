@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" fill="none">
+  <!-- Architectural grid lines (ultra-subtle) -->
+  <line x1="240" y1="0" x2="240" y2="900" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="480" y1="0" x2="480" y2="900" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="720" y1="0" x2="720" y2="900" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="960" y1="0" x2="960" y2="900" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="1200" y1="0" x2="1200" y2="900" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="180" x2="1440" y2="180" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="360" x2="1440" y2="360" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="540" x2="1440" y2="540" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="720" x2="1440" y2="720" stroke="#0259A1" stroke-opacity="0.04" stroke-width="1"/>
+
+  <!-- Large layered wave at bottom (brand blue, very subtle) -->
+  <path opacity="0.06" fill="#0C8EE9" d="M0,600L60,583C120,567,240,533,360,520C480,507,600,513,720,527C840,540,960,560,1080,553C1200,547,1320,513,1380,497L1440,480L1440,900L1380,900C1320,900,1200,900,1080,900C960,900,840,900,720,900C600,900,480,900,360,900C240,900,120,900,60,900L0,900Z"/>
+  <path opacity="0.04" fill="#0259A1" d="M0,680L60,667C120,653,240,627,360,620C480,613,600,627,720,640C840,653,960,667,1080,660C1200,653,1320,627,1380,613L1440,600L1440,900L1380,900C1320,900,1200,900,1080,900C960,900,840,900,720,900C600,900,480,900,360,900C240,900,120,900,60,900L0,900Z"/>
+
+  <!-- Geometric accent top-left (house-inspired angular) -->
+  <polygon opacity="0.04" fill="#0259A1" points="0,0 180,0 60,120"/>
+  <polygon opacity="0.03" fill="#0C8EE9" points="0,0 120,0 0,100"/>
+
+  <!-- Geometric accent top-right -->
+  <polygon opacity="0.04" fill="#0259A1" points="1440,0 1260,0 1380,120"/>
+  <polygon opacity="0.03" fill="#0C8EE9" points="1440,0 1320,0 1440,100"/>
+
+  <!-- Subtle diagonal lines (blueprint aesthetic) -->
+  <line x1="0" y1="900" x2="400" y2="400" stroke="#0C8EE9" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="1440" y1="900" x2="1040" y2="400" stroke="#0C8EE9" stroke-opacity="0.03" stroke-width="1"/>
+
+  <!-- Dot matrix (property grid reference - very faint) -->
+  <g opacity="0.08">
+    <circle cx="120" cy="200" r="1.5" fill="#0259A1"/>
+    <circle cx="180" cy="200" r="1.5" fill="#0259A1"/>
+    <circle cx="120" cy="260" r="1.5" fill="#0259A1"/>
+    <circle cx="180" cy="260" r="1.5" fill="#0259A1"/>
+    <circle cx="120" cy="320" r="1.5" fill="#0259A1"/>
+    <circle cx="180" cy="320" r="1.5" fill="#0259A1"/>
+    <circle cx="1260" cy="200" r="1.5" fill="#0259A1"/>
+    <circle cx="1320" cy="200" r="1.5" fill="#0259A1"/>
+    <circle cx="1260" cy="260" r="1.5" fill="#0259A1"/>
+    <circle cx="1320" cy="260" r="1.5" fill="#0259A1"/>
+    <circle cx="1260" cy="320" r="1.5" fill="#0259A1"/>
+    <circle cx="1320" cy="320" r="1.5" fill="#0259A1"/>
+  </g>
+</svg>

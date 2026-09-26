@@ -1,0 +1,267 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   RentHub — Global Stylesheet
+   Trust · Security · Home · Professionalism · Modern Technology
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Google Fonts — Lexend (headings) + Inter (body/ui) */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* ── Design Tokens ──────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Brand Blues (matches tailwind.config.js) */
+  --brand-50:  #f0f7ff;
+  --brand-100: #e0effe;
+  --brand-200: #bae0fd;
+  --brand-300: #7cc7fb;
+  --brand-400: #36aaf5;
+  --brand-500: #0c8ee9;
+  --brand-600: #0170c7;
+  --brand-700: #0259a1;
+  --brand-800: #064c84;
+  --brand-900: #0b406e;
+  --brand-950: #072849;
+
+  /* Semantic Surfaces */
+  --surface-page:    #f8fafc;
+  --surface-card:    #ffffff;
+  --surface-overlay: rgba(7, 40, 73, 0.04);
+
+  /* Typography */
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --text-inverse:   #ffffff;
+
+  /* Semantic Status */
+  --color-success:  #15803d;
+  --color-success-bg: #f0fdf4;
+  --color-error:    #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-warning:  #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-info:     #0259a1;
+  --color-info-bg:  #f0f7ff;
+
+  /* Interactive */
+  --focus-ring: 0 0 0 3px rgba(12, 142, 233, 0.35);
+  --focus-ring-offset: 2px;
+
+  /* Borders */
+  --border-subtle: rgba(2, 89, 161, 0.12);
+  --border-default: rgba(2, 89, 161, 0.18);
+  --border-strong: rgba(2, 89, 161, 0.30);
+
+  /* Elevation */
+  --shadow-xs:  0 1px 2px rgba(7, 40, 73, 0.05);
+  --shadow-sm:  0 2px 8px rgba(7, 40, 73, 0.08), 0 1px 2px rgba(7, 40, 73, 0.04);
+  --shadow-md:  0 4px 20px rgba(7, 40, 73, 0.10), 0 2px 6px rgba(7, 40, 73, 0.06);
+  --shadow-lg:  0 8px 40px rgba(7, 40, 73, 0.12), 0 4px 12px rgba(7, 40, 73, 0.08);
+  --shadow-xl:  0 16px 60px rgba(7, 40, 73, 0.14), 0 8px 24px rgba(7, 40, 73, 0.10);
+
+  /* Motion */
+  --duration-fast:    150ms;
+  --duration-base:    250ms;
+  --duration-slow:    400ms;
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Base Reset & Typography ────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Lexend', 'Inter', -apple-system, sans-serif;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+/* ── Focus States ───────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Utility Layer ──────────────────────────────────────────────────────── */
+@layer utilities {
+  .font-display {
+    font-family: 'Lexend', 'Inter', -apple-system, sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .shadow-brand-sm {
+    box-shadow: 0 2px 8px rgba(12, 142, 233, 0.15), 0 1px 2px rgba(12, 142, 233, 0.08);
+  }
+
+  .shadow-brand-md {
+    box-shadow: 0 4px 20px rgba(12, 142, 233, 0.20), 0 2px 6px rgba(12, 142, 233, 0.12);
+  }
+
+  /* Subtle inner border glow for auth card */
+  .ring-brand-inset {
+    box-shadow:
+      inset 0 0 0 1px rgba(12, 142, 233, 0.12),
+      0 8px 40px rgba(7, 40, 73, 0.10),
+      0 2px 8px rgba(7, 40, 73, 0.06);
+  }
+}
+
+/* ── Component Layer ────────────────────────────────────────────────────── */
+@layer components {
+  /* ── Buttons ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-medium
+           transition-all select-none cursor-pointer border-0
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+
+  .btn-sm  { @apply px-3 py-1.5 text-sm; }
+  .btn-md  { @apply px-4 py-2.5 text-sm; }
+  .btn-lg  { @apply px-5 py-3 text-base; }
+  .btn-xl  { @apply px-6 py-3.5 text-base; }
+
+  .btn-primary {
+    @apply btn btn-md bg-brand-600 text-white;
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply bg-brand-700;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(12, 142, 233, 0.35);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  .btn-outline {
+    @apply btn btn-md border border-brand-200 bg-white text-brand-700;
+  }
+  .btn-outline:hover:not(:disabled) {
+    @apply bg-brand-50 border-brand-300;
+  }
+
+  .btn-ghost {
+    @apply btn btn-md bg-transparent text-slate-600;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    @apply bg-slate-100 text-slate-900;
+  }
+
+  /* ── Form Inputs ── */
+  .form-input {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5
+           text-sm text-slate-900 placeholder:text-slate-400
+           transition-all duration-150
+           focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20;
+  }
+  .form-input:disabled {
+    @apply bg-slate-50 text-slate-400 cursor-not-allowed;
+  }
+
+  .form-input-error {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
+  }
+
+  .form-error {
+    @apply mt-1.5 text-xs text-red-600 flex items-center gap-1;
+  }
+
+  .form-helper {
+    @apply mt-1.5 text-xs text-slate-500;
+  }
+
+  /* ── Cards / Panels ── */
+  .card {
+    @apply bg-white rounded-2xl border border-slate-200/80;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-auth {
+    @apply bg-white rounded-2xl border border-slate-100;
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* ── Status Pills ── */
+  .badge-success {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-green-50 text-green-700 border border-green-200;
+  }
+  .badge-error {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-red-50 text-red-700 border border-red-200;
+  }
+  .badge-info {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-brand-50 text-brand-700 border border-brand-200;
+  }
+
+  /* ── Auth Alert Banner ── */
+  .auth-alert {
+    @apply flex items-start gap-3 rounded-xl border p-4 text-sm;
+  }
+  .auth-alert-error {
+    @apply auth-alert bg-red-50 border-red-200 text-red-800;
+  }
+  .auth-alert-success {
+    @apply auth-alert bg-green-50 border-green-200 text-green-800;
+  }
+  .auth-alert-info {
+    @apply auth-alert bg-brand-50 border-brand-200 text-brand-800;
+  }
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html { scroll-behavior: auto; }
+}
+
+/* ── Scrollbar (subtle) ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(2, 89, 161, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(2, 89, 161, 0.4); }
