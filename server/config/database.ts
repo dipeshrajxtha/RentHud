@@ -113,5 +113,9 @@ export async function pingDatabase(targetDb: Kysely<any> = db): Promise<{
  */
 export async function closeDatabase(): Promise<void> {
   await db.destroy();
-  await pool.end();
+  if (!pool.ending) {
+    try {
+      await pool.end();
+    } catch {}
+  }
 }

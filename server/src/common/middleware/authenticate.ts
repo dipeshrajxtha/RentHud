@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
+const { JsonWebTokenError, TokenExpiredError } = jwt;
 import { verifyAccessToken } from '../utils/jwt.js';
 import { UnauthorizedError } from '../errors/index.js';
 import { USER_ROLES, type UserRole } from '../../../../shared/enums/roles.js';

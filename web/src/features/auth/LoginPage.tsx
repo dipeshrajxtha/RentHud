@@ -236,11 +236,11 @@ export function LoginPage() {
               <GoogleLoadingState />
             ) : (
               <div
-                className="relative"
+                className="relative flex justify-center w-full"
                 aria-label="Sign in with Google"
               >
                 {/* @react-oauth/google GoogleLogin renders its own button */}
-                {/* We wrap it and override styling via the theme prop */}
+                {/* Width must be in pixels (200-400), percent values are rejected by GSI */}
                 <GoogleLogin
                   onSuccess={handleCredential}
                   onError={() => {
@@ -249,7 +249,7 @@ export function LoginPage() {
                   useOneTap={false}
                   theme="outline"
                   size="large"
-                  width="100%"
+                  width="380"
                   text="continue_with"
                   shape="rectangular"
                   logo_alignment="left"

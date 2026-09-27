@@ -14,17 +14,41 @@ const __dirname = path.dirname(__filename);
 
 export const MIGRATIONS_DIR = path.resolve(__dirname, 'migrations');
 
+import { pathToFileURL } from 'url';
+import type { Migration, MigrationProvider } from 'kysely';
+
+export class EsmFileMigrationProvider implements MigrationProvider {
+  constructor(private migrationFolder: string) {}
+
+  async getMigrations(): Promise<Record<string, Migration>> {
+    const files = await fs.readdir(this.migrationFolder);
+    const migrations: Record<string, Migration> = {};
+
+    for (const file of files.sort()) {
+      if (
+        (file.endsWith('.ts') && !file.endsWith('.d.ts')) ||
+        file.endsWith('.js') ||
+        file.endsWith('.mjs')
+      ) {
+        const migrationKey = file.substring(0, file.lastIndexOf('.'));
+        const filePath = path.join(this.migrationFolder, file);
+        const fileUrl = pathToFileURL(filePath).href;
+        const migration = await import(fileUrl);
+        migrations[migrationKey] = migration;
+      }
+    }
+
+    return migrations;
+  }
+}
+
 /**
- * Creates a Kysely Migrator instance with FileMigrationProvider
+ * Creates a Kysely Migrator instance with EsmFileMigrationProvider
  */
 export function createMigrator(database: Kysely<any> = defaultDb): Migrator {
   return new Migrator({
     db: database,
-    provider: new FileMigrationProvider({
-      fs,
-      path,
-      migrationFolder: MIGRATIONS_DIR,
-    }),
+    provider: new EsmFileMigrationProvider(MIGRATIONS_DIR),
   });
 }
 
