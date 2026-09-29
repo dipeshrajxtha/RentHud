@@ -1,18 +1,12 @@
 /**
  * RentHub App Root
  *
- * Provides:
- *   - GoogleOAuthProvider (Google credential flow)
- *   - AuthProvider (single source of truth for auth state)
- *   - BrowserRouter with protected and public-only route guards
- *
  * Route structure:
- *   /login            → PublicOnlyRoute → LoginPage
- *   /dashboard        → ProtectedRoute  → DashboardPage (placeholder)
- *   /                 → redirects to /dashboard (when auth) or /login (when not)
- *   *                 → 404 (future)
- *
- * GOOGLE_CLIENT_ID must be set in web/.env as VITE_GOOGLE_CLIENT_ID.
+ *   /login              → PublicOnlyRoute  → LoginPage
+ *   /onboarding/role    → ProtectedRoute   → RoleSelectionPage  (new users, status=needs-role)
+ *   /dashboard          → ProtectedRoute   → DashboardPage (role-aware router)
+ *   /                   → redirects to /dashboard
+ *   *                   → redirects to /
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -22,6 +16,7 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { PublicOnlyRoute } from '@/features/auth/PublicOnlyRoute';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { RoleSelectionPage } from '@/pages/RoleSelectionPage';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined ?? '';
 
@@ -31,21 +26,21 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public-only routes (redirect authenticated users away) */}
+            {/* Public-only: redirect authenticated (+ roles) users away */}
             <Route element={<PublicOnlyRoute />}>
               <Route path="/login" element={<LoginPage />} />
             </Route>
 
-            {/* Protected routes (redirect unauthenticated users to /login) */}
+            {/* Protected: requires auth (needs-role OR authenticated) */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/onboarding/role" element={<RoleSelectionPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              {/* Future protected routes go here */}
             </Route>
 
             {/* Root redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Catch-all — redirect to root for now */}
+            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

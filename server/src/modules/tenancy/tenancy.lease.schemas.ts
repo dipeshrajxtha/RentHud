@@ -42,3 +42,15 @@ export const terminateLeaseSchema = z.object({
 
 export type TerminateLeaseInput = z.infer<typeof terminateLeaseSchema>;
 
+/** Request body schema for filing a tenancy dispute */
+export const createTenancyDisputeSchema = z.object({
+  tenancyId: z.string().uuid('Invalid tenancy ID format'),
+  category: z.string().trim().min(1).max(100),
+  title: z.string().trim().min(3).max(255),
+  description: z.string().trim().min(10).max(3000),
+  claimAmount: z.coerce.number().nonnegative().optional().default(0),
+  evidenceUrls: z.array(z.string()).optional().default([]),
+});
+
+export type CreateTenancyDisputeInput = z.infer<typeof createTenancyDisputeSchema>;
+

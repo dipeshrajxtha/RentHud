@@ -123,7 +123,7 @@ export async function resolveUserFromGoogle(
       .executeTakeFirstOrThrow();
   }
 
-  // Stage 3: New user
+  // Stage 3: New user — empty roles so the frontend shows role-selection screen
   return await db
     .insertInto('users')
     .values({
@@ -131,7 +131,7 @@ export async function resolveUserFromGoogle(
       email: claims.email,
       name: claims.name,
       avatar_url: claims.avatarUrl,
-      roles: ['tenant'],
+      roles: [] as unknown as string[],
       is_active: true,
     })
     .returningAll()

@@ -14,13 +14,16 @@ export interface AuthUser {
   name: string;
   avatarUrl: string | null;
   roles: UserRole[];
+  /** True if this is a brand-new account with no roles set yet */
+  isNewUser: boolean;
 }
 
 /** Auth state lifecycle */
 export type AuthStatus =
-  | 'initializing'   // App startup — checking for existing session
+  | 'initializing'    // App startup — checking for existing session
   | 'unauthenticated' // No valid session
-  | 'authenticated'   // Session established
+  | 'needs-role'      // Authenticated but no roles set yet (new user onboarding)
+  | 'authenticated'   // Session established + roles set
   | 'error';          // Auth error occurred
 
 /** Complete authentication state */

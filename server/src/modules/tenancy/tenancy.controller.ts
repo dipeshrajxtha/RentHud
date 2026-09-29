@@ -13,11 +13,14 @@ import {
   getLeaseById,
   signLease,
   terminateLease,
+  createTenancyDispute,
+  listTenancyDisputes,
 } from './tenancy.service.js';
 import type {
   LeaseIdParam,
   LeaseQuery,
   TerminateLeaseInput,
+  CreateTenancyDisputeInput,
 } from './tenancy.lease.schemas.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import type {
@@ -233,6 +236,43 @@ export async function terminateLeaseAgreement(
   try {
     const db = getDb(req);
     const result = await terminateLease(db, req.params.id, req.user!.id, req.body);
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/tenancy/disputes
+ * Raises a formal tenancy dispute.
+ */
+export async function createDisputeHandler(
+  req: Request<{}, {}, CreateTenancyDisputeInput>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await createTenancyDispute(db, req.user!.id, req.body);
+    sendSuccess(res, result, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/tenancy/disputes
+ * Lists tenancy disputes for the authenticated user.
+ */
+export async function listDisputesHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const tenancyId = req.query.tenancyId as string | undefined;
+    const result = await listTenancyDisputes(db, req.user!.id, tenancyId);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);

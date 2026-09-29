@@ -12,6 +12,9 @@ import type {
   RentalRequestQuery,
 } from './tenancy.schemas.js';
 import type {
+  CreateTenancyDisputeInput,
+} from './tenancy.lease.schemas.js';
+import type {
   PublicRentalRequestSummary,
   PublicTenancySummary,
 } from '../../../../shared/types/tenancy.js';
@@ -895,5 +898,82 @@ export async function terminateLease(
 
     return mapTenancyRow(updated);
   });
+}
+
+/**
+ * Creates a formal tenancy dispute under the tenancy_disputes table.
+ * Restricted to tenants or landlords who are party to the tenancy.
+ */
+export async function createTenancyDispute(
+  db: Kysely<Database>,
+  userId: string,
+  input: CreateTenancyDisputeInput
+) {
+  const tenancy = await db
+    .selectFrom('tenancies')
+    .selectAll()
+    .where('id', '=', input.tenancyId)
+    .executeTakeFirst();
+
+  if (!tenancy) {
+    throw new NotFoundError('Tenancy not found');
+  }
+
+  const isParty = tenancy.tenant_id === userId || tenancy.landlord_id === userId;
+  if (!isParty) {
+    throw new ForbiddenError('You are not a party to this tenancy agreement');
+  }
+
+  const dispute = await db
+    .insertInto('tenancy_disputes')
+    .values({
+      tenancy_id: input.tenancyId,
+      raised_by_id: userId,
+      category: input.category,
+      title: input.title,
+      description: input.description,
+      claim_amount: input.claimAmount ?? 0,
+      evidence_urls: input.evidenceUrls ?? [],
+      status: 'OPEN',
+    })
+    .returningAll()
+    .executeTakeFirstOrThrow();
+
+  return dispute;
+}
+
+/**
+ * Lists tenancy disputes relevant to the authenticated user.
+ */
+export async function listTenancyDisputes(
+  db: Kysely<Database>,
+  userId: string,
+  tenancyId?: string
+) {
+  let query = db
+    .selectFrom('tenancy_disputes as d')
+    .innerJoin('tenancies as t', 't.id', 'd.tenancy_id')
+    .innerJoin('property_units as u', 'u.id', 't.unit_id')
+    .innerJoin('properties as p', 'p.id', 'u.property_id')
+    .selectAll('d')
+    .select([
+      'p.title as property_title',
+      'u.unit_identifier',
+      't.status as tenancy_status',
+    ])
+    .where((eb) =>
+      eb.or([
+        eb('d.raised_by_id', '=', userId),
+        eb('t.tenant_id', '=', userId),
+        eb('t.landlord_id', '=', userId),
+      ])
+    );
+
+  if (tenancyId) {
+    query = query.where('d.tenancy_id', '=', tenancyId);
+  }
+
+  const results = await query.orderBy('d.created_at', 'desc').execute();
+  return results;
 }
 

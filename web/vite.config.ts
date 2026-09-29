@@ -12,6 +12,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Allow Google OAuth popup to postMessage back without COOP blocking warning
+    headers: {
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL || 'http://localhost:5000',

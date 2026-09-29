@@ -14,6 +14,7 @@ import {
   leaseIdParamSchema,
   leaseQuerySchema,
   terminateLeaseSchema,
+  createTenancyDisputeSchema,
 } from './tenancy.lease.schemas.js';
 
 export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
@@ -105,6 +106,18 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
     validate(leaseIdParamSchema, 'params'),
     validate(terminateLeaseSchema, 'body'),
     tenancyController.terminateLeaseAgreement
+  );
+
+  // ── Tenancy Disputes endpoints ──────────────────────────────────────────
+  router.post(
+    '/disputes',
+    validate(createTenancyDisputeSchema, 'body'),
+    tenancyController.createDisputeHandler
+  );
+
+  router.get(
+    '/disputes',
+    tenancyController.listDisputesHandler
   );
 
   return router;
