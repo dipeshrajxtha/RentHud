@@ -14,6 +14,7 @@ import L from 'leaflet';
 import { MapPin, Bed, Bath, ArrowUpRight, Compass, Crosshair } from 'lucide-react';
 import type { PropertyListing } from '@/types/tenant';
 import { calculateDistanceKm } from '../tenant.service';
+import locationPlaceholderPin from '@/assets/Location/placeholder(2).png';
 
 interface PropertyMapViewProps {
   properties: PropertyListing[];
@@ -73,10 +74,10 @@ function createRedPropertyPinIcon(
           ${distText ? `<span style="font-size: 9px; opacity: 0.75; font-weight: 600;">• ${distText}</span>` : ''}
         </div>
 
-        <!-- Red Pin Graphic (User's pinned red pin with white cutout) -->
+        <!-- Red Pin Graphic (web/src/assets/Location/placeholder(2).png) -->
         <div style="position: relative; width: 34px; height: 44px; display: flex; align-items: center; justify-content: center;">
           <img 
-            src="/marker-pin-red.png" 
+            src="${locationPlaceholderPin}" 
             alt="House Location" 
             style="
               width: 34px; 
@@ -229,7 +230,7 @@ export function PropertyMapView({
 
         {/* Counter Pill with Red Pin Icon */}
         <div className="bg-brand-950/85 backdrop-blur-md text-white px-3 py-2 rounded-2xl text-xs font-semibold shadow-sm flex items-center gap-1.5 border border-brand-800">
-          <img src="/marker-pin-red.png" alt="House Pin" className="w-3.5 h-4.5 object-contain inline-block" />
+          <img src={locationPlaceholderPin} alt="House Pin" className="w-3.5 h-4.5 object-contain inline-block" />
           <span>
             <strong className="text-white font-bold">{properties.length}</strong> {properties.length === 1 ? 'house' : 'houses'} found {radiusKm > 0 ? `in ${radiusKm}km radius` : 'in Valley'}
           </span>
@@ -338,7 +339,7 @@ export function PropertyMapView({
                       </span>
                       {distKm !== null && radiusKm > 0 && distKm <= radiusKm && (
                         <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600/90 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 shadow-xs">
-                          <img src="/marker-pin-red.png" alt="pin" className="w-2.5 h-3 object-contain invert brightness-200" />
+                          <img src={locationPlaceholderPin} alt="pin" className="w-2.5 h-3 object-contain invert brightness-200" />
                           <span>Within {radiusKm} km ({distKm} km away)</span>
                         </span>
                       )}
