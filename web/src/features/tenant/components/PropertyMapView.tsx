@@ -13,6 +13,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Tooltip, useMap, useMap
 import L from 'leaflet';
 import { MapPin, Bed, Bath, ArrowUpRight, Compass, Crosshair } from 'lucide-react';
 import type { PropertyListing } from '@/types/tenant';
+import { calculateDistanceKm } from '../tenant.service';
 
 interface PropertyMapViewProps {
   properties: PropertyListing[];
@@ -28,45 +29,79 @@ interface PropertyMapViewProps {
 // Center of Kathmandu Valley (Durbar Marg / Ratnapark hub)
 const KTM_VALLEY_CENTER: [number, number] = [27.7080, 85.3200];
 
-// Custom Leaflet DivIcon for Price Pins
-function createPriceIcon(price: number, isSelected: boolean) {
+// Custom Leaflet DivIcon for Red House Location Pins (User's red pin with white center cutout)
+function createRedPropertyPinIcon(
+  price: number,
+  isSelected: boolean,
+  distKm?: number | null
+) {
   const formatted = price >= 1000 ? `रू ${(price / 1000).toFixed(0)}k` : `रू ${price}`;
+  const distText = distKm !== null && distKm !== undefined ? `${distKm} km` : null;
+
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-leaflet-red-pin-marker',
     html: `
-      <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer; transform: ${
-        isSelected ? 'scale(1.15) translateY(-3px)' : 'scale(1)'
-      }; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); z-index: ${isSelected ? 999 : 50};">
+      <div style="
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transform: ${isSelected ? 'scale(1.18) translateY(-6px)' : 'scale(1)'};
+        transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: ${isSelected ? 999 : 60};
+      ">
+        <!-- Floating Price Badge -->
         <div style="
-          background: ${isSelected ? '#0170c7' : '#ffffff'};
-          color: ${isSelected ? '#ffffff' : '#0b406e'};
-          border: 1.5px solid ${isSelected ? '#ffffff' : '#bae0fd'};
-          box-shadow: 0 4px 14px rgba(7, 40, 73, ${isSelected ? '0.35' : '0.12'});
-          padding: 3px 8px;
+          background: ${isSelected ? '#e50914' : '#ffffff'};
+          color: ${isSelected ? '#ffffff' : '#111827'};
+          border: 1.5px solid #e50914;
+          box-shadow: 0 4px 14px rgba(229, 9, 20, 0.3);
+          padding: 2.5px 8px;
           border-radius: 9999px;
-          font-weight: 700;
+          font-weight: 800;
           font-size: 11px;
+          line-height: 1.2;
           letter-spacing: -0.01em;
           white-space: nowrap;
+          margin-bottom: 2px;
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: 4px;
         ">
           <span>${formatted}</span>
+          ${distText ? `<span style="font-size: 9px; opacity: 0.75; font-weight: 600;">• ${distText}</span>` : ''}
         </div>
+
+        <!-- Red Pin Graphic (User's pinned red pin with white cutout) -->
+        <div style="position: relative; width: 34px; height: 44px; display: flex; align-items: center; justify-content: center;">
+          <img 
+            src="/marker-pin-red.png" 
+            alt="House Location" 
+            style="
+              width: 34px; 
+              height: 44px; 
+              object-fit: contain; 
+              filter: drop-shadow(0 3px 5px rgba(0,0,0,0.35));
+              pointer-events: none;
+            " 
+          />
+        </div>
+
+        <!-- Ground Pin Shadow -->
         <div style="
-          width: 6px;
-          height: 6px;
-          background: ${isSelected ? '#0170c7' : '#064c84'};
-          border-radius: 9999px;
-          margin-top: -2px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          width: 12px;
+          height: 3px;
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: 50%;
+          margin-top: -3px;
+          filter: blur(1px);
         "></div>
       </div>
     `,
-    iconSize: [60, 32],
-    iconAnchor: [30, 30],
-    popupAnchor: [0, -28],
+    iconSize: [72, 70],
+    iconAnchor: [36, 68],
+    popupAnchor: [0, -66],
   });
 }
 
@@ -192,11 +227,11 @@ export function PropertyMapView({
           </div>
         </div>
 
-        {/* Counter Pill */}
+        {/* Counter Pill with Red Pin Icon */}
         <div className="bg-brand-950/85 backdrop-blur-md text-white px-3 py-2 rounded-2xl text-xs font-semibold shadow-sm flex items-center gap-1.5 border border-brand-800">
-          <MapPin className="w-3.5 h-3.5 text-brand-400" />
+          <img src="/marker-pin-red.png" alt="House Pin" className="w-3.5 h-4.5 object-contain inline-block" />
           <span>
-            {properties.length} {properties.length === 1 ? 'home' : 'homes'} in Valley
+            <strong className="text-white font-bold">{properties.length}</strong> {properties.length === 1 ? 'house' : 'houses'} found {radiusKm > 0 ? `in ${radiusKm}km radius` : 'in Valley'}
           </span>
         </div>
 
@@ -230,9 +265,9 @@ export function PropertyMapView({
               center={mapCenter}
               radius={radiusKm * 1000}
               pathOptions={{
-                color: '#0c8ee9',
-                fillColor: '#0c8ee9',
-                fillOpacity: 0.08,
+                color: '#e50914',
+                fillColor: '#e50914',
+                fillOpacity: 0.07,
                 weight: 1.5,
                 dashArray: '4, 6',
               }}
@@ -257,7 +292,7 @@ export function PropertyMapView({
           {/* Dynamic Map Bounds Controller */}
           <MapController properties={properties} center={mapCenter} />
 
-          {/* Property Markers */}
+          {/* Property Markers: Displayed with the User's Red Location Pin */}
           {properties.map((property) => {
             if (!property.location?.latitude || !property.location?.longitude) {
               return null;
@@ -269,11 +304,21 @@ export function PropertyMapView({
               property.location.longitude,
             ];
 
+            const distKm =
+              centerCoords?.latitude && centerCoords?.longitude
+                ? calculateDistanceKm(
+                    centerCoords.latitude,
+                    centerCoords.longitude,
+                    property.location.latitude,
+                    property.location.longitude
+                  )
+                : null;
+
             return (
               <Marker
                 key={property.id}
                 position={position}
-                icon={createPriceIcon(property.minMonthlyRent, isSelected)}
+                icon={createRedPropertyPinIcon(property.minMonthlyRent, isSelected, distKm)}
                 eventHandlers={{
                   click: () => onSelectProperty(property),
                 }}
@@ -291,6 +336,12 @@ export function PropertyMapView({
                       <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur-xs text-[10px] font-bold text-white">
                         {property.availableUnitsCount} available
                       </span>
+                      {distKm !== null && radiusKm > 0 && distKm <= radiusKm && (
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-rose-600/90 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-1 shadow-xs">
+                          <img src="/marker-pin-red.png" alt="pin" className="w-2.5 h-3 object-contain invert brightness-200" />
+                          <span>Within {radiusKm} km ({distKm} km away)</span>
+                        </span>
+                      )}
                     </div>
 
                     {/* Title & Location */}
