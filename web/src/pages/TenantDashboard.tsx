@@ -394,7 +394,12 @@ export function TenantDashboard() {
             {/* Results Count & Meta */}
             <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
               <span>
-                Showing <strong className="text-slate-900 font-bold">{properties.length}</strong> rental properties in Kathmandu Valley
+                Showing <strong className="text-slate-900 font-bold">{properties.length}</strong> rental properties{' '}
+                {filters.searchQuery?.trim()
+                  ? `matching "${filters.searchQuery}"`
+                  : filters.city && filters.city !== 'All'
+                  ? `in ${filters.city}`
+                  : 'in Kathmandu Valley'}
                 {filters.radiusKm && (
                   <span className="text-brand-600 font-bold ml-1">
                     (within {filters.radiusKm} km radius)
@@ -420,10 +425,16 @@ export function TenantDashboard() {
                   setFilters((prev) => ({
                     ...prev,
                     radiusKm: km,
-                    centerCoords: { latitude: 27.7080, longitude: 85.3200 },
+                    centerCoords: prev.centerCoords ?? { latitude: 27.7080, longitude: 85.3200 },
                   }))
                 }
                 centerCoords={filters.centerCoords}
+                onCenterChange={(coords) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    centerCoords: coords,
+                  }))
+                }
               />
             ) : viewMode === 'split' ? (
               /* Split View: 3D List on left, Sticky Map on right */
@@ -457,10 +468,16 @@ export function TenantDashboard() {
                       setFilters((prev) => ({
                         ...prev,
                         radiusKm: km,
-                        centerCoords: { latitude: 27.7080, longitude: 85.3200 },
+                        centerCoords: prev.centerCoords ?? { latitude: 27.7080, longitude: 85.3200 },
                       }))
                     }
                     centerCoords={filters.centerCoords}
+                    onCenterChange={(coords) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        centerCoords: coords,
+                      }))
+                    }
                   />
                 </div>
               </div>

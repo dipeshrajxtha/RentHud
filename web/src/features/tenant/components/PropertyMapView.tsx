@@ -8,10 +8,10 @@
  * - Auto-fit bounds and recenter controls
  */
 
-import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { useEffect, useMemo, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, Tooltip, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { MapPin, Bed, Bath, ArrowUpRight, Compass } from 'lucide-react';
+import { MapPin, Bed, Bath, ArrowUpRight, Compass, Crosshair } from 'lucide-react';
 import type { PropertyListing } from '@/types/tenant';
 
 interface PropertyMapViewProps {
@@ -22,6 +22,7 @@ interface PropertyMapViewProps {
   radiusKm?: number;
   onRadiusChange?: (km: number) => void;
   centerCoords?: { latitude: number; longitude: number };
+  onCenterChange?: (coords: { latitude: number; longitude: number }) => void;
 }
 
 // Center of Kathmandu Valley (Durbar Marg / Ratnapark hub)
@@ -69,6 +70,21 @@ function createPriceIcon(price: number, isSelected: boolean) {
   });
 }
 
+// Custom Center Target Icon for search center
+function createCenterTargetIcon() {
+  return L.divIcon({
+    className: 'custom-leaflet-center-marker',
+    html: `
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
+        <div style="position: absolute; width: 32px; height: 32px; border-radius: 9999px; background: rgba(1, 112, 199, 0.25); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
+        <div style="width: 14px; height: 14px; border-radius: 9999px; background: #0170c7; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(1, 112, 199, 0.6); z-index: 10;"></div>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
+}
+
 // Map Controller for Dynamic Pan/Zoom and Bounds
 function MapController({
   properties,
@@ -78,7 +94,20 @@ function MapController({
   center: [number, number];
 }) {
   const map = useMap();
+  const prevCenterRef = useRef<[number, number]>(center);
 
+  // When center coordinates change, fly map to new center immediately
+  useEffect(() => {
+    if (
+      prevCenterRef.current[0] !== center[0] ||
+      prevCenterRef.current[1] !== center[1]
+    ) {
+      prevCenterRef.current = center;
+      map.flyTo(center, Math.max(map.getZoom(), 13), { duration: 0.8 });
+    }
+  }, [center, map]);
+
+  // When properties list changes
   useEffect(() => {
     if (properties.length > 0) {
       const validCoords = properties
@@ -86,7 +115,9 @@ function MapController({
         .map((p) => [p.location.latitude, p.location.longitude] as [number, number]);
 
       if (validCoords.length > 0) {
-        const bounds = L.latLngBounds(validCoords);
+        // Include center so both center radius and properties are framed nicely
+        const allPoints: [number, number][] = [...validCoords, center];
+        const bounds = L.latLngBounds(allPoints);
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
       }
     } else {
@@ -94,6 +125,22 @@ function MapController({
     }
   }, [properties, map, center]);
 
+  return null;
+}
+
+// Map Click Listener to re-center search radius
+function MapClickHandler({
+  onCenterChange,
+}: {
+  onCenterChange?: (coords: { latitude: number; longitude: number }) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      if (onCenterChange) {
+        onCenterChange({ latitude: e.latlng.lat, longitude: e.latlng.lng });
+      }
+    },
+  });
   return null;
 }
 
@@ -105,6 +152,7 @@ export function PropertyMapView({
   radiusKm = 10,
   onRadiusChange,
   centerCoords,
+  onCenterChange,
 }: PropertyMapViewProps) {
   const mapCenter = useMemo<[number, number]>(() => {
     if (centerCoords?.latitude && centerCoords?.longitude) {
@@ -151,6 +199,12 @@ export function PropertyMapView({
             {properties.length} {properties.length === 1 ? 'home' : 'homes'} in Valley
           </span>
         </div>
+
+        {/* Click-to-Move Map Center Hint Pill */}
+        <div className="hidden md:flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-200/80 text-xs font-semibold text-slate-600 shadow-sm">
+          <Crosshair className="w-3.5 h-3.5 text-brand-600" />
+          <span>Click map to center</span>
+        </div>
       </div>
 
       {/* ── Leaflet Map Container ────────────────────────────────────────── */}
@@ -167,6 +221,9 @@ export function PropertyMapView({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          {/* Map click listener to re-center radius */}
+          <MapClickHandler onCenterChange={onCenterChange} />
+
           {/* Interactive Radius Circle Overlay */}
           {radiusKm > 0 && (
             <Circle
@@ -180,6 +237,21 @@ export function PropertyMapView({
                 dashArray: '4, 6',
               }}
             />
+          )}
+
+          {/* Active Search Center Target Marker */}
+          {radiusKm > 0 && (
+            <Marker
+              position={mapCenter}
+              icon={createCenterTargetIcon()}
+              interactive={true}
+            >
+              <Tooltip direction="top" offset={[0, -18]} permanent={false}>
+                <span className="text-xs font-semibold text-slate-900">
+                  Search Center ({radiusKm} km radius) &bull; Click anywhere on map to move
+                </span>
+              </Tooltip>
+            </Marker>
           )}
 
           {/* Dynamic Map Bounds Controller */}

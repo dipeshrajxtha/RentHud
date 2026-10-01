@@ -17,6 +17,7 @@ import {
   INITIAL_MAINTENANCE,
   INITIAL_DISPUTES,
 } from './tenantMockData';
+import { matchesLocationSynonym } from './utils/locationResolver';
 
 const STORAGE_KEYS = {
   PREFERENCES: 'rh_tenant_preferences',
@@ -136,11 +137,19 @@ export const tenantService = {
             p.title.toLowerCase().includes(q) ||
             p.address.toLowerCase().includes(q) ||
             p.city.toLowerCase().includes(q) ||
-            p.description.toLowerCase().includes(q)
+            p.description.toLowerCase().includes(q) ||
+            matchesLocationSynonym(q, `${p.title} ${p.address} ${p.city} ${p.description}`)
         );
       }
       if (filters.city && filters.city !== 'All') {
-        list = list.filter(p => p.city.toLowerCase() === filters.city!.toLowerCase());
+        const c = filters.city.toLowerCase();
+        list = list.filter(p => {
+          const pc = p.city.toLowerCase();
+          if (c === 'lalitpur' || c === 'patan') {
+            return pc === 'lalitpur' || pc === 'patan' || p.address.toLowerCase().includes('patan');
+          }
+          return pc === c;
+        });
       }
       if (filters.minRent) {
         list = list.filter(p => p.maxMonthlyRent >= filters.minRent!);

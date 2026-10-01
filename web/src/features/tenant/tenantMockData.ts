@@ -4,8 +4,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
   {
     id: 'prop-ktm-001',
     title: 'Sanepa Heights Executive Residence',
-    description: 'Boutique architectural apartment complex located in diplomatic Sanepa. Features private balconies, uninterrupted 24/7 solar-backed electricity, treated deep-boring water, and seismic structural certification.',
-    address: 'Ward 2, Sanepa Road (near British School)',
+    description: 'Boutique architectural apartment complex located in diplomatic Sanepa, Patan. Features private balconies, uninterrupted 24/7 solar-backed electricity, treated deep-boring water, and seismic structural certification.',
+    address: 'Ward 2, Sanepa Road, Patan, Lalitpur (near British School)',
     city: 'Lalitpur',
     postalCode: '44700',
     location: { latitude: 27.6833, longitude: 85.3092 },
@@ -83,8 +83,8 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
   {
     id: 'prop-ktm-002',
     title: 'Jhamsikhel Garden Flat',
-    description: 'Quiet residential apartment minutes away from Restaurant Street. Ground floor with direct access to a private landscaped courtyard, peaceful surroundings, and secure parking.',
-    address: 'Jhamsikhel Marg 4, Lalitpur',
+    description: 'Quiet residential apartment minutes away from Restaurant Street in Patan / Lalitpur. Ground floor with direct access to a private landscaped courtyard, peaceful surroundings, and secure parking.',
+    address: 'Jhamsikhel Marg 4, Patan, Lalitpur',
     city: 'Lalitpur',
     postalCode: '44700',
     location: { latitude: 27.6789, longitude: 85.3117 },
