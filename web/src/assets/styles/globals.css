@@ -9,6 +9,7 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+@import "leaflet/dist/leaflet.css";
 
 /* ── Design Tokens ──────────────────────────────────────────────────────── */
 :root {
@@ -265,3 +266,50 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(2, 89, 161, 0.2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(2, 89, 161, 0.4); }
+
+/* ── 3D & Advanced Motion Aesthetics ────────────────────────────────────── */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.card-3d-tilt {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+}
+
+.glass-panel-3d {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px -5px rgba(7, 40, 73, 0.08), 0 0 0 1px rgba(12, 142, 233, 0.05);
+}
+
+/* Leaflet Map overrides */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  z-index: 10;
+}
+.custom-leaflet-marker {
+  background: transparent;
+  border: none;
+}
+.leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+.leaflet-popup-content {
+  margin: 0;
+  line-height: inherit;
+}
+

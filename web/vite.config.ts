@@ -14,8 +14,7 @@ export default defineConfig({
     port: 5173,
     // Allow Google OAuth popup to postMessage back without COOP blocking warning
     headers: {
-      'Cross-Origin-Opener-Policy': 'unsafe-none',
-      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     },
     proxy: {
       '/api': {

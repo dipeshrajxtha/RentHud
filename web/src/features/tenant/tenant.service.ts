@@ -44,6 +44,18 @@ function setStoredJson<T>(key: string, val: T): void {
   } catch {}
 }
 
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
+}
+
 export const tenantService = {
   // ── Preferences ────────────────────────────────────────────────────────
   getPreferences(): TenantPreferences | null {
@@ -152,6 +164,14 @@ export const tenantService = {
       if (filters.verifiedOnly) {
         list = list.filter(p => p.landlord.isVerified || p.verificationBadges.length > 0);
       }
+      if (filters.radiusKm && filters.centerCoords) {
+        const { latitude: cLat, longitude: cLng } = filters.centerCoords;
+        list = list.filter(p => {
+          if (!p.location?.latitude || !p.location?.longitude) return true;
+          const dist = calculateDistanceKm(cLat, cLng, p.location.latitude, p.location.longitude);
+          return dist <= (filters.radiusKm ?? 25);
+        });
+      }
       if (filters.sortBy === 'rent_asc') {
         list.sort((a, b) => a.minMonthlyRent - b.minMonthlyRent);
       } else if (filters.sortBy === 'rent_desc') {
@@ -199,7 +219,7 @@ export const tenantService = {
 
   // ── Rental Applications ────────────────────────────────────────────────
   async getApplications(): Promise<RentalApplication[]> {
-    return getStoredJson<RentalApplication[]>(STORAGE_KEYS.APPLICATIONS, []);
+    return getStoredJson<RentalApplication[]>(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
   },
 
   async submitApplication(data: {
@@ -284,7 +304,7 @@ export const tenantService = {
 
   // ── Leases & Agreements ────────────────────────────────────────────────
   async getLeases(): Promise<LeaseAgreement[]> {
-    return getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, []);
+    return getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, [INITIAL_ACTIVE_LEASE]);
   },
 
   async signLease(leaseId: string): Promise<LeaseAgreement> {
@@ -342,7 +362,7 @@ export const tenantService = {
 
   // ── Payments & Invoicing ───────────────────────────────────────────────
   async getPayments(): Promise<PaymentRecord[]> {
-    return getStoredJson<PaymentRecord[]>(STORAGE_KEYS.PAYMENTS, []);
+    return getStoredJson<PaymentRecord[]>(STORAGE_KEYS.PAYMENTS, INITIAL_PAYMENTS);
   },
 
   async payRent(paymentId: string, method: PaymentRecord['paymentMethod']): Promise<PaymentRecord> {
@@ -369,7 +389,7 @@ export const tenantService = {
 
   // ── Maintenance ────────────────────────────────────────────────────────
   async getMaintenanceRequests(): Promise<MaintenanceRequest[]> {
-    return getStoredJson<MaintenanceRequest[]>(STORAGE_KEYS.MAINTENANCE, []);
+    return getStoredJson<MaintenanceRequest[]>(STORAGE_KEYS.MAINTENANCE, INITIAL_MAINTENANCE);
   },
 
   async createMaintenanceRequest(data: {
@@ -404,7 +424,7 @@ export const tenantService = {
 
   // ── Tenancy Disputes ───────────────────────────────────────────────────
   async getDisputes(): Promise<TenancyDispute[]> {
-    return getStoredJson<TenancyDispute[]>(STORAGE_KEYS.DISPUTES, []);
+    return getStoredJson<TenancyDispute[]>(STORAGE_KEYS.DISPUTES, INITIAL_DISPUTES);
   },
 
   async createDispute(data: {

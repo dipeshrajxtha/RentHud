@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Wrench, AlertTriangle, Clock, Calendar, CheckCircle2 } from 'lucide-react';
+import { X, Wrench } from 'lucide-react';
 import type { LeaseAgreement, MaintenanceRequest } from '@/types/tenant';
 import { tenantService } from '@/features/tenant/tenant.service';
 

@@ -23,7 +23,11 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   }
 
   // ── Security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    })
+  );
 
   // ── CORS — strictly limited to configured client origin
   app.use(

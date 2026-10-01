@@ -2,7 +2,7 @@
  * PropertyDetailsModal Component
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -10,13 +10,10 @@ import {
   Bed,
   Bath,
   ShieldCheck,
-  Star,
   Phone,
   CheckCircle,
-  Building,
   Heart,
   ArrowRight,
-  Layers,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -74,7 +71,7 @@ export function PropertyDetailsModal({
           {/* Scrollable Container */}
           <div className="flex-1 overflow-y-auto">
             {/* Photo Gallery Header */}
-            <div className="relative aspect-16/9 sm:aspect-21/9 w-full bg-slate-900">
+            <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full bg-slate-900">
               <img
                 src={photos[activePhotoIndex]?.url}
                 alt={property.title}

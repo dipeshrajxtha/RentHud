@@ -2,7 +2,6 @@
  * PropertyFiltersDrawer Component
  */
 
-import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, RotateCcw, Check, Droplet, Car, Wifi, Zap, Heart, Sun, ShieldCheck } from 'lucide-react';
 import type { SearchFilters } from '@/types/tenant';

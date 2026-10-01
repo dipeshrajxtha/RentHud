@@ -2,9 +2,9 @@
  * SavedPropertiesView Component
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Heart, Trash2, ArrowUpRight, Scale, Check, X, Bed, Bath, MapPin } from 'lucide-react';
+import { Heart, Scale, Check, X } from 'lucide-react';
 import type { PropertyListing } from '@/types/tenant';
 import { PropertyCard } from './PropertyCard';
 

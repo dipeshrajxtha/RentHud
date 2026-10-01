@@ -2,17 +2,13 @@
  * MaintenanceView Component
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Wrench,
   Clock,
   CheckCircle2,
-  AlertTriangle,
   Plus,
-  Calendar,
-  Layers,
-  ChevronRight,
 } from 'lucide-react';
 import type { MaintenanceRequest, LeaseAgreement } from '@/types/tenant';
 

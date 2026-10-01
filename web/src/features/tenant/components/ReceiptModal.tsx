@@ -2,9 +2,8 @@
  * ReceiptModal Component
  */
 
-import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Printer, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Printer, CheckCircle2 } from 'lucide-react';
 import type { PaymentRecord, LeaseAgreement } from '@/types/tenant';
 import { RentHubLogo } from '@/components/common/RentHubLogo';
 

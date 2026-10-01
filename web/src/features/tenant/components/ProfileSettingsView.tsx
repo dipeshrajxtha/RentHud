@@ -2,23 +2,18 @@
  * ProfileSettingsView Component
  */
 
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
 import {
-  User,
-  Phone,
   Mail,
   ShieldCheck,
   Building,
   RotateCcw,
   Check,
   Save,
-  Bell,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
-import type { TenantPreferences } from '@/types/tenant';
 
 interface ProfileSettingsViewProps {
   onRetakeOnboarding: () => void;

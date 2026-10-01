@@ -2,22 +2,23 @@
  * TenantDashboard
  *
  * Full-fidelity Tenant Journey & Resident Portal:
- *   - Property Discovery (Search, Filters, Property Cards, Unit Selection)
+ *   - Property Discovery (Search, Filters, 3D Property Cards, Interactive Leaflet Map & Radius Search)
+ *   - View modes: 3D Grid, Split Map & List, and Full-screen Interactive Map
  *   - Saved Homes & Wishlist comparison
  *   - Rental Applications & Visual Tracking Stepper
- *   - Tenancy Hub & Digital Lease Agreement Signing
- *   - Rent Payments & Invoicing (eSewa / Khalti / ConnectIPS / Card)
+ *   - Tenancy Hub & Digital Lease Agreement Signing (Muluki Civil Code 2074)
+ *   - Rent Payments & Invoicing (eSewa / Khalti / ConnectIPS / Card simulation & receipts)
  *   - Maintenance Ticketing & Updates
  *   - Formal Tenancy Dispute Resolution (Muluki Civil Code 2074 § 398)
  *   - Early Lease Termination Workflow
  *   - Profile Settings & Multi-role Management
- *   - Full Mobile / Tablet Responsive States
+ *   - Full Mobile / Tablet Responsive States & Animated Transitions
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/features/auth/AuthContext';
-import { RentHubLogo, RentHubIcon } from '@/components/common/RentHubLogo';
+import { RentHubLogo } from '@/components/common/RentHubLogo';
 import { tenantService } from '@/features/tenant/tenant.service';
 import type {
   PropertyListing,
@@ -31,7 +32,8 @@ import type {
 } from '@/types/tenant';
 
 // Child components
-import { PropertySearchBar } from '@/features/tenant/components/PropertySearchBar';
+import { PropertySearchBar, type ViewMode } from '@/features/tenant/components/PropertySearchBar';
+import { PropertyMapView } from '@/features/tenant/components/PropertyMapView';
 import { PropertyFiltersDrawer } from '@/features/tenant/components/PropertyFiltersDrawer';
 import { PropertyCard } from '@/features/tenant/components/PropertyCard';
 import { PropertyDetailsModal } from '@/features/tenant/components/PropertyDetailsModal';
@@ -61,11 +63,7 @@ import {
   Settings,
   Menu,
   X,
-  LogOut,
-  Bell,
   Sparkles,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 
 type TenantTab =
@@ -79,11 +77,12 @@ type TenantTab =
   | 'settings';
 
 export function TenantDashboard() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<TenantTab>('discover');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // Data States
   const [properties, setProperties] = useState<PropertyListing[]>([]);
@@ -106,6 +105,8 @@ export function TenantDashboard() {
     amenities: [],
     sortBy: 'recommended',
     verifiedOnly: false,
+    radiusKm: undefined,
+    centerCoords: { latitude: 27.7080, longitude: 85.3200 },
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
@@ -173,6 +174,7 @@ export function TenantDashboard() {
     if (filters.bathrooms !== 'all') count++;
     if (filters.amenities.length > 0) count += filters.amenities.length;
     if (filters.verifiedOnly) count++;
+    if (filters.radiusKm) count++;
     return count;
   }, [filters]);
 
@@ -188,6 +190,8 @@ export function TenantDashboard() {
       amenities: [],
       sortBy: 'recommended',
       verifiedOnly: false,
+      radiusKm: undefined,
+      centerCoords: { latitude: 27.7080, longitude: 85.3200 },
     });
   };
 
@@ -219,8 +223,8 @@ export function TenantDashboard() {
             </span>
           </div>
 
-          {/* Desktop Navigation Tabs */}
-          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto scrollbar-none">
+          {/* Desktop Navigation Tabs with Sliding Animated Pill */}
+          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto scrollbar-none relative">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -229,12 +233,19 @@ export function TenantDashboard() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`relative px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap z-10 ${
                     isActive
-                      ? 'bg-brand-50 text-brand-700'
+                      ? 'text-brand-700 font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                   }`}
                 >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-tenant-tab"
+                      className="absolute inset-0 bg-brand-50 rounded-xl border border-brand-200/80 -z-10 shadow-xs"
+                      transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
+                    />
+                  )}
                   <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                   {Boolean(item.badge && item.badge > 0) && (
@@ -328,30 +339,44 @@ export function TenantDashboard() {
 
       {/* ── MAIN CONTENT AREA ─────────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-4">
+            <motion.div
+              className="h-full bg-gradient-to-r from-brand-400 via-brand-600 to-brand-400 rounded-full"
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+            />
+          </div>
+        )}
+
         {/* TAB 1: DISCOVER HOMES */}
         {activeTab === 'discover' && (
           <div className="space-y-6">
-            {/* Search & Filter Bar */}
+            {/* Search, Filter Bar & View Mode Switcher */}
             <PropertySearchBar
               filters={filters}
               onChange={(updated) => setFilters((prev) => ({ ...prev, ...updated }))}
               onOpenFilters={() => setIsFiltersOpen(true)}
               activeFilterCount={activeFilterCount}
+              viewMode={viewMode}
+              onViewModeChange={(mode) => setViewMode(mode)}
             />
 
             {/* Personalized Recommendations banner if MCQ preferences completed */}
             {userPreferences && (
-              <div className="rounded-2xl bg-gradient-to-r from-brand-50 via-slate-50 to-brand-50/50 border border-brand-200/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0">
+              <div className="rounded-3xl bg-gradient-to-r from-brand-50 via-white to-brand-50/60 border border-brand-200/90 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-semibold text-slate-900 block">
-                      Feed customized for {userPreferences.householdSize} renter · {userPreferences.budgetBracket}
+                    <span className="font-bold text-slate-900 block text-xs sm:text-sm">
+                      Personalized feed for {userPreferences.householdSize} renter · {userPreferences.budgetBracket}
                     </span>
-                    <span className="text-slate-500">
-                      Prioritizing {userPreferences.priorityAmenities.length} selected amenities
+                    <span className="text-slate-500 text-[11px]">
+                      Prioritizing {userPreferences.priorityAmenities.length} selected amenities in Kathmandu Valley
                     </span>
                   </div>
                 </div>
@@ -359,7 +384,7 @@ export function TenantDashboard() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('settings')}
-                  className="text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline self-start sm:self-center"
+                  className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline self-start sm:self-center"
                 >
                   Adjust Preferences →
                 </button>
@@ -369,47 +394,114 @@ export function TenantDashboard() {
             {/* Results Count & Meta */}
             <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
               <span>
-                Showing <strong className="text-slate-800 font-semibold">{properties.length}</strong> rental properties in Kathmandu Valley
+                Showing <strong className="text-slate-900 font-bold">{properties.length}</strong> rental properties in Kathmandu Valley
+                {filters.radiusKm && (
+                  <span className="text-brand-600 font-bold ml-1">
+                    (within {filters.radiusKm} km radius)
+                  </span>
+                )}
               </span>
               <span className="text-slate-400">All prices in Nepali Rupees (NPR)</span>
             </div>
 
-            {/* Properties Grid */}
-            {properties.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-md mx-auto space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                  <Compass className="w-6 h-6" />
+            {/* Dynamic Content by View Mode (Grid / Split / Full Map) */}
+            {viewMode === 'map' ? (
+              /* Full Map View */
+              <PropertyMapView
+                properties={properties}
+                selectedPropertyId={selectedPropertyDetails?.id}
+                onSelectProperty={(p) => setSelectedPropertyDetails(p)}
+                onApplyProperty={(p) => {
+                  const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                  if (avail) setApplyModalData({ property: p, unit: avail });
+                }}
+                radiusKm={filters.radiusKm ?? 10}
+                onRadiusChange={(km) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    radiusKm: km,
+                    centerCoords: { latitude: 27.7080, longitude: 85.3200 },
+                  }))
+                }
+                centerCoords={filters.centerCoords}
+              />
+            ) : viewMode === 'split' ? (
+              /* Split View: 3D List on left, Sticky Map on right */
+              <div className="grid lg:grid-cols-12 gap-6 items-start">
+                <div className="lg:col-span-5 space-y-5 max-h-[750px] overflow-y-auto pr-1">
+                  {properties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      isSaved={savedIds.includes(property.id)}
+                      onToggleSave={handleToggleSave}
+                      onSelect={(p) => setSelectedPropertyDetails(p)}
+                      onApply={(p) => {
+                        const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                        if (avail) setApplyModalData({ property: p, unit: avail });
+                      }}
+                    />
+                  ))}
                 </div>
-                <h3 className="text-base font-display font-semibold text-slate-900">No Listings Match Filters</h3>
-                <p className="text-xs text-slate-500">
-                  Try broadening your budget range, bedroom requirements, or resetting amenity filters.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl transition-colors"
-                >
-                  Reset Filters
-                </button>
+                <div className="lg:col-span-7 sticky top-20">
+                  <PropertyMapView
+                    properties={properties}
+                    selectedPropertyId={selectedPropertyDetails?.id}
+                    onSelectProperty={(p) => setSelectedPropertyDetails(p)}
+                    onApplyProperty={(p) => {
+                      const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                      if (avail) setApplyModalData({ property: p, unit: avail });
+                    }}
+                    radiusKm={filters.radiusKm ?? 10}
+                    onRadiusChange={(km) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        radiusKm: km,
+                        centerCoords: { latitude: 27.7080, longitude: 85.3200 },
+                      }))
+                    }
+                    centerCoords={filters.centerCoords}
+                  />
+                </div>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((property) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    isSaved={savedIds.includes(property.id)}
-                    onToggleSave={handleToggleSave}
-                    onSelect={(p) => setSelectedPropertyDetails(p)}
-                    onApply={(p) => {
-                      const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                      if (avail) {
-                        setApplyModalData({ property: p, unit: avail });
-                      }
-                    }}
-                  />
-                ))}
-              </div>
+              /* Grid View: 3D Cards */
+              properties.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-md mx-auto space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                    <Compass className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-display font-semibold text-slate-900">No Listings Match Filters</h3>
+                  <p className="text-xs text-slate-500">
+                    Try broadening your budget range, bedroom requirements, or resetting amenity filters.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl transition-colors shadow-xs"
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {properties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      isSaved={savedIds.includes(property.id)}
+                      onToggleSave={handleToggleSave}
+                      onSelect={(p) => setSelectedPropertyDetails(p)}
+                      onApply={(p) => {
+                        const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                        if (avail) {
+                          setApplyModalData({ property: p, unit: avail });
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </div>
         )}
@@ -487,7 +579,6 @@ export function TenantDashboard() {
         {activeTab === 'settings' && (
           <ProfileSettingsView
             onRetakeOnboarding={() => {
-              // Navigates to onboarding MCQs
               window.location.href = '/onboarding/role';
             }}
           />

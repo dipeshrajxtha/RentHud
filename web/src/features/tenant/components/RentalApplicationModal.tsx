@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, User, MessageSquare, ShieldCheck, CheckCircle2, Bed, Bath } from 'lucide-react';
+import { X, Calendar, MessageSquare, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import type { PropertyListing, UnitDetail, RentalApplication } from '@/types/tenant';
 import { tenantService } from '@/features/tenant/tenant.service';
 

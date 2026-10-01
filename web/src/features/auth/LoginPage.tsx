@@ -232,11 +232,16 @@ export function LoginPage() {
 
           {/* Google Sign-In */}
           <div className="space-y-4">
-            {isLoading ? (
-              <GoogleLoadingState />
-            ) : (
+            <div className="relative flex justify-center w-full min-h-[44px]">
+              {isLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/95 rounded-xl">
+                  <GoogleLoadingState />
+                </div>
+              )}
               <div
-                className="relative flex justify-center w-full"
+                className={`relative flex justify-center w-full transition-opacity ${
+                  isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
                 aria-label="Sign in with Google"
               >
                 {/* @react-oauth/google GoogleLogin renders its own button */}
@@ -255,7 +260,7 @@ export function LoginPage() {
                   logo_alignment="left"
                 />
               </div>
-            )}
+            </div>
 
             {/* Divider */}
             <div className="relative flex items-center gap-3 py-1" aria-hidden="true">

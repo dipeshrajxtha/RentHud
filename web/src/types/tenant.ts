@@ -175,4 +175,6 @@ export interface SearchFilters {
   amenities: string[];
   sortBy: 'recommended' | 'rent_asc' | 'rent_desc' | 'newest';
   verifiedOnly: boolean;
+  radiusKm?: number;
+  centerCoords?: { latitude: number; longitude: number };
 }

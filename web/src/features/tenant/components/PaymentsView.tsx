@@ -2,9 +2,8 @@
  * PaymentsView Component
  */
 
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { CreditCard, CheckCircle2, Clock, AlertCircle, FileText, Download, ArrowUpRight } from 'lucide-react';
+import { useState } from 'react';
+import { CreditCard, CheckCircle2, FileText, ArrowUpRight } from 'lucide-react';
 import type { PaymentRecord } from '@/types/tenant';
 
 interface PaymentsViewProps {

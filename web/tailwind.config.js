@@ -6,6 +6,12 @@ export default {
   ],
   theme: {
     extend: {
+      aspectRatio: {
+        '16/10': '16 / 10',
+        '16/9': '16 / 9',
+        '21/9': '21 / 9',
+        '4/3': '4 / 3',
+      },
       colors: {
         brand: {
           50:  '#f0f7ff',

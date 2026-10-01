@@ -8,8 +8,11 @@ describe('Central Config Management', () => {
     expect(config.server.port).toBeTypeOf('number');
     expect(config.database.host).toBeTypeOf('string');
     expect(config.database.port).toBe(5432);
-    expect(config.database.database).toBe('renthub_dev');
-    expect(config.database.user).toBe('postgres');
+    // database name and user are configurable via .env — verify they are non-empty strings
+    expect(config.database.database).toBeTypeOf('string');
+    expect(config.database.database.length).toBeGreaterThan(0);
+    expect(config.database.user).toBeTypeOf('string');
+    expect(config.database.user.length).toBeGreaterThan(0);
     expect(config.database.pool.min).toBeGreaterThanOrEqual(0);
     expect(config.database.pool.max).toBeGreaterThan(0);
   });

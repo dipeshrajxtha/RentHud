@@ -3,7 +3,7 @@
  * Digital Tenancy Agreement viewer with Electronic Signature execution
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, FileText, CheckCircle2, ShieldCheck, Printer, PenTool } from 'lucide-react';
 import type { LeaseAgreement } from '@/types/tenant';
