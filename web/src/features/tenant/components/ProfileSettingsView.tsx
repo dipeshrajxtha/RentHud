@@ -17,9 +17,10 @@ import { tenantService } from '@/features/tenant/tenant.service';
 
 interface ProfileSettingsViewProps {
   onRetakeOnboarding: () => void;
+  onSwitchView?: (view: 'landlord' | 'tenant') => void;
 }
 
-export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewProps) {
+export function ProfileSettingsView({ onRetakeOnboarding, onSwitchView }: ProfileSettingsViewProps) {
   const { user, addRole, signOut } = useAuth();
 
   const [name, setName] = useState(user?.name ?? '');
@@ -192,9 +193,22 @@ export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewP
           </div>
 
           {user?.roles?.includes('landlord') ? (
-            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-semibold rounded-lg shrink-0">
-              Active Role
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-semibold rounded-lg shrink-0 text-xs">
+                Active Role
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSwitchView) onSwitchView('landlord');
+                  else window.location.search = '?view=landlord';
+                }}
+                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-xs transition-colors shrink-0 text-xs flex items-center gap-1.5"
+              >
+                <Building className="w-3.5 h-3.5" />
+                <span>Open Landlord Portal</span>
+              </button>
+            </div>
           ) : (
             <button
               type="button"

@@ -73,8 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
 
         if (data) {
-          const cachedUser = sessionStorage.getItem('rh_user');
-          const user: AuthUser | null = cachedUser ? JSON.parse(cachedUser) as AuthUser : null;
+          let user: AuthUser | null = data.user ?? null;
+          if (!user) {
+            const cachedUser = sessionStorage.getItem('rh_user') || localStorage.getItem('rh_user');
+            user = cachedUser ? JSON.parse(cachedUser) as AuthUser : null;
+          }
+          if (user) {
+            try {
+              sessionStorage.setItem('rh_user', JSON.stringify(user));
+              localStorage.setItem('rh_user', JSON.stringify(user));
+            } catch {}
+          }
           setAuth({
             status: resolveStatusFromUser(user),
             user,
@@ -99,7 +108,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuth(prev => ({ ...prev, error: null }));
     try {
       const data = await googleLogin(idToken);
-      sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+      try {
+        sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+        localStorage.setItem('rh_user', JSON.stringify(data.user));
+      } catch {}
       if (isMounted.current) {
         setAuth({
           status: resolveStatusFromUser(data.user),
@@ -121,7 +133,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth.accessToken) return;
     try {
       const data = await setRoles(roles, auth.accessToken);
-      sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+      try {
+        sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+        localStorage.setItem('rh_user', JSON.stringify(data.user));
+      } catch {}
       if (isMounted.current) {
         setAuth({
           status: 'authenticated',
@@ -143,7 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth.accessToken) return;
     try {
       const data = await addRoleToAccount(role, auth.accessToken);
-      sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+      try {
+        sessionStorage.setItem('rh_user', JSON.stringify(data.user));
+        localStorage.setItem('rh_user', JSON.stringify(data.user));
+      } catch {}
       if (isMounted.current) {
         setAuth(prev => ({
           ...prev,
@@ -161,7 +179,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Sign Out ── */
   const signOut = useCallback(async () => {
-    sessionStorage.removeItem('rh_user');
+    try {
+      sessionStorage.removeItem('rh_user');
+      localStorage.removeItem('rh_user');
+      sessionStorage.removeItem('rh_active_view');
+      localStorage.removeItem('rh_active_view');
+    } catch {}
     await apiLogout();
     if (isMounted.current) {
       setAuth({ status: 'unauthenticated', user: null, accessToken: null, error: null });

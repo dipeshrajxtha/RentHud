@@ -78,7 +78,16 @@ export async function refreshToken(
     const roles = user.roles as UserRole[];
     const newAccessToken = signAccessToken(user.id, roles);
 
-    sendSuccess(res, { accessToken: newAccessToken });
+    sendSuccess(res, {
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatar_url,
+        roles: user.roles,
+      },
+    });
   } catch (err) {
     next(err);
   }

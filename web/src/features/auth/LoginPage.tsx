@@ -240,9 +240,11 @@ export function LoginPage() {
               )}
               <div
                 className={`relative flex justify-center w-full transition-opacity ${
-                  isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                  isLoading ? 'opacity-0 pointer-events-none invisible' : 'opacity-100'
                 }`}
                 aria-label="Sign in with Google"
+                aria-hidden={isLoading ? true : undefined}
+                {...(isLoading ? { inert: '' } : {})}
               >
                 {/* @react-oauth/google GoogleLogin renders its own button */}
                 {/* Width must be in pixels (200-400), percent values are rejected by GSI */}

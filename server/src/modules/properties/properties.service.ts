@@ -775,6 +775,9 @@ export async function getLandlordProperties(
   const propertyIds = rows.map((r) => r.id);
 
   const unitsByProperty: Record<string, any[]> = {};
+  const photosByProperty: Record<string, any[]> = {};
+  const amenitiesByProperty: Record<string, any[]> = {};
+
   if (propertyIds.length > 0) {
     const units = await db
       .selectFrom('property_units')
@@ -800,10 +803,61 @@ export async function getLandlordProperties(
         updatedAt: u.updated_at,
       });
     }
+
+    const photos = await db
+      .selectFrom('photos')
+      .selectAll()
+      .where('property_id', 'in', propertyIds)
+      .orderBy('display_order', 'asc')
+      .execute();
+    for (const ph of photos) {
+      if (ph.property_id) {
+        if (!photosByProperty[ph.property_id]) {
+          photosByProperty[ph.property_id] = [];
+        }
+        photosByProperty[ph.property_id].push({
+          id: ph.id,
+          url: ph.url,
+          caption: ph.caption,
+          isCover: Boolean(ph.is_cover),
+          displayOrder: ph.display_order,
+        });
+      }
+    }
+
+    const amenities = await db
+      .selectFrom('property_amenities as pa')
+      .innerJoin('amenities as a', 'a.id', 'pa.amenity_id')
+      .select([
+        'pa.property_id',
+        'a.id',
+        'a.name',
+        'a.slug',
+        'a.category',
+        'a.icon',
+      ])
+      .where('pa.property_id', 'in', propertyIds)
+      .execute();
+    for (const am of amenities) {
+      if (!amenitiesByProperty[am.property_id]) {
+        amenitiesByProperty[am.property_id] = [];
+      }
+      amenitiesByProperty[am.property_id].push({
+        id: am.id,
+        name: am.name,
+        slug: am.slug,
+        category: am.category,
+        icon: am.icon,
+      });
+    }
   }
 
   return rows.map((r) => {
     const propUnits = unitsByProperty[r.id] ?? [];
+    const propPhotos = photosByProperty[r.id] ?? [];
+    const propAmenities = amenitiesByProperty[r.id] ?? [];
+    const coverPhoto = propPhotos.find((p) => p.isCover) ?? propPhotos[0] ?? null;
+
     return {
       id: r.id,
       landlordId: r.landlord_id,
@@ -821,6 +875,9 @@ export async function getLandlordProperties(
       unitsCount: propUnits.length,
       availableUnitsCount: propUnits.filter((u) => u.availabilityStatus === 'AVAILABLE').length,
       units: propUnits,
+      coverPhotoUrl: coverPhoto?.url ?? null,
+      photos: propPhotos,
+      amenities: propAmenities,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     };

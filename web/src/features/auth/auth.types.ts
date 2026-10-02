@@ -59,4 +59,5 @@ export interface GoogleLoginResponseData {
 /** POST /api/auth/refresh — response data */
 export interface RefreshResponseData {
   accessToken: string;
+  user?: AuthUser;
 }
