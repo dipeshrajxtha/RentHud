@@ -26,5 +26,10 @@ export function ProtectedRoute() {
     return <Navigate to="/onboarding/role" replace />;
   }
 
+  // Onboarding complete — push authenticated users out of the onboarding route
+  if (status === 'authenticated' && location.pathname === '/onboarding/role') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <Outlet />;
 }
