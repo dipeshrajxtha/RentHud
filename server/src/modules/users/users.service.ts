@@ -66,7 +66,9 @@ export async function setInitialRoles(
   if (!user) throw new NotFoundError('User not found or deactivated');
 
   const current = (user.roles as string[]) ?? [];
-  if (current.length > 0) throw new ForbiddenError('Roles already set — use the add-role endpoint to add a second role');
+  // Idempotent: if roles are already set, return the current user as-is.
+  // This handles re-submissions from stale client state without throwing a visible error.
+  if (current.length > 0) return user;
 
   return await db
     .updateTable('users')

@@ -73,11 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
 
         if (data) {
+          // Always trust the live user from the server (has current roles from DB).
+          // Only fall back to cache if the server omitted the user object (shouldn't happen).
           let user: AuthUser | null = data.user ?? null;
           if (!user) {
             const cachedUser = sessionStorage.getItem('rh_user') || localStorage.getItem('rh_user');
             user = cachedUser ? JSON.parse(cachedUser) as AuthUser : null;
           }
+          // Overwrite any stale cache with the latest server data
           if (user) {
             try {
               sessionStorage.setItem('rh_user', JSON.stringify(user));
@@ -91,6 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error: null,
           });
         } else {
+          // No valid session — clear stale cache to avoid ghost needs-role state
+          try {
+            sessionStorage.removeItem('rh_user');
+            localStorage.removeItem('rh_user');
+          } catch {}
           setAuth({ status: 'unauthenticated', user: null, accessToken: null, error: null });
         }
       } catch {
