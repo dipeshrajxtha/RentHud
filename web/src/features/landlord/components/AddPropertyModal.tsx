@@ -8,7 +8,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { CreatePropertyDto, CreateUnitDto } from '@/types/landlord';
 
@@ -26,6 +26,15 @@ const customPin = L.divIcon({
   iconSize: [28, 28],
   iconAnchor: [14, 14],
 });
+
+function FlyToLocation({ position }: { position: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(position, map.getZoom(), { animate: true, duration: 1 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position[0], position[1]]);
+  return null;
+}
 
 function MapPinPicker({
   position,
@@ -58,6 +67,7 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
 
   // Step 2: Location (Default centered on Kathmandu Durbar Marg: 27.7080, 85.3200)
   const [coords, setCoords] = useState<[number, number]>([27.7080, 85.3200]);
+  const [geoState, setGeoState] = useState<'idle' | 'locating' | 'done' | 'denied'>('idle');
 
   // Step 3: Units
   const [units, setUnits] = useState<CreateUnitDto[]>([
@@ -109,6 +119,28 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
       isMountedRef.current = false;
     };
   }, []);
+
+  // Auto-locate landlord when they enter Step 2
+  useEffect(() => {
+    if (step !== 2 || geoState !== 'idle') return;
+    if (!navigator.geolocation) {
+      setGeoState('denied');
+      return;
+    }
+    setGeoState('locating');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (!isMountedRef.current) return;
+        setCoords([pos.coords.latitude, pos.coords.longitude]);
+        setGeoState('done');
+      },
+      () => {
+        if (!isMountedRef.current) return;
+        setGeoState('denied'); // Falls back to Kathmandu default
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }, [step, geoState]);
 
   const handleFinalSubmit = async () => {
     setErrorMsg(null);
@@ -275,10 +307,24 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
           {/* STEP 2: LOCATION MAP */}
           {step === 2 && (
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
-                <span className="font-bold block">Pin Your Exact Building Location</span>
-                Click anywhere on the map to place the green pin. This stores accurate PostGIS coordinates (<code className="text-[10px] font-mono">GEOGRAPHY(Point, 4326)</code>) for geospatial tenant discovery.
-              </div>
+              {geoState === 'locating' && (
+                <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 flex items-center gap-2">
+                  <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  <span>Locating your current position…</span>
+                </div>
+              )}
+              {geoState === 'denied' && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px]">
+                  Location access denied — map defaulted to Kathmandu. Click the map to pin your building.
+                </div>
+              )}
+              {(geoState === 'idle' || geoState === 'done') && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+                  <span className="font-bold block">Pin Your Exact Building Location</span>
+                  {geoState === 'done' ? 'Map centered on your current location. ' : ''}
+                  Click anywhere on the map to place the green pin. This stores accurate PostGIS coordinates (<code className="text-[10px] font-mono">GEOGRAPHY(Point, 4326)</code>) for geospatial tenant discovery.
+                </div>
+              )}
 
               <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-200 relative z-0">
                 <MapContainer
@@ -291,6 +337,7 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
+                  <FlyToLocation position={coords} />
                   <MapPinPicker position={coords} onChange={setCoords} />
                 </MapContainer>
               </div>

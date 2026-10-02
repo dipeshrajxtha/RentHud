@@ -19,8 +19,14 @@ export function PublicOnlyRoute() {
     return <AppLoadingScreen />;
   }
 
+  // Authenticated user with roles → go to dashboard (or original destination)
   if (status === 'authenticated') {
     return <Navigate to={from} replace />;
+  }
+
+  // New user: logged in via Google but no roles assigned yet → onboarding
+  if (status === 'needs-role') {
+    return <Navigate to="/onboarding/role" replace />;
   }
 
   return <Outlet />;

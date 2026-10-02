@@ -25,7 +25,10 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   // ── Security headers
   app.use(
     helmet({
-      crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+      // Google Sign-In (GSI / One Tap) uses cross-origin postMessage from accounts.google.com.
+      // same-origin-allow-popups blocks that channel and generates console warnings.
+      // unsafe-none is safe here since we have no SharedArrayBuffer usage.
+      crossOriginOpenerPolicy: { policy: 'unsafe-none' },
     })
   );
 
