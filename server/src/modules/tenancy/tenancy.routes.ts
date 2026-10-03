@@ -57,6 +57,7 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
   // Tenant cancels pending application
   router.post(
     '/requests/:id/cancel',
+    requireTenant,
     validate(rentalRequestIdParamSchema, 'params'),
     tenancyController.cancelApplication
   );

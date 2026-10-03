@@ -2,10 +2,10 @@ import type { Response } from 'express';
 import config from '../../../config/env.js';
 
 const COOKIE_NAME = 'renthub_rt';
-const MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days
-
 /**
- * Sets the HttpOnly refresh token cookie on the response.
+ * Sets the HttpOnly refresh token cookie on the response as a session cookie.
+ * No maxAge or expires is set, ensuring closing the browser destroys the cookie
+ * and fully ends the RentHub session.
  * Secure flag is enabled only in production.
  */
 export function setRefreshCookie(res: Response, refreshToken: string): void {
@@ -14,7 +14,6 @@ export function setRefreshCookie(res: Response, refreshToken: string): void {
     secure: config.server.isProduction,
     sameSite: 'lax',
     path: '/api/auth',
-    maxAge: MAX_AGE_SECONDS * 1000, // maxAge takes ms
   });
 }
 

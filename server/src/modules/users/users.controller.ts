@@ -91,8 +91,8 @@ export async function setMyRoles(
 
 /**
  * POST /api/users/me/roles/:role
- * Adds a second role to an existing user (e.g. tenant adding landlord).
- * Returns a fresh access token with the updated roles.
+ * Blocked: always returns 403. Single-role enforcement — users cannot add a second role.
+ * Kept as a route for backward compatibility; the service layer throws ForbiddenError.
  */
 export async function addMyRole(
   req: Request<AddRoleParam>,

@@ -227,7 +227,60 @@ export const tenantService = {
   },
 
   // ── Rental Applications ────────────────────────────────────────────────
-  async getApplications(): Promise<RentalApplication[]> {
+  async getApplications(accessToken?: string | null): Promise<RentalApplication[]> {
+    // Try real API first
+    if (accessToken) {
+      try {
+        const res = await fetch('/api/tenancy/requests', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data?.requests)) {
+            return (json.data.requests as any[]).map((req) => ({
+              id: req.id,
+              unitId: req.unitId,
+              propertyId: req.property?.id || req.propertyId || '',
+              tenantId: req.tenantId,
+              landlordId: req.landlordId,
+              status: req.status,
+              message: req.message || '',
+              proposedMoveIn: req.proposedMoveIn,
+              createdAt: req.createdAt,
+              updatedAt: req.updatedAt,
+              unit: {
+                id: req.unit?.id || req.unitId,
+                unitIdentifier: req.unit?.unitIdentifier || 'Unit',
+                floorNumber: req.unit?.floorNumber ?? 1,
+                bedrooms: req.unit?.bedrooms ?? 1,
+                bathrooms: req.unit?.bathrooms ?? 1,
+                monthlyRent: req.unit?.monthlyRent ?? 0,
+                securityDeposit: req.unit?.securityDeposit ?? 0,
+              },
+              property: {
+                id: req.property?.id || '',
+                title: req.property?.title || 'Rental Property',
+                address: req.property?.address || '',
+                city: req.property?.city || 'Kathmandu',
+                coverPhotoUrl: req.property?.coverPhotoUrl,
+              },
+              landlord: {
+                id: req.landlord?.id || req.landlordId || '',
+                name: req.landlord?.name || 'Property Owner',
+                avatarUrl: req.landlord?.avatarUrl || null,
+                phone: req.landlord?.phone,
+              },
+            }));
+          }
+        }
+      } catch {}
+    }
+    // Fallback to local mock data for demo
     return getStoredJson<RentalApplication[]>(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
   },
 
@@ -243,7 +296,75 @@ export const tenantService = {
     monthlyRent: number;
     securityDeposit: number;
     landlordName: string;
-  }): Promise<RentalApplication> {
+  }, accessToken?: string | null): Promise<RentalApplication> {
+    // Try real API with proper authorization
+    if (accessToken) {
+      try {
+        const res = await fetch('/api/tenancy/requests', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            unitId: data.unitId,
+            proposedMoveIn: data.proposedMoveIn,
+            message: data.message,
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const raw = json.data;
+            return {
+              id: raw.id,
+              unitId: raw.unitId || data.unitId,
+              propertyId: raw.property?.id || data.propertyId,
+              tenantId: raw.tenantId || '',
+              landlordId: raw.landlordId || '',
+              status: raw.status || 'pending',
+              message: raw.message || data.message,
+              proposedMoveIn: raw.proposedMoveIn || data.proposedMoveIn,
+              createdAt: raw.createdAt || new Date().toISOString(),
+              updatedAt: raw.updatedAt || new Date().toISOString(),
+              unit: {
+                id: raw.unit?.id || data.unitId,
+                unitIdentifier: raw.unit?.unitIdentifier || data.unitIdentifier,
+                floorNumber: raw.unit?.floorNumber ?? 1,
+                bedrooms: raw.unit?.bedrooms ?? 1,
+                bathrooms: raw.unit?.bathrooms ?? 1,
+                monthlyRent: raw.unit?.monthlyRent ?? data.monthlyRent,
+                securityDeposit: raw.unit?.securityDeposit ?? data.securityDeposit,
+              },
+              property: {
+                id: raw.property?.id || data.propertyId,
+                title: raw.property?.title || data.propertyTitle,
+                address: raw.property?.address || data.propertyAddress,
+                city: raw.property?.city || data.propertyCity,
+                coverPhotoUrl: raw.property?.coverPhotoUrl,
+              },
+              landlord: {
+                id: raw.landlord?.id || raw.landlordId || '',
+                name: raw.landlord?.name || data.landlordName || 'Property Owner',
+                avatarUrl: raw.landlord?.avatarUrl || null,
+                phone: raw.landlord?.phone,
+              },
+            };
+          }
+        }
+        // If API returned an error, parse and throw it
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.error?.message || `Application failed (${res.status})`);
+      } catch (err) {
+        // Re-throw API errors so the UI can display them
+        if (err instanceof Error && err.message !== 'Failed to fetch') {
+          throw err;
+        }
+      }
+    }
+
+    // Fallback to local mock if no token or network fails
     const newApp: RentalApplication = {
       id: `app-rh-${Date.now()}`,
       unitId: data.unitId,
@@ -277,29 +398,21 @@ export const tenantService = {
       },
     };
 
-    try {
-      await fetch('/api/tenancy/requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          unitId: data.unitId,
-          proposedMoveIn: data.proposedMoveIn,
-          message: data.message,
-        }),
-      });
-    } catch {}
-
     const existing = getStoredJson<RentalApplication[]>(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS);
     const updated = [newApp, ...existing.filter(a => a.unitId !== data.unitId)];
     setStoredJson(STORAGE_KEYS.APPLICATIONS, updated);
     return newApp;
   },
 
-  async cancelApplication(applicationId: string): Promise<void> {
+  async cancelApplication(applicationId: string, accessToken?: string | null): Promise<void> {
     try {
+      const headers: Record<string, string> = {};
+      if (accessToken) {
+        headers.Authorization = `Bearer ${accessToken}`;
+      }
       await fetch(`/api/tenancy/requests/${applicationId}/cancel`, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
     } catch {}

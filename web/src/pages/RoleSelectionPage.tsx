@@ -130,7 +130,7 @@ const AMENITY_OPTIONS = [
 
 export function RoleSelectionPage() {
   const { user, completeOnboarding, error, clearError } = useAuth();
-  const [selectedRoles, setSelectedRoles] = useState<RoleOption[]>([]);
+  const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
   const [currentStep, setCurrentStep] = useState<'role' | 'mcq' | 'summary'>('role');
   const [mcqIndex, setMcqIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,16 +145,14 @@ export function RoleSelectionPage() {
     preferredCity: 'Kathmandu',
   });
 
-  const toggleRole = useCallback((role: RoleOption) => {
+  const selectRole = useCallback((role: RoleOption) => {
     clearError();
-    setSelectedRoles(prev =>
-      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-    );
+    setSelectedRole(role);
   }, [clearError]);
 
   const handleRoleContinue = () => {
-    if (selectedRoles.length === 0) return;
-    if (selectedRoles.includes('tenant')) {
+    if (!selectedRole) return;
+    if (selectedRole === 'tenant') {
       setCurrentStep('mcq');
     } else {
       // Landlord only
@@ -163,16 +161,16 @@ export function RoleSelectionPage() {
   };
 
   const handleFinishOnboarding = async () => {
-    if (selectedRoles.length === 0 || isSubmitting) return;
+    if (!selectedRole || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      if (selectedRoles.includes('tenant')) {
+      if (selectedRole === 'tenant') {
         tenantService.savePreferences({
           ...preferences,
           completedAt: new Date().toISOString(),
         });
       }
-      await completeOnboarding(selectedRoles);
+      await completeOnboarding(selectedRole);
       // Navigation is triggered automatically when AuthContext status switches to 'authenticated'
     } catch {
       // Error managed in AuthContext
@@ -251,10 +249,10 @@ export function RoleSelectionPage() {
                   <ShieldCheck className="w-3.5 h-3.5 text-brand-400" /> Google Verified Account
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-display font-semibold text-white tracking-tight">
-                  Welcome, {user?.name?.split(' ')[0] ?? 'Friend'}!
+                  Choose your RentHub role
                 </h1>
                 <p className="mt-2 text-slate-400 text-sm sm:text-base">
-                  Choose how you want to begin on RentHub. You can add more roles anytime from your profile settings.
+                  RentHub enforces a single application role per account. Choose whether you will use RentHub as a Tenant or Landlord.
                 </p>
               </div>
 
@@ -262,12 +260,12 @@ export function RoleSelectionPage() {
                 {(['tenant', 'landlord'] as const).map(role => {
                   const meta = ROLE_META[role];
                   const Icon = meta.icon;
-                  const isSelected = selectedRoles.includes(role);
+                  const isSelected = selectedRole === role;
 
                   return (
                     <motion.div
                       key={role}
-                      onClick={() => toggleRole(role)}
+                      onClick={() => selectRole(role)}
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.98 }}
                       className={`cursor-pointer rounded-2xl p-6 border transition-all duration-200 relative flex flex-col justify-between ${
@@ -282,11 +280,11 @@ export function RoleSelectionPage() {
                             <Icon className="w-6 h-6 text-white" />
                           </div>
                           <div
-                            className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors ${
-                              isSelected ? 'bg-brand-500 border-brand-500 text-white' : 'border-slate-700 bg-slate-800'
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              isSelected ? 'border-brand-500 bg-brand-500' : 'border-slate-700 bg-slate-800/80'
                             }`}
                           >
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
                           </div>
                         </div>
 
@@ -318,9 +316,9 @@ export function RoleSelectionPage() {
                 <button
                   type="button"
                   onClick={handleRoleContinue}
-                  disabled={selectedRoles.length === 0 || isSubmitting}
+                  disabled={!selectedRole || isSubmitting}
                   className={`w-full py-3.5 px-6 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2 ${
-                    selectedRoles.length === 0
+                    !selectedRole
                       ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                       : 'bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30'
                   }`}
@@ -329,7 +327,7 @@ export function RoleSelectionPage() {
                     'Finalizing account…'
                   ) : (
                     <>
-                      <span>Continue {selectedRoles.includes('tenant') ? 'to Personalization' : 'as Landlord'}</span>
+                      <span>Continue {selectedRole === 'tenant' ? 'to Personalization' : 'as Landlord'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

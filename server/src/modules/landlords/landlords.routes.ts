@@ -16,10 +16,8 @@ import {
  *
  * Rules enforced:
  * - Authentication is required for all endpoints.
- * - The upgrade / initialization endpoint (POST /profile and POST /) DOES NOT require
- *   the landlord role beforehand, allowing a tenant to acquire landlord capability.
- * - Profile retrieval (GET /me, GET /profile), updates (PATCH /me, PATCH /profile),
- *   and lookup by ID (GET /:id) require the authenticated user to possess the landlord role.
+ * - All endpoints require the authenticated user to possess the landlord role
+ *   (single-role enforcement — no cross-role acquisition).
  */
 export function createLandlordsRouter(dbInstance?: Kysely<Database>): Router {
   const router = Router();
@@ -36,14 +34,16 @@ export function createLandlordsRouter(dbInstance?: Kysely<Database>): Router {
   // All landlord routes require a valid access token
   router.use(authenticate);
 
-  // 1. Upgrade / Create landlord capability — does NOT require landlord role beforehand
+  // 1. Landlord profile setup — requires landlord role
   router.post(
     '/profile',
+    requireLandlord,
     validate(createLandlordProfileSchema),
     landlordsController.createOrUpgradeProfile
   );
   router.post(
     '/',
+    requireLandlord,
     validate(createLandlordProfileSchema),
     landlordsController.createOrUpgradeProfile
   );

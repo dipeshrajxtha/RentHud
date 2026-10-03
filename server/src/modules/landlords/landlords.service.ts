@@ -1,7 +1,7 @@
 import type { Kysely } from 'kysely';
 import { sql } from 'kysely';
 import type { Database, User } from '../../types/database.js';
-import { NotFoundError } from '../../common/errors/index.js';
+import { NotFoundError, ForbiddenError } from '../../common/errors/index.js';
 import { findActiveUserById } from '../users/users.service.js';
 import type { CreateLandlordProfileBody, UpdateLandlordProfileBody } from './landlords.schemas.js';
 
@@ -25,10 +25,8 @@ export async function findActiveLandlordById(
 }
 
 /**
- * Creates or initializes landlord capability for an authenticated user.
- * Idempotently appends the 'landlord' role to users.roles while preserving
- * any existing roles (e.g. ['tenant'] becomes ['tenant', 'landlord']).
- * Updates mutable profile fields (phone, name, avatar_url).
+ * Updates landlord profile fields (phone, name, avatar_url) for a landlord user.
+ * RentHub accounts have a single role. Tenants cannot upgrade to landlords.
  */
 export async function createOrUpgradeLandlordProfile(
   db: Kysely<Database>,
@@ -41,17 +39,16 @@ export async function createOrUpgradeLandlordProfile(
   }
 
   const currentRoles = (user.roles as string[]) ?? [];
-  const needsRole = !currentRoles.includes('landlord');
+  if (!currentRoles.includes('landlord')) {
+    throw new ForbiddenError('Only accounts with the landlord role can create or manage a landlord profile.');
+  }
+
   const avatarUrl = data.avatar_url !== undefined ? data.avatar_url : data.avatarUrl;
 
   const updates: Record<string, unknown> = { updated_at: new Date() };
   if (data.phone !== undefined) updates.phone = data.phone;
   if (data.name !== undefined) updates.name = data.name;
   if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
-
-  if (needsRole) {
-    updates.roles = sql`array_append(roles, 'landlord')`;
-  }
 
   return await db
     .updateTable('users')

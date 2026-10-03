@@ -5,7 +5,6 @@
  *  - Sidebar navigation with notification badges (pending apps, unsigned leases, open maintenance)
  *  - Routes between: Overview, Properties, Applications, Leases, Financials, Maintenance, Disputes, Settings
  *  - All data fetched from the real backend via landlordService
- *  - Dual-role view switcher passed in from DashboardPage
  *  - Orchestrates property/unit modals at top level so PropertiesListView stays decoupled
  */
 
@@ -38,11 +37,10 @@ import type {
   UpdatePropertyDto,
   UpdateUnitDto,
 } from '@/types/landlord';
-import { Menu, X, Home } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Menu, X, LogOut } from 'lucide-react';
 
-interface LandlordDashboardProps {
-  onSwitchView?: (view: 'landlord' | 'tenant') => void;
-}
+
 
 // ── Mock maintenance data (no backend table yet — plan §Module 7) ──────────
 const MOCK_MAINTENANCE: LandlordMaintenanceTicket[] = [
@@ -68,9 +66,8 @@ const MOCK_MAINTENANCE: LandlordMaintenanceTicket[] = [
   },
 ];
 
-export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {}) {
+export function LandlordDashboard() {
   const { user, accessToken, signOut } = useAuth();
-  const hasTenantRole = user?.roles.includes('tenant') ?? false;
 
   // ── Navigation state ────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<LandlordTab>('overview');
@@ -117,10 +114,15 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
   }, []);
 
   // ── Sign out ───────────────────────────────────────────────────────────
+  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   async function handleSignOut() {
     setSigningOut(true);
-    await signOut();
+    try {
+      await signOut();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   }
 
   // ── Data loaders ───────────────────────────────────────────────────────
@@ -354,7 +356,6 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
           <LandlordSettingsView
             accessToken={accessToken ?? ''}
             showToast={showToast}
-            onSwitchView={onSwitchView}
           />
         );
       default:
@@ -373,7 +374,6 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
         unsignedLeasesCount={unsignedLeasesCount}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
-        onSwitchView={onSwitchView}
         onSignOut={handleSignOut}
         isSigningOut={signingOut}
       />
@@ -404,7 +404,6 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
                 unsignedLeasesCount={unsignedLeasesCount}
                 collapsed={false}
                 onToggleCollapse={() => setMobileSidebarOpen(false)}
-                onSwitchView={onSwitchView}
                 onSignOut={handleSignOut}
                 isSigningOut={signingOut}
               />
@@ -442,18 +441,6 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
           </div>
 
           <div className="flex items-center gap-3">
-            {hasTenantRole && (
-              <button
-                type="button"
-                onClick={() => onSwitchView?.('tenant')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-700 bg-brand-50 border border-brand-200 rounded-xl hover:bg-brand-100 transition-colors shadow-2xs cursor-pointer"
-                title="Switch to Tenant Portal"
-              >
-                <Home className="w-3.5 h-3.5 text-brand-600" />
-                <span>Tenant Portal</span>
-              </button>
-            )}
-
             <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
               {user?.avatarUrl ? (
                 <img
@@ -471,6 +458,17 @@ export function LandlordDashboard({ onSwitchView }: LandlordDashboardProps = {})
                 <span className="text-[10px] text-emerald-600 font-medium">Landlord</span>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition-all cursor-pointer shadow-2xs"
+              title="Sign out of RentHub"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600 transition-colors" />
+              <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
+            </button>
           </div>
         </header>
 

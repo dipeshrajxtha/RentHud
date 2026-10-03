@@ -58,7 +58,7 @@ export async function setInitialRoles(
   userId: string,
   roles: UserRole[]
 ): Promise<User> {
-  if (roles.length === 0) throw new BadRequestError('At least one role is required');
+  if (roles.length !== 1) throw new BadRequestError('Exactly one role must be selected');
   const invalid = roles.filter(r => !VALID_USER_ROLES.includes(r));
   if (invalid.length) throw new BadRequestError(`Invalid roles: ${invalid.join(', ')}`);
 
@@ -80,33 +80,17 @@ export async function setInitialRoles(
 }
 
 /**
- * Appends a single role to the user's roles array atomically.
- * Idempotent: returns existing user if the role is already present.
- * Only 'tenant' and 'landlord' are self-assignable.
+ * RentHub enforces a single application role per account.
+ * Ordinary users cannot add additional roles or operate as dual-role.
  */
 export async function addRole(
-  db: Kysely<Database>,
-  userId: string,
-  role: UserRole
+  _db: Kysely<Database>,
+  _userId: string,
+  _role: UserRole
 ): Promise<User> {
-  if (!VALID_USER_ROLES.includes(role)) throw new BadRequestError(`Role '${role}' cannot be self-assigned`);
-
-  const user = await findActiveUserById(db, userId);
-  if (!user) throw new NotFoundError('User not found or deactivated');
-
-  const currentRoles = (user.roles as string[]) ?? [];
-  if (currentRoles.includes(role)) return user; // already has this role — idempotent
-
-  return await db
-    .updateTable('users')
-    .set({
-      roles: sql`array_append(roles, ${role})`,
-      updated_at: new Date(),
-    })
-    .where('id', '=', userId)
-    .where('is_active', '=', true)
-    .returningAll()
-    .executeTakeFirstOrThrow();
+  throw new ForbiddenError(
+    'RentHub accounts are restricted to a single application role. Role switching and dual-role accounts are disabled.'
+  );
 }
 
 /**

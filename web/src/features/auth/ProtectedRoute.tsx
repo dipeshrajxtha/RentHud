@@ -12,7 +12,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { AppLoadingScreen } from '@/components/feedback/AppLoadingScreen';
 
 export function ProtectedRoute() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const location = useLocation();
 
   if (status === 'initializing') return <AppLoadingScreen />;
@@ -28,7 +28,8 @@ export function ProtectedRoute() {
 
   // Onboarding complete — push authenticated users out of the onboarding route
   if (status === 'authenticated' && location.pathname === '/onboarding/role') {
-    return <Navigate to="/dashboard" replace />;
+    const isLandlord = user?.roles.includes('landlord');
+    return <Navigate to={isLandlord ? '/landlord/dashboard' : '/tenant/dashboard'} replace />;
   }
 
   return <Outlet />;

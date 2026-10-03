@@ -11,17 +11,20 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { AppLoadingScreen } from '@/components/feedback/AppLoadingScreen';
 
 export function PublicOnlyRoute() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const location = useLocation();
-  const from = (location.state as { from?: Location })?.from?.pathname ?? '/dashboard';
+  const rawFrom = (location.state as { from?: Location })?.from?.pathname;
+  const isLandlord = user?.roles.includes('landlord');
+  const roleDashboard = isLandlord ? '/landlord/dashboard' : '/tenant/dashboard';
+  const target = rawFrom && rawFrom !== '/login' && rawFrom !== '/dashboard' && rawFrom !== '/' ? rawFrom : roleDashboard;
 
   if (status === 'initializing') {
     return <AppLoadingScreen />;
   }
 
-  // Authenticated user with roles → go to dashboard (or original destination)
+  // Authenticated user with roles → go to role dashboard (or valid original destination)
   if (status === 'authenticated') {
-    return <Navigate to={from} replace />;
+    return <Navigate to={target} replace />;
   }
 
   // New user: logged in via Google but no roles assigned yet → onboarding

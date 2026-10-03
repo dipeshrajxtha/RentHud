@@ -10,7 +10,7 @@ import { motion } from 'motion/react';
 import {
   Settings, User, Shield, ShieldCheck, ShieldAlert, ShieldX,
   Phone, Mail, CreditCard, Building,
-  Clock, Upload, Info, Edit2, Save, Home,
+  Clock, Upload, Info, Edit2, Save,
 } from 'lucide-react';
 import { landlordService } from '@/features/landlord/landlord.service';
 import type { LandlordProfile } from '@/types/landlord';
@@ -19,7 +19,6 @@ import { useAuth } from '@/features/auth/AuthContext';
 interface LandlordSettingsViewProps {
   accessToken: string;
   showToast: (msg: string, type?: 'success' | 'error') => void;
-  onSwitchView?: (view: 'landlord' | 'tenant') => void;
 }
 
 type KYCStatus = 'not_submitted' | 'pending_review' | 'verified' | 'rejected';
@@ -77,8 +76,8 @@ const PAYOUT_BANKS = [
   { name: 'Other', code: 'OTHER' },
 ];
 
-export function LandlordSettingsView({ accessToken, showToast, onSwitchView }: LandlordSettingsViewProps) {
-  const { user, addRole } = useAuth();
+export function LandlordSettingsView({ accessToken, showToast }: LandlordSettingsViewProps) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<LandlordProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
@@ -88,25 +87,6 @@ export function LandlordSettingsView({ accessToken, showToast, onSwitchView }: L
 
   const [payoutForm, setPayoutForm] = useState({ bankCode: '', accountNumber: '', accountName: '', mobileWallet: '' });
   const [savingPayout, setSavingPayout] = useState(false);
-
-  const [addingTenantRole, setAddingTenantRole] = useState(false);
-  const [roleMessage, setRoleMessage] = useState<string | null>(null);
-
-  const handleAddTenant = async () => {
-    if (user?.roles?.includes('tenant')) return;
-    setAddingTenantRole(true);
-    setRoleMessage(null);
-    try {
-      await addRole('tenant');
-      setRoleMessage('Tenant role added successfully! You can now switch between tenant and landlord portals.');
-      showToast('✓ Tenant role activated');
-    } catch (err: any) {
-      setRoleMessage(err.message || 'Failed to add tenant role');
-      showToast('Failed to add tenant role', 'error');
-    } finally {
-      setAddingTenantRole(false);
-    }
-  };
 
   useEffect(() => {
     if (!accessToken) return;
@@ -398,16 +378,16 @@ export function LandlordSettingsView({ accessToken, showToast, onSwitchView }: L
         </div>
       </div>
 
-      {/* ── Account Roles & Dual-Portal Switcher ── */}
+      {/* ── Account Role & Authorization ── */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <User className="w-4 h-4 text-brand-600" />
-              Account Roles & Portal Switching
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              Account Authorization
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              RentHub allows holding both Landlord and Tenant roles on a single account
+              RentHub operates on a single verified role architecture
             </p>
           </div>
         </div>
@@ -416,45 +396,17 @@ export function LandlordSettingsView({ accessToken, showToast, onSwitchView }: L
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Home className="w-4 h-4 text-brand-600" />
-                <strong className="text-slate-900 font-semibold">Tenant Portal Access</strong>
+                <Building className="w-4 h-4 text-emerald-600" />
+                <strong className="text-slate-900 font-semibold">Active Role: Landlord (Asset Owner)</strong>
               </div>
               <p className="text-slate-500">
-                Browse verified properties, submit rental applications, sign digital leases, and pay rent in Nepal.
+                Authorized for listing properties, managing residential units, executing digital leases, and rent ledger tracking.
               </p>
             </div>
-
-            {user?.roles?.includes('tenant') ? (
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 bg-brand-50 text-brand-700 font-semibold rounded-lg shrink-0 text-xs border border-brand-200">
-                  Active Role
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onSwitchView?.('tenant')}
-                  className="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold shadow-xs transition-colors shrink-0 text-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Home className="w-3.5 h-3.5" />
-                  <span>Open Tenant Portal</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                disabled={addingTenantRole}
-                onClick={handleAddTenant}
-                className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-semibold shadow-xs transition-colors shrink-0 cursor-pointer disabled:opacity-50"
-              >
-                {addingTenantRole ? 'Activating…' : 'Add Tenant Role'}
-              </button>
-            )}
+            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 font-semibold rounded-lg shrink-0 text-xs inline-flex items-center gap-1.5 border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Verified Landlord
+            </span>
           </div>
-
-          {roleMessage && (
-            <p className="text-xs text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
-              {roleMessage}
-            </p>
-          )}
         </div>
       </div>
     </div>

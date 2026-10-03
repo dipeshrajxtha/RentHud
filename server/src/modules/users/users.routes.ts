@@ -15,7 +15,7 @@ export function createUsersRouter(): Router {
 
   // Role management
   // POST /api/users/me/roles       — set initial roles (onboarding, roles must be empty)
-  // POST /api/users/me/roles/:role — add a second role (tenant ↔ landlord)
+  // POST /api/users/me/roles/:role — blocked: always returns 403 (single-role enforcement)
   router.post('/me/roles', validate(setRolesSchema), usersController.setMyRoles);
   router.post('/me/roles/:role', validate(addRoleParamSchema, 'params'), usersController.addMyRole);
 

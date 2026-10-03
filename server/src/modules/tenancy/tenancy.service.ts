@@ -116,6 +116,13 @@ export async function submitRentalRequest(
     .where('id', '=', tenantId)
     .executeTakeFirstOrThrow();
 
+  // Fetch landlord user details
+  const landlordUser = await db
+    .selectFrom('users')
+    .select(['id', 'name', 'email', 'avatar_url', 'phone'])
+    .where('id', '=', unit.landlord_id)
+    .executeTakeFirst();
+
   return {
     id: created.id,
     unitId: created.unit_id,
@@ -149,6 +156,15 @@ export async function submitRentalRequest(
       avatarUrl: applicant.avatar_url,
       phone: applicant.phone,
     },
+    landlord: landlordUser
+      ? {
+          id: landlordUser.id,
+          name: landlordUser.name,
+          email: landlordUser.email,
+          avatarUrl: landlordUser.avatar_url,
+          phone: landlordUser.phone,
+        }
+      : undefined,
   };
 }
 
@@ -166,7 +182,8 @@ export async function listRentalRequests(
     .selectFrom('rental_requests as r')
     .innerJoin('property_units as u', 'u.id', 'r.unit_id')
     .innerJoin('properties as p', 'p.id', 'u.property_id')
-    .innerJoin('users as t', 't.id', 'r.tenant_id');
+    .innerJoin('users as t', 't.id', 'r.tenant_id')
+    .innerJoin('users as l', 'l.id', 'r.landlord_id');
 
   // RBAC scope
   if (roles.includes('tenant') && !roles.includes('landlord')) {
@@ -215,6 +232,11 @@ export async function listRentalRequests(
       't.email as tenant_email',
       't.avatar_url as tenant_avatar_url',
       't.phone as tenant_phone',
+      'l.id as landlord_user_id',
+      'l.name as landlord_name',
+      'l.email as landlord_email',
+      'l.avatar_url as landlord_avatar_url',
+      'l.phone as landlord_phone',
     ])
     .orderBy('r.created_at', 'desc')
     .limit(limit)
@@ -254,6 +276,13 @@ export async function listRentalRequests(
       avatarUrl: row.tenant_avatar_url,
       phone: row.tenant_phone,
     },
+    landlord: {
+      id: row.landlord_user_id,
+      name: row.landlord_name,
+      email: row.landlord_email,
+      avatarUrl: row.landlord_avatar_url,
+      phone: row.landlord_phone,
+    },
   }));
 
   return {
@@ -273,6 +302,7 @@ export async function getRentalRequestById(
     .innerJoin('property_units as u', 'u.id', 'r.unit_id')
     .innerJoin('properties as p', 'p.id', 'u.property_id')
     .innerJoin('users as t', 't.id', 'r.tenant_id')
+    .innerJoin('users as l', 'l.id', 'r.landlord_id')
     .select([
       'r.id as request_id',
       'r.unit_id',
@@ -299,6 +329,11 @@ export async function getRentalRequestById(
       't.email as tenant_email',
       't.avatar_url as tenant_avatar_url',
       't.phone as tenant_phone',
+      'l.id as landlord_user_id',
+      'l.name as landlord_name',
+      'l.email as landlord_email',
+      'l.avatar_url as landlord_avatar_url',
+      'l.phone as landlord_phone',
     ])
     .where('r.id', '=', requestId)
     .executeTakeFirst();
@@ -349,6 +384,13 @@ export async function getRentalRequestById(
       email: row.tenant_email,
       avatarUrl: row.tenant_avatar_url,
       phone: row.tenant_phone,
+    },
+    landlord: {
+      id: row.landlord_user_id,
+      name: row.landlord_name,
+      email: row.landlord_email,
+      avatarUrl: row.landlord_avatar_url,
+      phone: row.landlord_phone,
     },
   };
 }

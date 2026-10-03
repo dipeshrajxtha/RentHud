@@ -6,7 +6,6 @@ import { useState } from 'react';
 import {
   Mail,
   ShieldCheck,
-  Building,
   RotateCcw,
   Check,
   Save,
@@ -17,18 +16,15 @@ import { tenantService } from '@/features/tenant/tenant.service';
 
 interface ProfileSettingsViewProps {
   onRetakeOnboarding: () => void;
-  onSwitchView?: (view: 'landlord' | 'tenant') => void;
 }
 
-export function ProfileSettingsView({ onRetakeOnboarding, onSwitchView }: ProfileSettingsViewProps) {
-  const { user, addRole, signOut } = useAuth();
+export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewProps) {
+  const { user, signOut } = useAuth();
 
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState('+977-9860001136');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [addingRole, setAddingRole] = useState(false);
-  const [roleMessage, setRoleMessage] = useState<string | null>(null);
 
   const preferences = tenantService.getPreferences();
 
@@ -41,20 +37,6 @@ export function ProfileSettingsView({ onRetakeOnboarding, onSwitchView }: Profil
       setTimeout(() => setSaveSuccess(false), 2500);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleAddLandlord = async () => {
-    if (user?.roles?.includes('landlord')) return;
-    setAddingRole(true);
-    setRoleMessage(null);
-    try {
-      await addRole('landlord');
-      setRoleMessage('Landlord role added successfully! You can now switch between tenant and landlord portals.');
-    } catch (err: any) {
-      setRoleMessage(err.message || 'Failed to add landlord role');
-    } finally {
-      setAddingRole(false);
     }
   };
 
@@ -176,56 +158,25 @@ export function ProfileSettingsView({ onRetakeOnboarding, onSwitchView }: Profil
         )}
       </div>
 
-      {/* Multi-role expansion */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-xs">
+      {/* Account Verification & Role Status */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3 shadow-xs">
         <div>
-          <h3 className="text-sm font-display font-semibold text-slate-900">Account Roles</h3>
-          <p className="text-xs text-slate-500">RentHub allows holding both Tenant and Landlord roles on a single account</p>
+          <h3 className="text-sm font-display font-semibold text-slate-900">Account Authorization</h3>
+          <p className="text-xs text-slate-500">RentHub operates on a single verified role architecture</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Building className="w-4 h-4 text-emerald-600" />
-              <strong className="text-slate-900 font-semibold">Landlord Portal Access</strong>
+              <ShieldCheck className="w-4 h-4 text-brand-600" />
+              <strong className="text-slate-900 font-semibold">Active Role: Tenant (Resident)</strong>
             </div>
-            <p className="text-slate-500">List properties, review incoming tenant applications, and issue digital leases.</p>
+            <p className="text-slate-500">Authorized for Kathmandu Valley property discovery, digital applications, and legal electronic leases.</p>
           </div>
-
-          {user?.roles?.includes('landlord') ? (
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-semibold rounded-lg shrink-0 text-xs">
-                Active Role
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onSwitchView) onSwitchView('landlord');
-                  else window.location.search = '?view=landlord';
-                }}
-                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-xs transition-colors shrink-0 text-xs flex items-center gap-1.5"
-              >
-                <Building className="w-3.5 h-3.5" />
-                <span>Open Landlord Portal</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              disabled={addingRole}
-              onClick={handleAddLandlord}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-xs transition-colors shrink-0"
-            >
-              {addingRole ? 'Activating…' : 'Add Landlord Role'}
-            </button>
-          )}
+          <span className="px-3 py-1.5 bg-brand-100 text-brand-800 font-semibold rounded-lg shrink-0 text-xs inline-flex items-center gap-1.5">
+            <Check className="w-3.5 h-3.5" /> Verified Tenant Account
+          </span>
         </div>
-
-        {roleMessage && (
-          <p className="text-xs text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
-            {roleMessage}
-          </p>
-        )}
       </div>
 
       {/* Sign Out */}

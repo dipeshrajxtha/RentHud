@@ -125,17 +125,17 @@ export function ApplicationTrackingView({
                       </span>
                     </div>
 
-                    <h3 className="text-base font-display font-semibold text-slate-900">{app.property.title}</h3>
-                    <p className="text-xs text-slate-500">{app.unit.unitIdentifier} · {app.property.address}, {app.property.city}</p>
+                    <h3 className="text-base font-display font-semibold text-slate-900">{app.property?.title ?? 'Rental Property'}</h3>
+                    <p className="text-xs text-slate-500">{app.unit?.unitIdentifier ?? 'Unit'} · {app.property?.address ?? ''}{app.property?.city ? `, ${app.property.city}` : ''}</p>
                   </div>
                 </div>
 
                 <div className="sm:text-right">
                   <div className="text-base font-display font-bold text-slate-900">
-                    NPR {app.unit.monthlyRent.toLocaleString()}
+                    NPR {app.unit?.monthlyRent != null ? app.unit.monthlyRent.toLocaleString() : 'N/A'}
                     <span className="text-xs font-normal text-slate-400"> / mo</span>
                   </div>
-                  <span className="text-xs text-slate-500">Proposed Move-in: {app.proposedMoveIn}</span>
+                  <span className="text-xs text-slate-500">Proposed Move-in: {app.proposedMoveIn || 'N/A'}</span>
                 </div>
               </div>
 
@@ -179,9 +179,9 @@ export function ApplicationTrackingView({
               {/* Bottom Actions & Details */}
               <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                 <div className="text-slate-500">
-                  <span>Landlord: <strong className="text-slate-700 font-medium">{app.landlord.name}</strong></span>
+                  <span>Landlord: <strong className="text-slate-700 font-medium">{app.landlord?.name ?? 'Property Owner'}</strong></span>
                   <span className="mx-2 text-slate-300">•</span>
-                  <span>Submitted on {new Date(app.createdAt).toLocaleDateString()}</span>
+                  <span>Submitted on {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Recently'}</span>
                 </div>
 
                 <div className="flex items-center gap-2.5 w-full sm:w-auto">

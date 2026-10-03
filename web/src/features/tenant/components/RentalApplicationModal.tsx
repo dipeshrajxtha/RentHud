@@ -11,6 +11,7 @@ import { tenantService } from '@/features/tenant/tenant.service';
 interface RentalApplicationModalProps {
   property: PropertyListing | null;
   selectedUnit: UnitDetail | null;
+  accessToken?: string | null;
   onClose: () => void;
   onApplicationSubmitted: (app: RentalApplication) => void;
 }
@@ -18,6 +19,7 @@ interface RentalApplicationModalProps {
 export function RentalApplicationModal({
   property,
   selectedUnit,
+  accessToken,
   onClose,
   onApplicationSubmitted,
 }: RentalApplicationModalProps) {
@@ -53,7 +55,7 @@ export function RentalApplicationModal({
         monthlyRent: activeUnit.monthlyRent,
         securityDeposit: activeUnit.securityDeposit,
         landlordName: property.landlord.name,
-      });
+      }, accessToken);
 
       setSubmittedApp(app);
       onApplicationSubmitted(app);

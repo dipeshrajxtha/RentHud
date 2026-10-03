@@ -81,7 +81,7 @@ export async function googleLogin(idToken: string): Promise<GoogleLoginResponseD
 }
 
 /**
- * Set initial roles for a new user (onboarding).
+ * Set initial role for a new user (onboarding).
  * POST /api/users/me/roles
  */
 export async function setRoles(roles: ('tenant' | 'landlord')[], accessToken: string): Promise<{ accessToken: string; user: GoogleLoginResponseData['user'] }> {
@@ -94,23 +94,6 @@ export async function setRoles(roles: ('tenant' | 'landlord')[], accessToken: st
   const payload = await response.json();
   if (!response.ok || !payload.success) {
     throw new AuthApiError(payload.error?.message ?? 'Failed to set roles', response.status);
-  }
-  return payload.data;
-}
-
-/**
- * Add a single role to an existing user account.
- * POST /api/users/me/roles/:role
- */
-export async function addRoleToAccount(role: 'tenant' | 'landlord', accessToken: string): Promise<{ accessToken: string; user: GoogleLoginResponseData['user'] }> {
-  const response = await fetch(`/api/users/me/roles/${role}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-    credentials: 'include',
-  });
-  const payload = await response.json();
-  if (!response.ok || !payload.success) {
-    throw new AuthApiError(payload.error?.message ?? 'Failed to add role', response.status);
   }
   return payload.data;
 }

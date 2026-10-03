@@ -9,9 +9,9 @@ export const updateProfileSchema = z.object({
 
 export type UpdateProfileBody = z.infer<typeof updateProfileSchema>;
 
-/** POST /api/users/me/roles — set initial roles for new users */
+/** POST /api/users/me/roles — set initial role for new users */
 export const setRolesSchema = z.object({
-  roles: z.array(z.enum(['tenant', 'landlord'])).min(1).max(2),
+  roles: z.array(z.enum(['tenant', 'landlord'])).length(1, 'Exactly one role must be selected'),
 });
 export type SetRolesBody = z.infer<typeof setRolesSchema>;
 

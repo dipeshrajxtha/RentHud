@@ -133,10 +133,10 @@ describe('Landlord Profile API (/api/landlords)', () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 3. UPGRADE & PROFILE INITIALIZATION (POST /api/landlords/profile)
+  // 3. SINGLE-ROLE ENFORCEMENT ON PROFILE INITIALIZATION (POST /api/landlords/profile)
   // ──────────────────────────────────────────────────────────────────────────
-  describe('Landlord Capability Upgrade & Initialization', () => {
-    it('allows a tenant to create/upgrade landlord capability without having landlord role beforehand', async () => {
+  describe('Single-Role Enforcement on Landlord Profile Initialization', () => {
+    it('returns 403 when a tenant-only user tries to create a landlord profile', async () => {
       const tenantId = await seedTestUser({ name: 'Aspiring Landlord', roles: ['tenant'] });
       const tenantToken = signAccessToken(tenantId, ['tenant']);
 
@@ -149,34 +149,37 @@ describe('Landlord Profile API (/api/landlords)', () => {
           avatar_url: 'https://cdn.example.com/avatar.png',
         });
 
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/access denied.*landlord/i);
+    });
+
+    it('allows a landlord user to create/update their profile', async () => {
+      const landlordId = await seedTestUser({ name: 'Landlord User', roles: ['landlord'] });
+      const landlordToken = signAccessToken(landlordId, ['landlord']);
+
+      const res = await request(app)
+        .post('/api/landlords/profile')
+        .set('Authorization', `Bearer ${landlordToken}`)
+        .send({
+          phone: '+977-9841234567',
+          name: 'Verified Landlord Name',
+          avatar_url: 'https://cdn.example.com/avatar.png',
+        });
+
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data).toHaveProperty('accessToken');
       expect(res.body.data.user).toBeDefined();
-      expect(res.body.data.user.id).toBe(tenantId);
+      expect(res.body.data.user.id).toBe(landlordId);
       expect(res.body.data.user.name).toBe('Verified Landlord Name');
       expect(res.body.data.user.phone).toBe('+977-9841234567');
       expect(res.body.data.user.avatarUrl).toBe('https://cdn.example.com/avatar.png');
-
-      // Crucial: Existing 'tenant' role must be preserved alongside 'landlord'
-      const roles: UserRole[] = res.body.data.user.roles;
-      expect(roles).toContain('tenant');
-      expect(roles).toContain('landlord');
-
-      // Verify persistence in the database
-      const dbUser = await testDb.db
-        .selectFrom('users')
-        .selectAll()
-        .where('id', '=', tenantId)
-        .executeTakeFirstOrThrow();
-      expect(dbUser.phone).toBe('+977-9841234567');
-      expect(dbUser.name).toBe('Verified Landlord Name');
-      expect(dbUser.roles).toEqual(expect.arrayContaining(['tenant', 'landlord']));
     });
 
-    it('upgrading is idempotent — does not duplicate roles if user is already a landlord', async () => {
-      const landlordId = await seedTestUser({ roles: ['tenant', 'landlord'] });
-      const token = signAccessToken(landlordId, ['tenant', 'landlord']);
+    it('profile update is idempotent — does not duplicate roles if user is already a landlord', async () => {
+      const landlordId = await seedTestUser({ roles: ['landlord'] });
+      const token = signAccessToken(landlordId, ['landlord']);
 
       const res = await request(app)
         .post('/api/landlords/profile')
@@ -191,9 +194,22 @@ describe('Landlord Profile API (/api/landlords)', () => {
       expect(landlordCount).toBe(1);
     });
 
-    it('supports alias POST /api/landlords route identically', async () => {
+    it('returns 403 when a tenant tries POST /api/landlords alias', async () => {
       const tenantId = await seedTestUser({ roles: ['tenant'] });
       const token = signAccessToken(tenantId, ['tenant']);
+
+      const res = await request(app)
+        .post('/api/landlords')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ phone: '+977-9851000000' });
+
+      expect(res.status).toBe(403);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('allows a landlord via POST /api/landlords alias', async () => {
+      const landlordId = await seedTestUser({ roles: ['landlord'] });
+      const token = signAccessToken(landlordId, ['landlord']);
 
       const res = await request(app)
         .post('/api/landlords')
@@ -211,8 +227,8 @@ describe('Landlord Profile API (/api/landlords)', () => {
   // ──────────────────────────────────────────────────────────────────────────
   describe('Input Validation (400)', () => {
     it('POST /api/landlords/profile returns 400 when phone is missing', async () => {
-      const tenantId = await seedTestUser({ roles: ['tenant'] });
-      const token = signAccessToken(tenantId, ['tenant']);
+      const landlordId = await seedTestUser({ roles: ['landlord'] });
+      const token = signAccessToken(landlordId, ['landlord']);
 
       const res = await request(app)
         .post('/api/landlords/profile')
@@ -225,8 +241,8 @@ describe('Landlord Profile API (/api/landlords)', () => {
     });
 
     it('POST /api/landlords/profile returns 400 when phone is empty string', async () => {
-      const tenantId = await seedTestUser({ roles: ['tenant'] });
-      const token = signAccessToken(tenantId, ['tenant']);
+      const landlordId = await seedTestUser({ roles: ['landlord'] });
+      const token = signAccessToken(landlordId, ['landlord']);
 
       const res = await request(app)
         .post('/api/landlords/profile')
@@ -239,8 +255,8 @@ describe('Landlord Profile API (/api/landlords)', () => {
     });
 
     it('POST /api/landlords/profile returns 400 when avatar_url is not a valid URL', async () => {
-      const tenantId = await seedTestUser({ roles: ['tenant'] });
-      const token = signAccessToken(tenantId, ['tenant']);
+      const landlordId = await seedTestUser({ roles: ['landlord'] });
+      const token = signAccessToken(landlordId, ['landlord']);
 
       const res = await request(app)
         .post('/api/landlords/profile')
@@ -427,42 +443,53 @@ describe('Landlord Profile API (/api/landlords)', () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // 6. DUAL-ROLE CAPABILITY PRESERVATION
+  // 6. SINGLE-ROLE ACCOUNT ENFORCEMENT
   // ──────────────────────────────────────────────────────────────────────────
-  describe('Dual-Role Capability Preservation', () => {
-    it('ensures user retains tenant capabilities after acquiring landlord role', async () => {
-      // 1. Create a user starting as tenant
-      const userId = await seedTestUser({ name: 'Dual User', roles: ['tenant'] });
-      const initialToken = signAccessToken(userId, ['tenant']);
+  describe('Single-Role Account Enforcement', () => {
+    it('tenant cannot upgrade to landlord via POST /api/landlords/profile', async () => {
+      const userId = await seedTestUser({ name: 'Tenant Only', roles: ['tenant'] });
+      const tenantToken = signAccessToken(userId, ['tenant']);
 
-      // 2. Upgrade to landlord via POST /api/landlords/profile
       const upgradeRes = await request(app)
         .post('/api/landlords/profile')
-        .set('Authorization', `Bearer ${initialToken}`)
+        .set('Authorization', `Bearer ${tenantToken}`)
         .send({ phone: '+977-9844444444' });
 
-      expect(upgradeRes.status).toBe(201);
-      const newAccessToken = upgradeRes.body.data.accessToken;
-      expect(newAccessToken).toBeDefined();
+      // Single-role enforcement: tenants are blocked from landlord endpoints
+      expect(upgradeRes.status).toBe(403);
+      expect(upgradeRes.body.success).toBe(false);
 
-      // 3. Verify user can access /api/landlords/me using the new token
+      // Verify database roles were NOT modified
+      const dbUser = await testDb.db
+        .selectFrom('users')
+        .selectAll()
+        .where('id', '=', userId)
+        .executeTakeFirstOrThrow();
+      expect(dbUser.roles).toEqual(['tenant']);
+    });
+
+    it('landlord can access their own profile but not tenant-restricted endpoints', async () => {
+      const userId = await seedTestUser({ name: 'Landlord Only', roles: ['landlord'], phone: '+977-9844444444' });
+      const landlordToken = signAccessToken(userId, ['landlord']);
+
+      // Landlord can access /api/landlords/me
       const landlordMeRes = await request(app)
         .get('/api/landlords/me')
-        .set('Authorization', `Bearer ${newAccessToken}`);
+        .set('Authorization', `Bearer ${landlordToken}`);
 
       expect(landlordMeRes.status).toBe(200);
       expect(landlordMeRes.body.data.roles).toContain('landlord');
-      expect(landlordMeRes.body.data.roles).toContain('tenant');
+      expect(landlordMeRes.body.data.roles).not.toContain('tenant');
 
-      // 4. Verify user can still access /api/users/me (tenant/general user profile)
+      // Landlord can access /api/users/me (general user profile)
       const userMeRes = await request(app)
         .get('/api/users/me')
-        .set('Authorization', `Bearer ${newAccessToken}`);
+        .set('Authorization', `Bearer ${landlordToken}`);
 
       expect(userMeRes.status).toBe(200);
       expect(userMeRes.body.data.phone).toBe('+977-9844444444');
-      expect(userMeRes.body.data.roles).toContain('tenant');
       expect(userMeRes.body.data.roles).toContain('landlord');
+      expect(userMeRes.body.data.roles).not.toContain('tenant');
     });
   });
 });

@@ -140,4 +140,28 @@ describe('POST /api/auth/logout', () => {
     const cookieHeader = Array.isArray(setCookie) ? setCookie.join(';') : (setCookie ?? '');
     expect(cookieHeader).toContain('renthub_rt');
   });
+
+  it('sets a session cookie without Max-Age or Expires so closing browser ends session', async () => {
+    const mockRes = {
+      cookie: vi.fn(),
+    } as unknown as import('express').Response;
+
+    const { setRefreshCookie } = await import('../../src/common/utils/cookies.js');
+    setRefreshCookie(mockRes, 'test-refresh-token');
+
+    expect(mockRes.cookie).toHaveBeenCalledWith(
+      'renthub_rt',
+      'test-refresh-token',
+      expect.objectContaining({
+        httpOnly: true,
+        path: '/api/auth',
+        sameSite: 'lax',
+      })
+    );
+    // Explicitly verify maxAge and expires are NOT set (session cookie)
+    const options = (vi.mocked(mockRes.cookie).mock.calls[0] as any[])[2];
+    expect(options).not.toHaveProperty('maxAge');
+    expect(options).not.toHaveProperty('expires');
+  });
 });
+

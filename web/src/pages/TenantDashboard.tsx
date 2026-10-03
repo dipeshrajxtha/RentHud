@@ -52,6 +52,7 @@ import { NewDisputeModal } from '@/features/tenant/components/NewDisputeModal';
 import { SavedPropertiesView } from '@/features/tenant/components/SavedPropertiesView';
 import { ProfileSettingsView } from '@/features/tenant/components/ProfileSettingsView';
 
+import { useNavigate } from 'react-router-dom';
 import {
   Compass,
   Heart,
@@ -64,7 +65,7 @@ import {
   Menu,
   X,
   Sparkles,
-  Building2,
+  LogOut,
 } from 'lucide-react';
 
 type TenantTab =
@@ -77,13 +78,19 @@ type TenantTab =
   | 'disputes'
   | 'settings';
 
-interface TenantDashboardProps {
-  onSwitchView?: (view: 'landlord' | 'tenant') => void;
-}
+export function TenantDashboard() {
+  const { user, accessToken, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
 
-export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
-  const { user } = useAuth();
-  const hasLandlordRole = user?.roles.includes('landlord') ?? false;
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      navigate('/login', { replace: true });
+    }
+  }
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<TenantTab>('discover');
@@ -136,7 +143,7 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
       const [props, saved, apps, leases, pmts, maint, disps] = await Promise.all([
         tenantService.getProperties(filters),
         Promise.resolve(tenantService.getSavedPropertyIds()),
-        tenantService.getApplications(),
+        tenantService.getApplications(accessToken),
         tenantService.getLeases(),
         tenantService.getPayments(),
         tenantService.getMaintenanceRequests(),
@@ -153,7 +160,7 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filters, accessToken]);
 
   useEffect(() => {
     void loadData();
@@ -268,23 +275,8 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
             })}
           </nav>
 
-          {/* User Profile / Multi-role Switcher / Mobile Toggle */}
+          {/* User Profile / Mobile Toggle */}
           <div className="flex items-center gap-2.5">
-            {/* Multi-role Landlord Switcher */}
-            {hasLandlordRole && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onSwitchView) onSwitchView('landlord');
-                  else window.location.search = '?view=landlord';
-                }}
-                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
-                title="Switch to Landlord Portal"
-              >
-                <Building2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Landlord Portal</span>
-              </button>
-            )}
 
             <button
               onClick={() => setActiveTab('settings')}
@@ -305,6 +297,18 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
                 <span className="font-semibold text-slate-900 block leading-tight">{user?.name}</span>
                 <span className="text-[10px] text-slate-400">Kathmandu, NP</span>
               </div>
+            </button>
+
+            {/* Clear Sign Out Button */}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition-all cursor-pointer shadow-2xs"
+              title="Sign out of RentHub"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600 transition-colors" />
+              <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
             </button>
 
             {/* Mobile Hamburger Button */}
@@ -355,26 +359,20 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
                 );
               })}
 
-              {/* Mobile Multi-role Switcher */}
-              {hasLandlordRole && (
-                <div className="pt-2 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      if (onSwitchView) onSwitchView('landlord');
-                      else window.location.search = '?view=landlord';
-                    }}
-                    className="w-full px-3 py-2.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center justify-between"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-emerald-600" />
-                      <span>Switch to Landlord Portal</span>
-                    </span>
-                    <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Portal</span>
-                  </button>
-                </div>
-              )}
+              <div className="pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    void handleSignOut();
+                  }}
+                  disabled={signingOut}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -641,7 +639,6 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
             onRetakeOnboarding={() => {
               window.location.href = '/onboarding/role';
             }}
-            onSwitchView={onSwitchView}
           />
         )}
       </main>
@@ -674,6 +671,7 @@ export function TenantDashboard({ onSwitchView }: TenantDashboardProps = {}) {
         <RentalApplicationModal
           property={applyModalData.property}
           selectedUnit={applyModalData.unit}
+          accessToken={accessToken}
           onClose={() => setApplyModalData(null)}
           onApplicationSubmitted={(newApp) => {
             setApplications((prev) => [newApp, ...prev.filter((a) => a.id !== newApp.id)]);

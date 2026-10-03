@@ -44,6 +44,13 @@ export interface PublicRentalRequestSummary {
     avatarUrl: string | null;
     phone: string | null;
   };
+  landlord?: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    phone: string | null;
+  };
 }
 
 export interface PublicTenancySummary {

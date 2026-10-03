@@ -17,7 +17,7 @@
  *   7. On error → AuthAlertBanner shows the mapped error message
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -51,6 +51,15 @@ const TRUST_POINTS = [
 export function LoginPage() {
   const { signInWithGoogle, error, clearError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Ensure Google sign-in is not automatically treated as an active session
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id?.disableAutoSelect) {
+        (window as any).google.accounts.id.disableAutoSelect();
+      }
+    } catch {}
+  }, []);
 
   const handleCredential = useCallback(
     async (credentialResponse: { credential?: string }) => {
@@ -254,6 +263,7 @@ export function LoginPage() {
                     // Google popup was closed or failed — not a hard error
                   }}
                   useOneTap={false}
+                  auto_select={false}
                   theme="outline"
                   size="large"
                   width="380"
