@@ -220,6 +220,7 @@ export async function listRentalRequests(
       'u.floor_number',
       'u.bedrooms',
       'u.bathrooms',
+      'u.area_sqft',
       'u.monthly_rent',
       'u.security_deposit',
       'u.availability_status',
@@ -227,11 +228,14 @@ export async function listRentalRequests(
       'p.title as property_title',
       'p.address as property_address',
       'p.city as property_city',
+      'p.postal_code as property_postal_code',
       't.id as tenant_user_id',
       't.name as tenant_name',
       't.email as tenant_email',
       't.avatar_url as tenant_avatar_url',
       't.phone as tenant_phone',
+      't.created_at as tenant_created_at',
+      't.is_active as tenant_is_active',
       'l.id as landlord_user_id',
       'l.name as landlord_name',
       'l.email as landlord_email',
@@ -259,6 +263,7 @@ export async function listRentalRequests(
       floorNumber: row.floor_number,
       bedrooms: row.bedrooms,
       bathrooms: row.bathrooms,
+      areaSqft: row.area_sqft != null ? Number(row.area_sqft) : null,
       monthlyRent: Number(row.monthly_rent),
       securityDeposit: Number(row.security_deposit),
       availabilityStatus: row.availability_status,
@@ -268,6 +273,7 @@ export async function listRentalRequests(
       title: row.property_title,
       address: row.property_address,
       city: row.property_city,
+      postalCode: row.property_postal_code,
     },
     tenant: {
       id: row.tenant_user_id,
@@ -275,6 +281,9 @@ export async function listRentalRequests(
       email: row.tenant_email,
       avatarUrl: row.tenant_avatar_url,
       phone: row.tenant_phone,
+      createdAt: row.tenant_created_at,
+      isVerified: Boolean(row.tenant_is_active),
+      verificationStatus: 'VERIFIED',
     },
     landlord: {
       id: row.landlord_user_id,
@@ -317,6 +326,7 @@ export async function getRentalRequestById(
       'u.floor_number',
       'u.bedrooms',
       'u.bathrooms',
+      'u.area_sqft',
       'u.monthly_rent',
       'u.security_deposit',
       'u.availability_status',
@@ -324,11 +334,14 @@ export async function getRentalRequestById(
       'p.title as property_title',
       'p.address as property_address',
       'p.city as property_city',
+      'p.postal_code as property_postal_code',
       't.id as tenant_user_id',
       't.name as tenant_name',
       't.email as tenant_email',
       't.avatar_url as tenant_avatar_url',
       't.phone as tenant_phone',
+      't.created_at as tenant_created_at',
+      't.is_active as tenant_is_active',
       'l.id as landlord_user_id',
       'l.name as landlord_name',
       'l.email as landlord_email',
@@ -368,6 +381,7 @@ export async function getRentalRequestById(
       floorNumber: row.floor_number,
       bedrooms: row.bedrooms,
       bathrooms: row.bathrooms,
+      areaSqft: row.area_sqft != null ? Number(row.area_sqft) : null,
       monthlyRent: Number(row.monthly_rent),
       securityDeposit: Number(row.security_deposit),
       availabilityStatus: row.availability_status,
@@ -377,6 +391,7 @@ export async function getRentalRequestById(
       title: row.property_title,
       address: row.property_address,
       city: row.property_city,
+      postalCode: row.property_postal_code,
     },
     tenant: {
       id: row.tenant_user_id,
@@ -384,6 +399,9 @@ export async function getRentalRequestById(
       email: row.tenant_email,
       avatarUrl: row.tenant_avatar_url,
       phone: row.tenant_phone,
+      createdAt: row.tenant_created_at,
+      isVerified: Boolean(row.tenant_is_active),
+      verificationStatus: 'VERIFIED',
     },
     landlord: {
       id: row.landlord_user_id,
@@ -601,7 +619,6 @@ export async function approveRentalRequest(
       })
       .returningAll()
       .execute();
-
     const applicationSummary = await getRentalRequestById(
       trx,
       requestId,
@@ -609,24 +626,7 @@ export async function approveRentalRequest(
       ['landlord']
     );
 
-    const tenancySummary: PublicTenancySummary = {
-      id: tenancy.id,
-      unitId: tenancy.unit_id,
-      tenantId: tenancy.tenant_id,
-      landlordId: tenancy.landlord_id,
-      rentalRequestId: tenancy.rental_request_id,
-      status: tenancy.status,
-      startDate: String(tenancy.start_date),
-      endDate: String(tenancy.end_date),
-      agreedMonthlyRent: Number(tenancy.agreed_monthly_rent),
-      agreedDeposit: Number(tenancy.agreed_deposit),
-      tenantSignedAt: tenancy.tenant_signed_at ?? null,
-      landlordSignedAt: tenancy.landlord_signed_at ?? null,
-      signedAt: tenancy.signed_at,
-      terminatedAt: tenancy.terminated_at,
-      createdAt: tenancy.created_at,
-      updatedAt: tenancy.updated_at,
-    };
+    const tenancySummary = await getLeaseById(trx, tenancy.id, landlordUserId, ['landlord']);
 
     return {
       application: applicationSummary,
@@ -646,24 +646,7 @@ import type { TenancyStatus } from '../../types/database.js';
  * Internal helper — maps a raw tenancy DB row to PublicTenancySummary.
  * Avoids duplicating the shape mapping across list/get/sign functions.
  */
-function mapTenancyRow(row: {
-  id: string;
-  unit_id: string;
-  tenant_id: string;
-  landlord_id: string;
-  rental_request_id: string | null;
-  status: string;
-  start_date: Date;
-  end_date: Date;
-  agreed_monthly_rent: number;
-  agreed_deposit: number;
-  tenant_signed_at: Date | null;
-  landlord_signed_at: Date | null;
-  signed_at: Date | null;
-  terminated_at: Date | null;
-  created_at: Date;
-  updated_at: Date;
-}): PublicTenancySummary {
+function mapTenancyRow(row: any): PublicTenancySummary {
   return {
     id: row.id,
     unitId: row.unit_id,
@@ -681,6 +664,17 @@ function mapTenancyRow(row: {
     terminatedAt: row.terminated_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    unitIdentifier: row.unit_identifier ?? undefined,
+    propertyId: row.property_id ?? undefined,
+    propertyTitle: row.property_title ?? undefined,
+    propertyAddress: row.property_address ?? undefined,
+    propertyCity: row.property_city ?? undefined,
+    tenantName: row.tenant_name ?? undefined,
+    tenantEmail: row.tenant_email ?? undefined,
+    tenantPhone: row.tenant_phone ?? undefined,
+    landlordName: row.landlord_name ?? undefined,
+    landlordEmail: row.landlord_email ?? undefined,
+    landlordPhone: row.landlord_phone ?? undefined,
   };
 }
 
@@ -699,7 +693,12 @@ export async function listLeases(
   const limit = query.limit ?? 20;
   const offset = (page - 1) * limit;
 
-  let base = db.selectFrom('tenancies as t');
+  let base = db
+    .selectFrom('tenancies as t')
+    .leftJoin('property_units as u', 'u.id', 't.unit_id')
+    .leftJoin('properties as p', 'p.id', 'u.property_id')
+    .leftJoin('users as tenant_user', 'tenant_user.id', 't.tenant_id')
+    .leftJoin('users as landlord_user', 'landlord_user.id', 't.landlord_id');
 
   if (roles.includes('tenant') && !roles.includes('landlord')) {
     base = base.where('t.tenant_id', '=', userId);
@@ -720,7 +719,35 @@ export async function listLeases(
     .executeTakeFirst();
 
   const rows = await base
-    .selectAll('t')
+    .select([
+      't.id',
+      't.unit_id',
+      't.tenant_id',
+      't.landlord_id',
+      't.rental_request_id',
+      't.status',
+      't.start_date',
+      't.end_date',
+      't.agreed_monthly_rent',
+      't.agreed_deposit',
+      't.tenant_signed_at',
+      't.landlord_signed_at',
+      't.signed_at',
+      't.terminated_at',
+      't.created_at',
+      't.updated_at',
+      'u.unit_identifier',
+      'p.id as property_id',
+      'p.title as property_title',
+      'p.address as property_address',
+      'p.city as property_city',
+      'tenant_user.name as tenant_name',
+      'tenant_user.email as tenant_email',
+      'tenant_user.phone as tenant_phone',
+      'landlord_user.name as landlord_name',
+      'landlord_user.email as landlord_email',
+      'landlord_user.phone as landlord_phone',
+    ])
     .orderBy('t.created_at', 'desc')
     .limit(limit)
     .offset(offset)
@@ -743,9 +770,41 @@ export async function getLeaseById(
   roles: UserRole[]
 ): Promise<PublicTenancySummary> {
   const row = await db
-    .selectFrom('tenancies')
-    .selectAll()
-    .where('id', '=', leaseId)
+    .selectFrom('tenancies as t')
+    .leftJoin('property_units as u', 'u.id', 't.unit_id')
+    .leftJoin('properties as p', 'p.id', 'u.property_id')
+    .leftJoin('users as tenant_user', 'tenant_user.id', 't.tenant_id')
+    .leftJoin('users as landlord_user', 'landlord_user.id', 't.landlord_id')
+    .select([
+      't.id',
+      't.unit_id',
+      't.tenant_id',
+      't.landlord_id',
+      't.rental_request_id',
+      't.status',
+      't.start_date',
+      't.end_date',
+      't.agreed_monthly_rent',
+      't.agreed_deposit',
+      't.tenant_signed_at',
+      't.landlord_signed_at',
+      't.signed_at',
+      't.terminated_at',
+      't.created_at',
+      't.updated_at',
+      'u.unit_identifier',
+      'p.id as property_id',
+      'p.title as property_title',
+      'p.address as property_address',
+      'p.city as property_city',
+      'tenant_user.name as tenant_name',
+      'tenant_user.email as tenant_email',
+      'tenant_user.phone as tenant_phone',
+      'landlord_user.name as landlord_name',
+      'landlord_user.email as landlord_email',
+      'landlord_user.phone as landlord_phone',
+    ])
+    .where('t.id', '=', leaseId)
     .executeTakeFirst();
 
   if (!row) {
@@ -854,13 +913,7 @@ export async function signLease(
         .execute();
     }
 
-    const final = await trx
-      .selectFrom('tenancies')
-      .selectAll()
-      .where('id', '=', leaseId)
-      .executeTakeFirstOrThrow();
-
-    return mapTenancyRow(final);
+    return await getLeaseById(trx, leaseId, userId, roles);
   });
 }
 
@@ -932,13 +985,7 @@ export async function terminateLease(
       .where('id', '=', tenancy.unit_id)
       .execute();
 
-    const updated = await trx
-      .selectFrom('tenancies')
-      .selectAll()
-      .where('id', '=', leaseId)
-      .executeTakeFirstOrThrow();
-
-    return mapTenancyRow(updated);
+    return await getLeaseById(trx, leaseId, userId, ['tenant', 'landlord', 'admin']);
   });
 }
 

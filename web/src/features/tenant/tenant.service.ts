@@ -12,7 +12,6 @@ import {
   INITIAL_PROPERTIES,
   INITIAL_SAVED_PROPERTY_IDS,
   INITIAL_APPLICATIONS,
-  INITIAL_ACTIVE_LEASE,
   INITIAL_PAYMENTS,
   INITIAL_MAINTENANCE,
   INITIAL_DISPUTES,
@@ -425,27 +424,121 @@ export const tenantService = {
   },
 
   // ── Leases & Agreements ────────────────────────────────────────────────
-  async getLeases(): Promise<LeaseAgreement[]> {
-    return getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, [INITIAL_ACTIVE_LEASE]);
+  async getLeases(accessToken?: string | null): Promise<LeaseAgreement[]> {
+    if (accessToken) {
+      try {
+        const res = await fetch('/api/tenancy/leases', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data?.leases)) {
+            const mapped = (json.data.leases as any[]).map((raw) => ({
+              id: raw.id,
+              unitId: raw.unitId,
+              propertyId: raw.propertyId || '',
+              tenantId: raw.tenantId,
+              landlordId: raw.landlordId,
+              rentalRequestId: raw.rentalRequestId,
+              status: raw.status,
+              startDate: raw.startDate ? String(raw.startDate).split('T')[0] : '',
+              endDate: raw.endDate ? String(raw.endDate).split('T')[0] : '',
+              agreedMonthlyRent: Number(raw.agreedMonthlyRent),
+              agreedDeposit: Number(raw.agreedDeposit),
+              tenantSignedAt: raw.tenantSignedAt ? String(raw.tenantSignedAt) : null,
+              landlordSignedAt: raw.landlordSignedAt ? String(raw.landlordSignedAt) : null,
+              signedAt: raw.signedAt ? String(raw.signedAt) : null,
+              terminatedAt: raw.terminatedAt ? String(raw.terminatedAt) : null,
+              createdAt: String(raw.createdAt),
+              updatedAt: String(raw.updatedAt),
+              propertyTitle: raw.propertyTitle || 'Residential Property',
+              propertyAddress: raw.propertyAddress || 'Kathmandu, Nepal',
+              propertyCity: raw.propertyCity || 'Kathmandu',
+              unitIdentifier: raw.unitIdentifier || 'Unit',
+              landlordName: raw.landlordName || 'Landlord',
+              landlordPhone: raw.landlordPhone || undefined,
+              tenantName: raw.tenantName || 'Tenant',
+            }));
+            if (mapped.length > 0) {
+              setStoredJson(STORAGE_KEYS.LEASES, mapped);
+              return mapped;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load leases from API:', err);
+      }
+    }
+    return getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, []);
   },
 
-  async signLease(leaseId: string): Promise<LeaseAgreement> {
-    try {
-      await fetch(`/api/tenancy/leases/${leaseId}/sign`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch {}
+  async signLease(leaseId: string, accessToken?: string | null): Promise<LeaseAgreement> {
+    if (accessToken) {
+      try {
+        const res = await fetch(`/api/tenancy/leases/${leaseId}/sign`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const raw = json.data;
+            const updated: LeaseAgreement = {
+              id: raw.id,
+              unitId: raw.unitId,
+              propertyId: raw.propertyId || '',
+              tenantId: raw.tenantId,
+              landlordId: raw.landlordId,
+              rentalRequestId: raw.rentalRequestId,
+              status: raw.status,
+              startDate: raw.startDate ? String(raw.startDate).split('T')[0] : '',
+              endDate: raw.endDate ? String(raw.endDate).split('T')[0] : '',
+              agreedMonthlyRent: Number(raw.agreedMonthlyRent),
+              agreedDeposit: Number(raw.agreedDeposit),
+              tenantSignedAt: raw.tenantSignedAt ? String(raw.tenantSignedAt) : null,
+              landlordSignedAt: raw.landlordSignedAt ? String(raw.landlordSignedAt) : null,
+              signedAt: raw.signedAt ? String(raw.signedAt) : null,
+              terminatedAt: raw.terminatedAt ? String(raw.terminatedAt) : null,
+              createdAt: String(raw.createdAt),
+              updatedAt: String(raw.updatedAt),
+              propertyTitle: raw.propertyTitle || 'Residential Property',
+              propertyAddress: raw.propertyAddress || 'Kathmandu, Nepal',
+              propertyCity: raw.propertyCity || 'Kathmandu',
+              unitIdentifier: raw.unitIdentifier || 'Unit',
+              landlordName: raw.landlordName || 'Landlord',
+              landlordPhone: raw.landlordPhone || undefined,
+              tenantName: raw.tenantName || 'Tenant',
+            };
+            const leases = getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, []);
+            const nextLeases = leases.map((l) => (l.id === leaseId ? updated : l));
+            setStoredJson(STORAGE_KEYS.LEASES, nextLeases);
+            return updated;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sign lease via API:', err);
+      }
+    }
 
-    const leases = await this.getLeases();
+    const leases = await this.getLeases(accessToken);
     const updated = leases.map(l => {
       if (l.id === leaseId) {
         const now = new Date().toISOString();
+        const bothSigned = Boolean(l.landlordSignedAt);
         return {
           ...l,
           tenantSignedAt: now,
-          signedAt: l.landlordSignedAt ? now : l.signedAt,
-          status: 'active' as const,
+          signedAt: bothSigned ? now : null,
+          status: bothSigned ? ('active' as const) : ('pending_signature' as const),
           updatedAt: now,
         };
       }
@@ -455,17 +548,60 @@ export const tenantService = {
     return updated.find(l => l.id === leaseId)!;
   },
 
-  async terminateLease(leaseId: string, reasonCode: string, narrative: string): Promise<LeaseAgreement> {
-    try {
-      await fetch(`/api/tenancy/leases/${leaseId}/terminate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ reasonCode, narrative }),
-      });
-    } catch {}
+  async terminateLease(leaseId: string, reasonCode: string, narrative: string, accessToken?: string | null): Promise<LeaseAgreement> {
+    if (accessToken) {
+      try {
+        const res = await fetch(`/api/tenancy/leases/${leaseId}/terminate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ reasonCode, narrative }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const raw = json.data;
+            const updated: LeaseAgreement = {
+              id: raw.id,
+              unitId: raw.unitId,
+              propertyId: raw.propertyId || '',
+              tenantId: raw.tenantId,
+              landlordId: raw.landlordId,
+              rentalRequestId: raw.rentalRequestId,
+              status: raw.status,
+              startDate: raw.startDate ? String(raw.startDate).split('T')[0] : '',
+              endDate: raw.endDate ? String(raw.endDate).split('T')[0] : '',
+              agreedMonthlyRent: Number(raw.agreedMonthlyRent),
+              agreedDeposit: Number(raw.agreedDeposit),
+              tenantSignedAt: raw.tenantSignedAt ? String(raw.tenantSignedAt) : null,
+              landlordSignedAt: raw.landlordSignedAt ? String(raw.landlordSignedAt) : null,
+              signedAt: raw.signedAt ? String(raw.signedAt) : null,
+              terminatedAt: raw.terminatedAt ? String(raw.terminatedAt) : null,
+              createdAt: String(raw.createdAt),
+              updatedAt: String(raw.updatedAt),
+              propertyTitle: raw.propertyTitle || 'Residential Property',
+              propertyAddress: raw.propertyAddress || 'Kathmandu, Nepal',
+              propertyCity: raw.propertyCity || 'Kathmandu',
+              unitIdentifier: raw.unitIdentifier || 'Unit',
+              landlordName: raw.landlordName || 'Landlord',
+              landlordPhone: raw.landlordPhone || undefined,
+              tenantName: raw.tenantName || 'Tenant',
+            };
+            const leases = getStoredJson<LeaseAgreement[]>(STORAGE_KEYS.LEASES, []);
+            const nextLeases = leases.map((l) => (l.id === leaseId ? updated : l));
+            setStoredJson(STORAGE_KEYS.LEASES, nextLeases);
+            return updated;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to terminate lease via API:', err);
+      }
+    }
 
-    const leases = await this.getLeases();
+    const leases = await this.getLeases(accessToken);
     const updated = leases.map(l => {
       if (l.id === leaseId) {
         const now = new Date().toISOString();

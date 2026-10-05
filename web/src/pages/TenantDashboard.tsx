@@ -144,7 +144,7 @@ export function TenantDashboard() {
         tenantService.getProperties(filters),
         Promise.resolve(tenantService.getSavedPropertyIds()),
         tenantService.getApplications(accessToken),
-        tenantService.getLeases(),
+        tenantService.getLeases(accessToken),
         tenantService.getPayments(),
         tenantService.getMaintenanceRequests(),
         tenantService.getDisputes(),

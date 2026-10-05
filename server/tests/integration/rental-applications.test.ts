@@ -4,6 +4,7 @@ import { sql } from 'kysely';
 import { createTestDatabase, type TestDbInstance } from '../helpers/test-db.js';
 import { createTestApp } from '../helpers/test-app.js';
 import * as coreSchema from '../../db/migrations/20260916000001_core_schema.js';
+import * as leaseSignaturesMigration from '../../db/migrations/20260922000002_lease_signatures.js';
 import { signAccessToken } from '../../src/common/utils/jwt.js';
 import { stMakePointGeography } from '../../src/common/gis.js';
 
@@ -28,6 +29,7 @@ describe('Tenant Rental Application Flow & One Active Tenancy Enforcement (/api/
   beforeAll(async () => {
     testDb = await createTestDatabase();
     await coreSchema.up(testDb.db);
+    await leaseSignaturesMigration.up(testDb.db);
     app = createTestApp(testDb.db);
 
     // 1. Seed Landlord

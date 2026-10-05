@@ -216,7 +216,11 @@ export function LandlordDashboard() {
     if (!accessToken) return;
     const updated = await landlordService.signLease(leaseId, accessToken);
     setLeases((prev) => prev.map((l) => l.id === leaseId ? { ...l, ...updated } : l));
-    showToast('✓ Lease signed — tenancy is now active');
+    if (updated.status === 'active') {
+      showToast('✓ Both parties have signed — tenancy is now active');
+    } else {
+      showToast("✓ Lease signed — awaiting tenant's counter-signature");
+    }
   }, [accessToken, showToast]);
 
   const handleTerminateLease = useCallback(async (leaseId: string, reasonCode: string, narrative: string) => {

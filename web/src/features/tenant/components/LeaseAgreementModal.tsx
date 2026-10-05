@@ -5,8 +5,9 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, FileText, CheckCircle2, ShieldCheck, Printer, PenTool } from 'lucide-react';
+import { X, FileText, CheckCircle2, ShieldCheck, Printer, PenTool, AlertTriangle } from 'lucide-react';
 import type { LeaseAgreement } from '@/types/tenant';
+import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
 
 interface LeaseAgreementModalProps {
@@ -22,14 +23,17 @@ export function LeaseAgreementModal({
 }: LeaseAgreementModalProps) {
   if (!lease) return null;
 
+  const { accessToken } = useAuth();
   const [isSigning, setIsSigning] = useState(false);
   const isTenantSigned = Boolean(lease.tenantSignedAt);
+  const isLandlordSigned = Boolean(lease.landlordSignedAt);
+  const canTenantSign = isLandlordSigned && !isTenantSigned;
 
   const handleSign = async () => {
-    if (isSigning || isTenantSigned) return;
+    if (isSigning || isTenantSigned || !isLandlordSigned) return;
     setIsSigning(true);
     try {
-      const updated = await tenantService.signLease(lease.id);
+      const updated = await tenantService.signLease(lease.id, accessToken);
       onSigned(updated);
     } finally {
       setIsSigning(false);
@@ -228,13 +232,20 @@ export function LeaseAgreementModal({
                   <span className="font-mono text-[10px] text-emerald-700">HASH: SHA256-LEGAL-VALID</span>
                 </div>
               )}
+
+              {!isLandlordSigned && !isTenantSigned && (
+                <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span className="font-medium">Awaiting landlord’s signature — you will be able to counter-sign once the landlord has signed this lease.</span>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Footer Signature CTA */}
           <div className="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
             <span className="text-xs text-slate-500">
-              {isTenantSigned ? 'You have signed this agreement' : 'Click below to affix your electronic signature'}
+              {isTenantSigned ? 'You have signed this agreement' : !isLandlordSigned ? 'Landlord signature required before you can sign' : 'Click below to affix your electronic signature'}
             </span>
 
             <div className="flex items-center gap-3">
@@ -246,7 +257,7 @@ export function LeaseAgreementModal({
                 Close
               </button>
 
-              {!isTenantSigned && (
+              {canTenantSign && (
                 <button
                   type="button"
                   disabled={isSigning}

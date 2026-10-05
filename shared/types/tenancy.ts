@@ -30,12 +30,14 @@ export interface PublicRentalRequestSummary {
     monthlyRent: number;
     securityDeposit: number;
     availabilityStatus: string;
+    areaSqft?: number | null;
   };
   property?: {
     id: string;
     title: string;
     address: string;
     city: string;
+    postalCode?: string | null;
   };
   tenant?: {
     id: string;
@@ -43,6 +45,9 @@ export interface PublicRentalRequestSummary {
     email: string;
     avatarUrl: string | null;
     phone: string | null;
+    createdAt?: Date | string;
+    isVerified?: boolean;
+    verificationStatus?: string;
   };
   landlord?: {
     id: string;
@@ -70,4 +75,17 @@ export interface PublicTenancySummary {
   terminatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  // Extended lease party & unit properties
+  unitIdentifier?: string;
+  propertyId?: string;
+  propertyTitle?: string;
+  propertyAddress?: string;
+  propertyCity?: string;
+  tenantName?: string;
+  tenantEmail?: string;
+  tenantPhone?: string | null;
+  landlordName?: string;
+  landlordEmail?: string;
+  landlordPhone?: string | null;
 }
+

@@ -12,7 +12,7 @@ export const INITIAL_PROPERTIES: PropertyListing[] = [
     totalFloors: 5,
     landlord: {
       id: 'landlord-001',
-      name: 'Bikram Thapa',
+      name: 'Property Landlord',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
       phone: '+977-9841234567',
       isVerified: true,
@@ -394,7 +394,7 @@ export const INITIAL_APPLICATIONS: RentalApplication[] = [
     },
     landlord: {
       id: 'landlord-001',
-      name: 'Bikram Thapa',
+      name: 'Property Landlord',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
       phone: '+977-9841234567',
     },
@@ -423,9 +423,9 @@ export const INITIAL_ACTIVE_LEASE: LeaseAgreement = {
   propertyAddress: 'Ward 2, Sanepa Road (near British School)',
   propertyCity: 'Lalitpur',
   unitIdentifier: 'Unit 201 (South Facing)',
-  landlordName: 'Bikram Thapa',
+  landlordName: 'Property Landlord',
   landlordPhone: '+977-9841234567',
-  tenantName: 'Dipesh Raj Shrestha',
+  tenantName: 'Resident Tenant',
 };
 
 export const INITIAL_PAYMENTS: PaymentRecord[] = [

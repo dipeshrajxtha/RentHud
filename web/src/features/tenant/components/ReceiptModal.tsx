@@ -75,13 +75,13 @@ export function ReceiptModal({ payment, lease, onClose }: ReceiptModalProps) {
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
                 <span className="text-slate-400 block text-[11px]">Billed To (Tenant):</span>
-                <strong className="text-slate-900 font-semibold block">{lease?.tenantName ?? 'Dipesh Raj'}</strong>
+                <strong className="text-slate-900 font-semibold block">{lease?.tenantName || 'Resident Tenant'}</strong>
                 <span className="text-slate-500">Premises: {lease?.unitIdentifier ?? 'Unit 201'}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[11px]">Payee (Landlord):</span>
-                <strong className="text-slate-900 font-semibold block">{lease?.landlordName ?? 'Bikram Thapa'}</strong>
-                <span className="text-slate-500">Property: {lease?.propertyTitle ?? 'Sanepa Heights'}</span>
+                <strong className="text-slate-900 font-semibold block">{lease?.landlordName || 'Property Landlord'}</strong>
+                <span className="text-slate-500">Property: {lease?.propertyTitle ?? 'Residential Property'}</span>
               </div>
             </div>
 

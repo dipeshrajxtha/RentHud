@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, AlertTriangle, Calendar, CheckCircle2, ShieldAlert } from 'lucide-react';
 import type { LeaseAgreement } from '@/types/tenant';
+import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
 
 interface EarlyTerminationModalProps {
@@ -30,6 +31,7 @@ export function EarlyTerminationModal({
 }: EarlyTerminationModalProps) {
   if (!lease) return null;
 
+  const { accessToken } = useAuth();
   const [reasonCode, setReasonCode] = useState('JOB_RELOCATION');
   const [narrative, setNarrative] = useState(
     'Due to an unforeseen personal relocation, I am providing formal early termination notice in accordance with the tenancy agreement covenants.'
@@ -49,7 +51,7 @@ export function EarlyTerminationModal({
     setIsSubmitting(true);
 
     try {
-      const updated = await tenantService.terminateLease(lease.id, reasonCode, narrative);
+      const updated = await tenantService.terminateLease(lease.id, reasonCode, narrative, accessToken);
       setSuccess(true);
       onTerminated(updated);
     } finally {

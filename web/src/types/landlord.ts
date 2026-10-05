@@ -102,12 +102,14 @@ export interface LandlordApplication {
     monthlyRent: number;
     securityDeposit: number;
     availabilityStatus: string;
+    areaSqft?: number | null;
   };
   property: {
     id: string;
     title: string;
     address: string;
     city: string;
+    postalCode?: string | null;
   };
   tenant: {
     id: string;
@@ -115,6 +117,9 @@ export interface LandlordApplication {
     email: string;
     avatarUrl: string | null;
     phone: string | null;
+    createdAt?: string | Date;
+    isVerified?: boolean;
+    verificationStatus?: string;
   };
 }
 
@@ -139,9 +144,13 @@ export interface LandlordLease {
   unitIdentifier?: string;
   propertyTitle?: string;
   propertyAddress?: string;
+  propertyCity?: string;
   tenantName?: string;
   tenantEmail?: string;
-  tenantPhone?: string | null;
+  tenantPhone?: string;
+  landlordName?: string;
+  landlordEmail?: string;
+  landlordPhone?: string;
 }
 
 export interface LandlordDispute {
