@@ -13,6 +13,8 @@ import {
   createUnitSchema,
   updateUnitSchema,
   propertyAndUnitIdParamSchema,
+  addPropertyPhotosSchema,
+  propertyPhotoParamSchema,
 } from './properties.schemas.js';
 
 export function createPropertiesRouter(dbInstance?: Kysely<Database>): Router {
@@ -117,6 +119,36 @@ export function createPropertiesRouter(dbInstance?: Kysely<Database>): Router {
     requireLandlord,
     validate(propertyAndUnitIdParamSchema, 'params'),
     propertiesController.deleteUnitHandler
+  );
+
+  // ── Property Photos Management Endpoints ───────────────────────────────────
+
+  // Landlord uploads/attaches photos to a property
+  router.post(
+    '/:id/photos',
+    authenticate,
+    requireLandlord,
+    validate(propertyIdParamSchema, 'params'),
+    validate(addPropertyPhotosSchema, 'body'),
+    propertiesController.addPropertyPhotosHandler
+  );
+
+  // Landlord deletes a photo from a property
+  router.delete(
+    '/:id/photos/:photoId',
+    authenticate,
+    requireLandlord,
+    validate(propertyPhotoParamSchema, 'params'),
+    propertiesController.deletePropertyPhotoHandler
+  );
+
+  // Landlord sets a photo as cover
+  router.patch(
+    '/:id/photos/:photoId/cover',
+    authenticate,
+    requireLandlord,
+    validate(propertyPhotoParamSchema, 'params'),
+    propertiesController.setPropertyCoverPhotoHandler
   );
 
   return router;

@@ -145,9 +145,9 @@ export function TenantDashboard() {
         Promise.resolve(tenantService.getSavedPropertyIds()),
         tenantService.getApplications(accessToken),
         tenantService.getLeases(accessToken),
-        tenantService.getPayments(),
-        tenantService.getMaintenanceRequests(),
-        tenantService.getDisputes(),
+        tenantService.getPayments(accessToken),
+        tenantService.getMaintenanceRequests(accessToken),
+        tenantService.getDisputes(accessToken),
       ]);
 
       setProperties(props);

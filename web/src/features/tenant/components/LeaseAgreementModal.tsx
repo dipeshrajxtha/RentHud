@@ -21,13 +21,13 @@ export function LeaseAgreementModal({
   onClose,
   onSigned,
 }: LeaseAgreementModalProps) {
-  if (!lease) return null;
-
   const { accessToken } = useAuth();
   const [isSigning, setIsSigning] = useState(false);
-  const isTenantSigned = Boolean(lease.tenantSignedAt);
-  const isLandlordSigned = Boolean(lease.landlordSignedAt);
+  const isTenantSigned = Boolean(lease?.tenantSignedAt);
+  const isLandlordSigned = Boolean(lease?.landlordSignedAt);
   const canTenantSign = isLandlordSigned && !isTenantSigned;
+
+  if (!lease) return null;
 
   const handleSign = async () => {
     if (isSigning || isTenantSigned || !isLandlordSigned) return;

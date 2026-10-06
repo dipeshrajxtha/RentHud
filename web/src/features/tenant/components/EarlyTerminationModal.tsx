@@ -29,8 +29,6 @@ export function EarlyTerminationModal({
   onClose,
   onTerminated,
 }: EarlyTerminationModalProps) {
-  if (!lease) return null;
-
   const { accessToken } = useAuth();
   const [reasonCode, setReasonCode] = useState('JOB_RELOCATION');
   const [narrative, setNarrative] = useState(
@@ -44,6 +42,8 @@ export function EarlyTerminationModal({
   const [acknowledged, setAcknowledged] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  if (!lease) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

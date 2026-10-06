@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs';
 import express, { type Application, type Request, type Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -13,6 +15,7 @@ import { createUsersRouter } from './modules/users/users.routes.js';
 import { createLandlordsRouter } from './modules/landlords/index.js';
 import { createPropertiesRouter } from './modules/properties/index.js';
 import { createTenancyRouter } from './modules/tenancy/index.js';
+import { createOperationsRouter } from './modules/operations/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
@@ -21,6 +24,15 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   if (overrideDb) {
     app.locals.db = overrideDb;
   }
+
+  // Ensure uploads directory exists
+  const uploadsPath = path.resolve(process.cwd(), config.storage.uploadDir);
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+
+  // ── Static uploaded assets
+  app.use('/uploads', express.static(uploadsPath));
 
   // ── Security headers
   app.use(
@@ -43,8 +55,8 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   );
 
   // ── Body parsing
-  app.use(express.json({ limit: '1mb' }));
-  app.use(express.urlencoded({ extended: false }));
+  app.use(express.json({ limit: '25mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '25mb' }));
 
   // ── Cookie parsing (required for HttpOnly refresh token cookie)
   app.use(cookieParser());
@@ -71,6 +83,7 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/landlords', createLandlordsRouter(overrideDb));
   app.use('/api/properties', createPropertiesRouter(overrideDb));
   app.use('/api/tenancy', createTenancyRouter(overrideDb));
+  app.use('/api', createOperationsRouter(overrideDb));
 
   // ── 404 for unmatched routes — forwarded to centralized error handler
   app.use((_req: Request, _res: Response, next) => {

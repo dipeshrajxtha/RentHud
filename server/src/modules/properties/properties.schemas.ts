@@ -145,6 +145,32 @@ export const propertyIdParamSchema = z.object({
 
 export type PropertyIdParam = z.infer<typeof propertyIdParamSchema>;
 
+export const propertyPhotoInputSchema = z
+  .object({
+    url: z.string().trim().max(1024).optional(),
+    data: z.string().optional(),
+    caption: z.string().trim().max(255).nullable().optional(),
+    isCover: z.boolean().optional().default(false),
+  })
+  .refine((d) => Boolean(d.url || d.data), {
+    message: 'Either image url or image file data must be provided',
+  });
+
+export type PropertyPhotoInput = z.infer<typeof propertyPhotoInputSchema>;
+
+export const addPropertyPhotosSchema = z.object({
+  photos: z.array(propertyPhotoInputSchema).min(1, 'At least one photo must be provided'),
+});
+
+export type AddPropertyPhotosInput = z.infer<typeof addPropertyPhotosSchema>;
+
+export const propertyPhotoParamSchema = z.object({
+  id: z.string().uuid('Invalid property ID format'),
+  photoId: z.string().uuid('Invalid photo ID format'),
+});
+
+export type PropertyPhotoParam = z.infer<typeof propertyPhotoParamSchema>;
+
 export const createPropertySchema = z.object({
   title: z.string().trim().min(2, 'Title must be at least 2 characters').max(255),
   description: z.string().trim().max(5000).optional(),
@@ -154,6 +180,7 @@ export const createPropertySchema = z.object({
   latitude: z.coerce.number().min(-90, 'Latitude must be >= -90').max(90, 'Latitude must be <= 90'),
   longitude: z.coerce.number().min(-180, 'Longitude must be >= -180').max(180, 'Longitude must be <= 180'),
   totalFloors: z.coerce.number().int().min(1, 'Total floors must be at least 1').optional().default(1),
+  photos: z.array(propertyPhotoInputSchema).optional(),
 });
 
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;

@@ -378,6 +378,55 @@ export type NewVerification = Insertable<VerificationsTable>;
 export type VerificationUpdate = Updateable<VerificationsTable>;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TABLE: maintenance_requests
+// ─────────────────────────────────────────────────────────────────────────────
+export interface MaintenanceRequestsTable {
+  id: Generated<string>;
+  tenancy_id: string | null;
+  property_id: string;
+  unit_id: string | null;
+  reported_by_id: string;
+  category: string;
+  urgency: Generated<'Emergency' | 'High' | 'Normal' | 'Low'>;
+  title: string;
+  description: string;
+  preferred_time_window: string | null;
+  assigned_contractor: string | null;
+  scheduled_date: Date | null;
+  status: Generated<'Reported' | 'Scheduled' | 'In Progress' | 'Resolved'>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export type MaintenanceRequestRow = Selectable<MaintenanceRequestsTable>;
+export type NewMaintenanceRequest = Insertable<MaintenanceRequestsTable>;
+export type MaintenanceRequestUpdate = Updateable<MaintenanceRequestsTable>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLE: rent_payments
+// ─────────────────────────────────────────────────────────────────────────────
+export interface RentPaymentsTable {
+  id: Generated<string>;
+  tenancy_id: string;
+  property_id: string;
+  tenant_id: string;
+  amount: number;
+  month_for: string;
+  due_date: Date;
+  paid_date: Date | null;
+  payment_method: string | null;
+  transaction_id: string | null;
+  status: Generated<'PENDING' | 'PAID' | 'OVERDUE'>;
+  receipt_number: string | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export type RentPaymentRow = Selectable<RentPaymentsTable>;
+export type NewRentPayment = Insertable<RentPaymentsTable>;
+export type RentPaymentUpdate = Updateable<RentPaymentsTable>;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Composite Database interface — maps table names to Kysely table types
 // ─────────────────────────────────────────────────────────────────────────────
 export interface Database {
@@ -396,4 +445,6 @@ export interface Database {
   photos: PhotosTable;
   verification_badges: VerificationBadgesTable;
   verifications: VerificationsTable;
+  maintenance_requests: MaintenanceRequestsTable;
+  rent_payments: RentPaymentsTable;
 }

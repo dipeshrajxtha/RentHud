@@ -77,8 +77,6 @@ motion-primitives/
 motion-primitives-local/
 
 # ── HAIKEI local/generated resources ──
-# Keep actual application assets under web/src/assets/
-# ignored only if these are local tooling folders:
 haikei/
 haikei-out/
 haikei-generated/

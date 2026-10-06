@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CheckCircle2, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import type { PaymentRecord } from '@/types/tenant';
+import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
 
 interface PayRentModalProps {
@@ -29,20 +30,20 @@ export function PayRentModal({
   onClose,
   onPaymentSuccess,
 }: PayRentModalProps) {
-  if (!payment) return null;
-
+  const { accessToken } = useAuth();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>('eSewa');
   const [isProcessing, setIsProcessing] = useState(false);
   const [completedPayment, setCompletedPayment] = useState<PaymentRecord | null>(null);
+
+  if (!payment) return null;
 
   const handlePay = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
     try {
-      // Simulate gateway roundtrip
-      await new Promise((r) => setTimeout(r, 1200));
-      const res = await tenantService.payRent(payment.id, selectedMethod);
+      const txId = `TX-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const res = await tenantService.payRent(payment.id, selectedMethod, txId, accessToken);
       setCompletedPayment(res);
       onPaymentSuccess(res);
     } finally {

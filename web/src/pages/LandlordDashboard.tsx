@@ -25,6 +25,7 @@ import { LandlordSettingsView } from '@/features/landlord/components/LandlordSet
 import { AddPropertyModal } from '@/features/landlord/components/AddPropertyModal';
 import { EditPropertyModal } from '@/features/landlord/components/EditPropertyModal';
 import { AddOrEditUnitModal } from '@/features/landlord/components/AddOrEditUnitModal';
+import { ManagePhotosModal } from '@/features/landlord/components/ManagePhotosModal';
 import type {
   LandlordProperty,
   LandlordApplication,
@@ -42,30 +43,6 @@ import { Menu, X, LogOut } from 'lucide-react';
 
 
 
-// ── Mock maintenance data (no backend table yet — plan §Module 7) ──────────
-const MOCK_MAINTENANCE: LandlordMaintenanceTicket[] = [
-  {
-    id: 'm1', tenancyId: 't1', propertyTitle: 'Sunrise Apartments 3B',
-    unitIdentifier: 'Unit 302', category: 'Plumbing', urgency: 'Emergency',
-    title: 'Burst water pipe in bathroom', description: 'Water leaking heavily from the pipe under the bathroom sink. Needs immediate attention.',
-    status: 'Reported', reportedBy: 'Aarav Sharma', createdAt: '2026-09-30T08:22:00Z',
-  },
-  {
-    id: 'm2', tenancyId: 't2', propertyTitle: 'Lakeside Flat 2F',
-    unitIdentifier: 'Unit F1', category: 'Electrical', urgency: 'High',
-    title: 'Power outage in kitchen', description: 'All kitchen outlets stopped working. Circuit breaker trips when microwave is used.',
-    status: 'Scheduled', reportedBy: 'Priya Thapa', assignedContractor: 'Bijay Electricals',
-    scheduledDate: '2026-10-04', createdAt: '2026-09-29T14:00:00Z',
-  },
-  {
-    id: 'm3', tenancyId: 't1', propertyTitle: 'Sunrise Apartments 3B',
-    unitIdentifier: 'Unit 201', category: 'Carpentry & Locks', urgency: 'Normal',
-    title: 'Main door lock broken', description: 'Door lock is stiff and sometimes does not open with the key.',
-    status: 'In Progress', reportedBy: 'Sunita Karki', assignedContractor: 'Ram Carpenter',
-    createdAt: '2026-09-28T10:00:00Z',
-  },
-];
-
 export function LandlordDashboard() {
   const { user, accessToken, signOut } = useAuth();
 
@@ -78,7 +55,7 @@ export function LandlordDashboard() {
   const [properties, setProperties] = useState<LandlordProperty[]>([]);
   const [applications, setApplications] = useState<LandlordApplication[]>([]);
   const [leases, setLeases] = useState<LandlordLease[]>([]);
-  const [maintenance] = useState<LandlordMaintenanceTicket[]>(MOCK_MAINTENANCE);
+  const [maintenance, setMaintenance] = useState<LandlordMaintenanceTicket[]>([]);
   const [disputes, setDisputes] = useState<LandlordDispute[]>([]);
   const [loadingProps, setLoadingProps] = useState(true);
   const [loadingLeases, setLoadingLeases] = useState(true);
@@ -89,6 +66,7 @@ export function LandlordDashboard() {
   const [editingProperty, setEditingProperty] = useState<LandlordProperty | null>(null);
   const [addUnitForProperty, setAddUnitForProperty] = useState<LandlordProperty | null>(null);
   const [editUnitCtx, setEditUnitCtx] = useState<{ property: LandlordProperty; unit: LandlordUnit } | null>(null);
+  const [managePhotosProperty, setManagePhotosProperty] = useState<LandlordProperty | null>(null);
 
   // ── Toast ──────────────────────────────────────────────────────────────
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -158,6 +136,28 @@ export function LandlordDashboard() {
       .then(setDisputes)
       .catch(() => {})
       .finally(() => setLoadingDisputes(false));
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    landlordService.getMaintenanceTickets(accessToken)
+      .then(setMaintenance)
+      .catch(() => {});
+  }, [accessToken]);
+
+  const handleUpdateMaintenanceTicket = useCallback(async (
+    ticketId: string,
+    update: {
+      status?: LandlordMaintenanceTicket['status'];
+      assignedContractor?: string;
+      scheduledDate?: string;
+    }
+  ) => {
+    if (!accessToken) return;
+    const updated = await landlordService.updateMaintenanceTicket(ticketId, update, accessToken);
+    setMaintenance((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, ...updated } : t))
+    );
   }, [accessToken]);
 
   // ── Derived badge counts ────────────────────────────────────────────────
@@ -287,6 +287,17 @@ export function LandlordDashboard() {
     showToast('Unit removed');
   }, [accessToken, showToast]);
 
+  // ── Photo handlers ─────────────────────────────────────────────────────
+  const handlePhotosUpdated = useCallback((propertyId: string, updatedPhotos: import('@/types/landlord').LandlordPhoto[]) => {
+    setProperties((prev) =>
+      prev.map((p) => {
+        if (p.id !== propertyId) return p;
+        const cover = updatedPhotos.find((ph) => ph.isCover) ?? updatedPhotos[0] ?? null;
+        return { ...p, photos: updatedPhotos, coverPhotoUrl: cover?.url ?? null };
+      })
+    );
+  }, []);
+
   // ── Render active view ─────────────────────────────────────────────────
   function renderView() {
     switch (activeTab) {
@@ -309,6 +320,7 @@ export function LandlordDashboard() {
             properties={properties}
             onOpenAddProperty={() => setAddPropertyOpen(true)}
             onOpenEditProperty={(p) => setEditingProperty(p)}
+            onOpenManagePhotos={(p) => setManagePhotosProperty(p)}
             onOpenAddUnit={(p) => setAddUnitForProperty(p)}
             onOpenEditUnit={(p, u) => setEditUnitCtx({ property: p, unit: u })}
             onDeleteProperty={handleDeleteProperty}
@@ -346,6 +358,7 @@ export function LandlordDashboard() {
           <MaintenanceBoardView
             tickets={maintenance}
             showToast={showToast}
+            onUpdateTicket={handleUpdateMaintenanceTicket}
           />
         );
       case 'disputes':
@@ -509,6 +522,7 @@ export function LandlordDashboard() {
             property={editingProperty}
             onClose={() => setEditingProperty(null)}
             onSubmit={handleEditPropertySubmit}
+            onOpenManagePhotos={(p) => setManagePhotosProperty(p)}
           />
         )}
       </AnimatePresence>
@@ -531,6 +545,17 @@ export function LandlordDashboard() {
             unit={editUnitCtx.unit}
             onClose={() => setEditUnitCtx(null)}
             onSubmit={handleEditUnitSubmit}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {managePhotosProperty && accessToken && (
+          <ManagePhotosModal
+            property={managePhotosProperty}
+            token={accessToken}
+            onClose={() => setManagePhotosProperty(null)}
+            onPhotosUpdated={handlePhotosUpdated}
           />
         )}
       </AnimatePresence>

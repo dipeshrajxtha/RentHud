@@ -12,6 +12,7 @@ import {
   Search,
   Trash2,
   Edit2,
+  Camera,
 } from 'lucide-react';
 import type { LandlordProperty, LandlordUnit } from '@/types/landlord';
 
@@ -21,6 +22,7 @@ interface PropertiesListViewProps {
   properties: LandlordProperty[];
   onOpenAddProperty: () => void;
   onOpenEditProperty: (property: LandlordProperty) => void;
+  onOpenManagePhotos: (property: LandlordProperty) => void;
   onOpenAddUnit: (property: LandlordProperty) => void;
   onOpenEditUnit: (property: LandlordProperty, unit: LandlordUnit) => void;
   onDeleteProperty: (propertyId: string) => Promise<void>;
@@ -31,6 +33,7 @@ export function PropertiesListView({
   properties,
   onOpenAddProperty,
   onOpenEditProperty,
+  onOpenManagePhotos,
   onOpenAddUnit,
   onOpenEditUnit,
   onDeleteProperty,
@@ -185,14 +188,32 @@ export function PropertiesListView({
                 <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
                   <div className="flex items-start sm:items-center gap-4 min-w-0">
                     {prop.coverPhotoUrl ? (
-                      <img
-                        src={prop.coverPhotoUrl}
-                        alt={prop.title}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-slate-200 shrink-0"
-                      />
+                      <div
+                        onClick={() => onOpenManagePhotos(prop)}
+                        className="relative group/cover cursor-pointer shrink-0"
+                        title="Click to manage property photos"
+                      >
+                        <img
+                          src={prop.coverPhotoUrl}
+                          alt={prop.title}
+                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-slate-200"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-slate-900/40 rounded-2xl opacity-0 group-hover/cover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Camera className="w-5 h-5" />
+                        </div>
+                      </div>
                     ) : (
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
-                        <Building className="w-8 h-8" />
+                      <div
+                        onClick={() => onOpenManagePhotos(prop)}
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col items-center justify-center text-emerald-600 shrink-0 cursor-pointer hover:bg-emerald-100 transition-colors"
+                        title="Click to upload photos for this property"
+                      >
+                        <Camera className="w-5 h-5 mb-0.5" />
+                        <span className="text-[9px] font-bold">Add Photo</span>
                       </div>
                     )}
 
@@ -233,6 +254,16 @@ export function PropertiesListView({
 
                   {/* Actions & Expansion Toggle */}
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => onOpenManagePhotos(prop)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      title="Manage property photos"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Photos ({prop.photos?.length || 0})</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => onOpenAddUnit(prop)}

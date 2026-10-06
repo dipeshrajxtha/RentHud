@@ -22,7 +22,9 @@ import type {
   UpdatePropertyInput,
   CreateUnitInput,
   UpdateUnitInput,
+  PropertyPhotoInput,
 } from './properties.schemas.js';
+import { saveBase64Image, deleteStoredImage } from '../../common/utils/storage.js';
 import type {
   PublicPropertySummary,
   PublicPropertyDetail,
@@ -725,6 +727,40 @@ export async function createProperty(
     .returningAll()
     .execute();
 
+  const photos: any[] = [];
+  if (input.photos && input.photos.length > 0) {
+    const hasCover = input.photos.some((p) => p.isCover);
+    for (let i = 0; i < input.photos.length; i++) {
+      const p = input.photos[i];
+      const url = p.data ? await saveBase64Image(p.data, 'properties') : p.url!;
+      const isCover = p.isCover ?? (!hasCover && i === 0);
+
+      const [ph] = await db
+        .insertInto('photos')
+        .values({
+          property_id: row.id,
+          unit_id: null,
+          uploaded_by: landlordId,
+          url,
+          caption: p.caption ?? null,
+          is_cover: isCover,
+          display_order: i,
+        })
+        .returningAll()
+        .execute();
+
+      photos.push({
+        id: ph.id,
+        url: ph.url,
+        caption: ph.caption,
+        isCover: Boolean(ph.is_cover),
+        displayOrder: ph.display_order,
+      });
+    }
+  }
+
+  const coverPhoto = photos.find((p) => p.isCover) ?? photos[0] ?? null;
+
   return {
     id: row.id,
     landlordId: row.landlord_id,
@@ -739,6 +775,8 @@ export async function createProperty(
     },
     totalFloors: row.total_floors,
     isActive: row.is_active,
+    coverPhotoUrl: coverPhoto?.url ?? null,
+    photos,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -1333,5 +1371,203 @@ export async function deleteUnit(
     .execute();
 
   return { message: 'Unit successfully deleted' };
+}
+
+/**
+ * Adds one or more photos to a property owned by the landlord.
+ */
+export async function addPropertyPhotos(
+  db: Kysely<Database>,
+  landlordId: string,
+  propertyId: string,
+  photosInput: PropertyPhotoInput[]
+) {
+  const prop = await db
+    .selectFrom('properties')
+    .select(['id', 'landlord_id'])
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!prop) {
+    throw new NotFoundError('Property not found');
+  }
+  if (prop.landlord_id !== landlordId) {
+    throw new ForbiddenError('You are not authorized to modify photos for this property');
+  }
+
+  const existingPhotos = await db
+    .selectFrom('photos')
+    .selectAll()
+    .where('property_id', '=', propertyId)
+    .orderBy('display_order', 'asc')
+    .execute();
+
+  const hasExistingCover = existingPhotos.some((p) => p.is_cover);
+  let nextOrder = existingPhotos.length;
+
+  const insertedPhotos: any[] = [];
+
+  for (let i = 0; i < photosInput.length; i++) {
+    const p = photosInput[i];
+    const url = p.data ? await saveBase64Image(p.data, 'properties') : p.url!;
+
+    let isCover = Boolean(p.isCover);
+    if (!hasExistingCover && i === 0 && !photosInput.some((x) => x.isCover)) {
+      isCover = true;
+    }
+
+    if (isCover) {
+      await db
+        .updateTable('photos')
+        .set({ is_cover: false })
+        .where('property_id', '=', propertyId)
+        .execute();
+    }
+
+    const [newPhoto] = await db
+      .insertInto('photos')
+      .values({
+        property_id: propertyId,
+        unit_id: null,
+        uploaded_by: landlordId,
+        url,
+        caption: p.caption ?? null,
+        is_cover: isCover,
+        display_order: nextOrder++,
+      })
+      .returningAll()
+      .execute();
+
+    insertedPhotos.push({
+      id: newPhoto.id,
+      url: newPhoto.url,
+      caption: newPhoto.caption,
+      isCover: Boolean(newPhoto.is_cover),
+      displayOrder: newPhoto.display_order,
+    });
+  }
+
+  return insertedPhotos;
+}
+
+/**
+ * Deletes a photo from a property owned by the landlord.
+ */
+export async function deletePropertyPhoto(
+  db: Kysely<Database>,
+  landlordId: string,
+  propertyId: string,
+  photoId: string
+) {
+  const prop = await db
+    .selectFrom('properties')
+    .select(['id', 'landlord_id'])
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!prop) {
+    throw new NotFoundError('Property not found');
+  }
+  if (prop.landlord_id !== landlordId) {
+    throw new ForbiddenError('You are not authorized to modify photos for this property');
+  }
+
+  const targetPhoto = await db
+    .selectFrom('photos')
+    .selectAll()
+    .where('id', '=', photoId)
+    .where('property_id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!targetPhoto) {
+    throw new NotFoundError('Photo not found');
+  }
+
+  const wasCover = Boolean(targetPhoto.is_cover);
+
+  await db.deleteFrom('photos').where('id', '=', photoId).execute();
+
+  await deleteStoredImage(targetPhoto.url);
+
+  if (wasCover) {
+    const nextPhoto = await db
+      .selectFrom('photos')
+      .selectAll()
+      .where('property_id', '=', propertyId)
+      .orderBy('display_order', 'asc')
+      .limit(1)
+      .executeTakeFirst();
+
+    if (nextPhoto) {
+      await db
+        .updateTable('photos')
+        .set({ is_cover: true })
+        .where('id', '=', nextPhoto.id)
+        .execute();
+    }
+  }
+
+  return { success: true, id: photoId };
+}
+
+/**
+ * Sets a specific photo as the cover photo for a property.
+ */
+export async function setPropertyCoverPhoto(
+  db: Kysely<Database>,
+  landlordId: string,
+  propertyId: string,
+  photoId: string
+) {
+  const prop = await db
+    .selectFrom('properties')
+    .select(['id', 'landlord_id'])
+    .where('id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!prop) {
+    throw new NotFoundError('Property not found');
+  }
+  if (prop.landlord_id !== landlordId) {
+    throw new ForbiddenError('You are not authorized to modify photos for this property');
+  }
+
+  const targetPhoto = await db
+    .selectFrom('photos')
+    .selectAll()
+    .where('id', '=', photoId)
+    .where('property_id', '=', propertyId)
+    .executeTakeFirst();
+
+  if (!targetPhoto) {
+    throw new NotFoundError('Photo not found');
+  }
+
+  await db
+    .updateTable('photos')
+    .set({ is_cover: false })
+    .where('property_id', '=', propertyId)
+    .execute();
+
+  await db
+    .updateTable('photos')
+    .set({ is_cover: true })
+    .where('id', '=', photoId)
+    .execute();
+
+  const allPhotos = await db
+    .selectFrom('photos')
+    .selectAll()
+    .where('property_id', '=', propertyId)
+    .orderBy('display_order', 'asc')
+    .execute();
+
+  return allPhotos.map((ph) => ({
+    id: ph.id,
+    url: ph.url,
+    caption: ph.caption,
+    isCover: Boolean(ph.is_cover),
+    displayOrder: ph.display_order,
+  }));
 }
 

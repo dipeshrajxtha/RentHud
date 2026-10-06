@@ -201,6 +201,13 @@ export interface LandlordProfile {
   updatedAt: string | Date;
 }
 
+export interface CreatePropertyPhotoInput {
+  url?: string;
+  data?: string;
+  caption?: string | null;
+  isCover?: boolean;
+}
+
 export interface CreatePropertyDto {
   title: string;
   description?: string;
@@ -210,6 +217,7 @@ export interface CreatePropertyDto {
   latitude: number;
   longitude: number;
   totalFloors?: number;
+  photos?: CreatePropertyPhotoInput[];
 }
 
 export interface UpdatePropertyDto {

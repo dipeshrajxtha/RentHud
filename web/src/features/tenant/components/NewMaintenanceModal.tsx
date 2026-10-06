@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Wrench } from 'lucide-react';
 import type { LeaseAgreement, MaintenanceRequest } from '@/types/tenant';
+import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
 
 interface NewMaintenanceModalProps {
@@ -35,14 +36,15 @@ export function NewMaintenanceModal({
   onClose,
   onCreated,
 }: NewMaintenanceModalProps) {
-  if (!lease) return null;
-
+  const { accessToken } = useAuth();
   const [category, setCategory] = useState<MaintenanceRequest['category']>('Plumbing');
   const [urgency, setUrgency] = useState<MaintenanceRequest['urgency']>('Medium');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [preferredTime, setPreferredTime] = useState('Morning (9:00 AM – 12:00 PM)');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!lease) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +54,8 @@ export function NewMaintenanceModal({
     try {
       const ticket = await tenantService.createMaintenanceRequest({
         tenancyId: lease.id,
+        propertyId: lease.propertyId,
+        unitId: lease.unitId,
         unitIdentifier: lease.unitIdentifier,
         propertyTitle: lease.propertyTitle,
         category,
@@ -59,7 +63,7 @@ export function NewMaintenanceModal({
         title,
         description,
         preferredTimeWindow: preferredTime,
-      });
+      }, accessToken);
 
       onCreated(ticket);
       onClose();

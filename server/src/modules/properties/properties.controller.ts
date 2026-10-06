@@ -13,6 +13,9 @@ import {
   getUnitsByProperty,
   updateUnit,
   deleteUnit,
+  addPropertyPhotos,
+  deletePropertyPhoto,
+  setPropertyCoverPhoto,
 } from './properties.service.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import type {
@@ -23,6 +26,8 @@ import type {
   CreateUnitInput,
   UpdateUnitInput,
   PropertyAndUnitIdParam,
+  AddPropertyPhotosInput,
+  PropertyPhotoParam,
 } from './properties.schemas.js';
 
 export function getDb(req: Request): Kysely<Database> {
@@ -214,6 +219,75 @@ export async function deleteUnitHandler(
       req.params.propertyId,
       req.params.unitId,
       req.user!.id
+    );
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/properties/:id/photos
+ * Landlord uploads/adds photos to their property.
+ */
+export async function addPropertyPhotosHandler(
+  req: Request<PropertyIdParam, {}, AddPropertyPhotosInput>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await addPropertyPhotos(
+      db,
+      req.user!.id,
+      req.params.id,
+      req.body.photos
+    );
+    sendSuccess(res, result, 201);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * DELETE /api/properties/:id/photos/:photoId
+ * Landlord removes a photo from their property.
+ */
+export async function deletePropertyPhotoHandler(
+  req: Request<PropertyPhotoParam>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await deletePropertyPhoto(
+      db,
+      req.user!.id,
+      req.params.id,
+      req.params.photoId
+    );
+    sendSuccess(res, result, 200);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * PATCH /api/properties/:id/photos/:photoId/cover
+ * Sets the specified photo as the primary cover photo for the property.
+ */
+export async function setPropertyCoverPhotoHandler(
+  req: Request<PropertyPhotoParam>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const db = getDb(req);
+    const result = await setPropertyCoverPhoto(
+      db,
+      req.user!.id,
+      req.params.id,
+      req.params.photoId
     );
     sendSuccess(res, result, 200);
   } catch (err) {

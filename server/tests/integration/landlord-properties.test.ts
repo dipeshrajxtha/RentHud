@@ -477,4 +477,105 @@ describe('Landlord Property & Unit Management (/api/properties)', () => {
       expect(prop.rows[0].is_active).toBe(false);
     });
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 3. Property Photo Management
+  // ──────────────────────────────────────────────────────────────────────────
+  describe('Property Photos Management', () => {
+    let photoPropertyId: string;
+    let photo1Id: string;
+    let photo2Id: string;
+
+    it('creates property with initial photos and sets first photo as cover', async () => {
+      const res = await request(app)
+        .post('/api/properties')
+        .set('Authorization', `Bearer ${landlord1Token}`)
+        .send({
+          title: 'Photo Villa',
+          address: 'Kathmandu Heights',
+          city: 'Kathmandu',
+          latitude: 27.712,
+          longitude: 85.321,
+          photos: [
+            {
+              url: 'https://images.unsplash.com/photo-sample-1',
+              caption: 'Front Exterior',
+              isCover: true,
+            },
+            {
+              url: 'https://images.unsplash.com/photo-sample-2',
+              caption: 'Balcony View',
+            },
+          ],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.photos).toHaveLength(2);
+      expect(res.body.data.coverPhotoUrl).toBe('https://images.unsplash.com/photo-sample-1');
+      photoPropertyId = res.body.data.id;
+      photo1Id = res.body.data.photos[0].id;
+      photo2Id = res.body.data.photos[1].id;
+    });
+
+    it('adds new photos to an existing property (201)', async () => {
+      // Small 1x1 transparent GIF base64 data URL
+      const tinyGif =
+        'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+      const res = await request(app)
+        .post(`/api/properties/${photoPropertyId}/photos`)
+        .set('Authorization', `Bearer ${landlord1Token}`)
+        .send({
+          photos: [
+            {
+              data: tinyGif,
+              caption: 'Uploaded Living Room',
+            },
+          ],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveLength(1);
+      expect(res.body.data[0].url).toMatch(/^\/uploads\/properties\//);
+      expect(res.body.data[0].caption).toBe('Uploaded Living Room');
+    });
+
+    it('prevents non-owner from adding photos (403)', async () => {
+      const res = await request(app)
+        .post(`/api/properties/${photoPropertyId}/photos`)
+        .set('Authorization', `Bearer ${landlord2Token}`)
+        .send({
+          photos: [
+            {
+              url: 'https://images.unsplash.com/intruder',
+            },
+          ],
+        });
+
+      expect(res.status).toBe(403);
+    });
+
+    it('allows landlord to switch cover photo (200)', async () => {
+      const res = await request(app)
+        .patch(`/api/properties/${photoPropertyId}/photos/${photo2Id}/cover`)
+        .set('Authorization', `Bearer ${landlord1Token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const updatedPhoto2 = res.body.data.find((p: any) => p.id === photo2Id);
+      expect(updatedPhoto2.isCover).toBe(true);
+    });
+
+    it('allows landlord to delete a photo (200)', async () => {
+      const res = await request(app)
+        .delete(`/api/properties/${photoPropertyId}/photos/${photo1Id}`)
+        .set('Authorization', `Bearer ${landlord1Token}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe(photo1Id);
+    });
+  });
 });

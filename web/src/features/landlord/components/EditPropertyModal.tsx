@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Camera } from 'lucide-react';
 import type { LandlordProperty, UpdatePropertyDto } from '@/types/landlord';
 
 interface EditPropertyModalProps {
   property: LandlordProperty;
   onClose: () => void;
   onSubmit: (propertyId: string, dto: UpdatePropertyDto) => Promise<void>;
+  onOpenManagePhotos?: (property: LandlordProperty) => void;
 }
 
 export function EditPropertyModal({
   property,
   onClose,
   onSubmit,
+  onOpenManagePhotos,
 }: EditPropertyModalProps) {
   const [title, setTitle] = useState(property.title);
   const [address, setAddress] = useState(property.address);
@@ -141,6 +143,28 @@ export function EditPropertyModal({
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             />
           </div>
+
+          {onOpenManagePhotos && (
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-slate-700 block">Property Photos</span>
+                <span className="text-[11px] text-slate-400">
+                  {property.photos?.length || 0} photo(s) currently attached
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenManagePhotos(property);
+                }}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl font-semibold flex items-center gap-1.5 text-xs transition-colors"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Manage Photos</span>
+              </button>
+            </div>
+          )}
 
           <div className="pt-2 flex items-center justify-end gap-2">
             <button

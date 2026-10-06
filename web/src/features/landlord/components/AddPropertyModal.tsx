@@ -7,6 +7,8 @@ import {
   Check,
   ChevronRight,
   ChevronLeft,
+  Upload,
+  Star,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -52,8 +54,16 @@ function MapPinPicker({
   return <Marker position={position} icon={customPin} />;
 }
 
+interface LocalPhoto {
+  id: string;
+  data?: string;
+  url?: string;
+  caption?: string;
+  isCover: boolean;
+}
+
 export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -82,6 +92,73 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
       availabilityStatus: 'AVAILABLE',
     },
   ]);
+
+  // Step 4: Photos
+  const [photos, setPhotos] = useState<LocalPhoto[]>([]);
+  const [urlPhotoInput, setUrlPhotoInput] = useState('');
+  const [captionPhotoInput, setCaptionPhotoInput] = useState('');
+  const [isPhotoDragOver, setIsPhotoDragOver] = useState(false);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoFilesSelected = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPhotos((prev) => {
+          const isCover = prev.length === 0;
+          return [
+            ...prev,
+            {
+              id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              data: reader.result as string,
+              caption: file.name.replace(/\.[^/.]+$/, ''),
+              isCover,
+            },
+          ];
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddUrlPhoto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!urlPhotoInput.trim()) return;
+    setPhotos((prev) => [
+      ...prev,
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        url: urlPhotoInput.trim(),
+        caption: captionPhotoInput.trim() || undefined,
+        isCover: prev.length === 0,
+      },
+    ]);
+    setUrlPhotoInput('');
+    setCaptionPhotoInput('');
+  };
+
+  const handleSetCoverPhoto = (id: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => ({
+        ...p,
+        isCover: p.id === id,
+      }))
+    );
+  };
+
+  const handleRemovePhoto = (id: string) => {
+    setPhotos((prev) => {
+      const remaining = prev.filter((p) => p.id !== id);
+      const wasCover = prev.find((p) => p.id === id)?.isCover;
+      if (wasCover && remaining.length > 0 && !remaining.some((p) => p.isCover)) {
+        remaining[0].isCover = true;
+      }
+      return remaining;
+    });
+  };
 
   // Unit form helper
   const addUnitField = () => {
@@ -155,6 +232,12 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
         latitude: coords[0],
         longitude: coords[1],
         totalFloors: Number(totalFloors) || 1,
+        photos: photos.map((p) => ({
+          data: p.data,
+          url: p.url,
+          caption: p.caption,
+          isCover: p.isCover,
+        })),
       };
 
       await onSubmit(propertyDto, units);
@@ -181,10 +264,12 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900">List New Property</h2>
-            <p className="text-xs text-slate-500">Step {step} of 4 — {
+            <p className="text-xs text-slate-500">Step {step} of 5 — {
               step === 1 ? 'Building Details' :
               step === 2 ? 'PostGIS Location Pin' :
-              step === 3 ? 'Rentable Units Configuration' : 'Review & Confirm'
+              step === 3 ? 'Rentable Units Configuration' :
+              step === 4 ? 'Property Photos & Media' :
+              'Review & Confirm'
             }</p>
           </div>
           <button
@@ -197,8 +282,8 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
         </div>
 
         {/* Step Progress Pills */}
-        <div className="px-6 pt-3 pb-1 grid grid-cols-4 gap-2">
-          {[1, 2, 3, 4].map((s) => (
+        <div className="px-6 pt-3 pb-1 grid grid-cols-5 gap-1.5">
+          {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
               className={`h-1.5 rounded-full transition-all ${
@@ -499,8 +584,164 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
             </div>
           )}
 
-          {/* STEP 4: REVIEW & CONFIRM */}
+          {/* STEP 4: PROPERTY PHOTOS & MEDIA */}
           {step === 4 && (
+            <div className="space-y-4 text-xs">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-900 block">Property Photos & Media</span>
+                  <span className="text-slate-500 text-[11px]">
+                    Upload building exterior, lobby, room interiors, or floor layouts
+                  </span>
+                </div>
+                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                  {photos.length} {photos.length === 1 ? 'photo' : 'photos'} added
+                </span>
+              </div>
+
+              {/* Upload Dropzone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(true);
+                }}
+                onDragLeave={() => setIsPhotoDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsPhotoDragOver(false);
+                  handlePhotoFilesSelected(e.dataTransfer.files);
+                }}
+                onClick={() => photoFileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${
+                  isPhotoDragOver
+                    ? 'border-emerald-500 bg-emerald-50/60'
+                    : 'border-slate-200 hover:border-emerald-400 bg-slate-50/50'
+                }`}
+              >
+                <input
+                  ref={photoFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => handlePhotoFilesSelected(e.target.files)}
+                />
+
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-xs border border-slate-200 flex items-center justify-center text-emerald-600 mb-2">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <span className="font-bold text-slate-800 text-xs">
+                    Click or drag & drop property photos from your device
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">
+                    Supports JPG, PNG, WEBP, and GIF up to 10MB each.
+                  </span>
+                  <button
+                    type="button"
+                    className="mt-2.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold inline-flex items-center gap-1 shadow-2xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      photoFileInputRef.current?.click();
+                    }}
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Choose Images</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Add by URL */}
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={urlPhotoInput}
+                  onChange={(e) => setUrlPhotoInput(e.target.value)}
+                  placeholder="Or paste an image URL (e.g. Unsplash or CDN)..."
+                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                />
+                <button
+                  type="button"
+                  disabled={!urlPhotoInput.trim()}
+                  onClick={handleAddUrlPhoto}
+                  className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs disabled:opacity-50 transition-colors"
+                >
+                  Add URL
+                </button>
+              </div>
+
+              {/* Gallery preview */}
+              {photos.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                    <span>Uploaded Gallery ({photos.length})</span>
+                    <span>Click the star to set Primary Cover</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1">
+                    {photos.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`group relative rounded-xl overflow-hidden border ${
+                          p.isCover
+                            ? 'ring-2 ring-emerald-500 border-emerald-500 shadow-xs'
+                            : 'border-slate-200'
+                        }`}
+                      >
+                        <div className="aspect-4/3 w-full bg-slate-100 relative">
+                          <img
+                            src={p.data || p.url}
+                            alt={p.caption || 'Property'}
+                            className="w-full h-full object-cover"
+                          />
+                          {p.isCover && (
+                            <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] font-bold flex items-center gap-0.5 shadow-xs">
+                              <Star className="w-2.5 h-2.5 fill-white" />
+                              <span>Cover</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                            {!p.isCover && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetCoverPhoto(p.id)}
+                                className="p-1 bg-white hover:bg-emerald-50 text-slate-800 rounded-lg text-[10px] font-bold"
+                                title="Set as cover"
+                              >
+                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePhoto(p.id)}
+                              className="p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"
+                              title="Remove"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        {p.caption && (
+                          <div className="p-1 bg-white border-t border-slate-100">
+                            <p className="text-[10px] text-slate-600 truncate font-medium">
+                              {p.caption}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px]">
+                  💡 <strong>Tip:</strong> While photos are optional, properties with high-quality photos receive up to 5x more tenant inquiries! You can also upload photos later from your property dashboard.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 5: REVIEW & CONFIRM */}
+          {step === 5 && (
             <div className="space-y-4 text-xs">
               <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-2">
                 <span className="font-bold text-emerald-900 text-sm block">Property Summary</span>
@@ -523,6 +764,41 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
                   </div>
                 </div>
               </div>
+
+              {/* Photos in Review */}
+              {photos.length > 0 && (
+                <div className="p-4 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 block">
+                      Uploaded Media ({photos.length} photos)
+                    </span>
+                    <span className="text-[11px] text-emerald-700 font-semibold">
+                      Cover: {photos.find((p) => p.isCover)?.caption || 'Cover Selected'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                    {photos.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`relative shrink-0 w-20 h-16 rounded-xl overflow-hidden border ${
+                          p.isCover ? 'ring-2 ring-emerald-500' : 'border-slate-200'
+                        }`}
+                      >
+                        <img
+                          src={p.data || p.url}
+                          alt="Thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                        {p.isCover && (
+                          <div className="absolute bottom-0 inset-x-0 bg-emerald-600 text-white text-[9px] text-center font-bold py-0.5">
+                            Cover
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="p-4 rounded-2xl border border-slate-200 space-y-2">
                 <span className="font-bold text-slate-900 block">Configured Units ({units.length})</span>
@@ -564,7 +840,7 @@ export function AddPropertyModal({ onClose, onSubmit }: AddPropertyModalProps) {
             <div />
           )}
 
-          {step < 4 ? (
+          {step < 5 ? (
             <button
               type="button"
               disabled={step === 1 && (!title.trim() || !address.trim())}

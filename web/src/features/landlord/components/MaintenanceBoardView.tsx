@@ -20,6 +20,14 @@ import type { LandlordMaintenanceTicket } from '@/types/landlord';
 interface MaintenanceBoardViewProps {
   tickets: LandlordMaintenanceTicket[];
   showToast: (msg: string, type?: 'success' | 'error') => void;
+  onUpdateTicket?: (
+    id: string,
+    update: {
+      status?: LandlordMaintenanceTicket['status'];
+      assignedContractor?: string;
+      scheduledDate?: string;
+    }
+  ) => Promise<void>;
 }
 
 const URGENCY_CONFIG = {
@@ -50,7 +58,7 @@ const STATUS_PIPELINE: LandlordMaintenanceTicket['status'][] = ['Reported', 'Sch
 type FilterUrgency = 'ALL' | LandlordMaintenanceTicket['urgency'];
 type FilterStatus = 'ALL' | LandlordMaintenanceTicket['status'];
 
-export function MaintenanceBoardView({ tickets, showToast }: MaintenanceBoardViewProps) {
+export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: MaintenanceBoardViewProps) {
   const [filterUrgency, setFilterUrgency] = useState<FilterUrgency>('ALL');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('ALL');
   const [selected, setSelected] = useState<LandlordMaintenanceTicket | null>(null);
@@ -58,6 +66,10 @@ export function MaintenanceBoardView({ tickets, showToast }: MaintenanceBoardVie
   const [contractorInput, setContractorInput] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [landlordNotes, setLandlordNotes] = useState('');
+
+  React.useEffect(() => {
+    setLocalTickets(tickets);
+  }, [tickets]);
 
   const filtered = localTickets.filter((t) => {
     if (filterUrgency !== 'ALL' && t.urgency !== filterUrgency) return false;
@@ -68,31 +80,53 @@ export function MaintenanceBoardView({ tickets, showToast }: MaintenanceBoardVie
   const openCount = localTickets.filter((t) => t.status !== 'Resolved').length;
   const emergencyCount = localTickets.filter((t) => t.urgency === 'Emergency' && t.status !== 'Resolved').length;
 
-  function handleAdvanceStatus(ticketId: string) {
-    setLocalTickets((prev) => prev.map((t) => {
-      if (t.id !== ticketId) return t;
-      const idx = STATUS_PIPELINE.indexOf(t.status);
-      if (idx >= STATUS_PIPELINE.length - 1) return t;
-      const newStatus = STATUS_PIPELINE[idx + 1];
-      return { ...t, status: newStatus };
-    }));
+  async function handleAdvanceStatus(ticketId: string) {
+    const t = localTickets.find((item) => item.id === ticketId);
+    if (!t) return;
+    const idx = STATUS_PIPELINE.indexOf(t.status);
+    if (idx >= STATUS_PIPELINE.length - 1) return;
+    const newStatus = STATUS_PIPELINE[idx + 1];
+
+    setLocalTickets((prev) => prev.map((item) => (item.id === ticketId ? { ...item, status: newStatus } : item)));
     showToast('✓ Status updated');
+
+    if (onUpdateTicket) {
+      try {
+        await onUpdateTicket(ticketId, { status: newStatus });
+      } catch (err: any) {
+        showToast(err.message || 'Failed to update ticket on server', 'error');
+      }
+    }
   }
 
-  function handleSaveDetail() {
+  async function handleSaveDetail() {
     if (!selected) return;
-    setLocalTickets((prev) => prev.map((t) =>
-      t.id === selected.id
-        ? {
-            ...t,
-            assignedContractor: contractorInput || t.assignedContractor,
-            scheduledDate: scheduledDate || t.scheduledDate,
-            landlordNotes: landlordNotes || t.landlordNotes,
-          }
-        : t
-    ));
+    const update = {
+      assignedContractor: contractorInput || selected.assignedContractor,
+      scheduledDate: scheduledDate || selected.scheduledDate,
+      landlordNotes: landlordNotes || selected.landlordNotes,
+    };
+
+    setLocalTickets((prev) =>
+      prev.map((t) =>
+        t.id === selected.id
+          ? {
+              ...t,
+              ...update,
+            }
+          : t
+      )
+    );
     showToast('✓ Work order updated');
     setSelected(null);
+
+    if (onUpdateTicket) {
+      try {
+        await onUpdateTicket(selected.id, update);
+      } catch (err: any) {
+        showToast(err.message || 'Failed to sync with server', 'error');
+      }
+    }
   }
 
   function openDetail(ticket: LandlordMaintenanceTicket) {

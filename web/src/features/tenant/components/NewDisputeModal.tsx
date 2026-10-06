@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Scale, ShieldCheck } from 'lucide-react';
 import type { LeaseAgreement, TenancyDispute } from '@/types/tenant';
+import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
 
 interface NewDisputeModalProps {
@@ -27,13 +28,14 @@ export function NewDisputeModal({
   onClose,
   onCreated,
 }: NewDisputeModalProps) {
-  if (!lease) return null;
-
+  const { accessToken } = useAuth();
   const [category, setCategory] = useState('DEPOSIT_WITHHOLDING');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [claimAmount, setClaimAmount] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!lease) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +49,9 @@ export function NewDisputeModal({
         title,
         description,
         claimAmount,
-      });
+        propertyTitle: lease.propertyTitle,
+        unitIdentifier: lease.unitIdentifier,
+      }, accessToken);
 
       onCreated(dispute);
       onClose();

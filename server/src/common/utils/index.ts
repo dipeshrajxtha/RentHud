@@ -17,3 +17,9 @@ export {
   clearRefreshCookie,
   REFRESH_COOKIE_NAME,
 } from './cookies.js';
+
+export {
+  saveBase64Image,
+  deleteStoredImage,
+  ensureUploadDir,
+} from './storage.js';

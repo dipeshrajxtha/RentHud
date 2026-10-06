@@ -15,10 +15,13 @@ import type {
   LandlordLease,
   LandlordDispute,
   LandlordProfile,
+  LandlordMaintenanceTicket,
   CreatePropertyDto,
   UpdatePropertyDto,
   CreateUnitDto,
   UpdateUnitDto,
+  LandlordPhoto,
+  CreatePropertyPhotoInput,
 } from '@/types/landlord';
 
 interface ApiResponse<T> {
@@ -101,6 +104,45 @@ export const landlordService = {
     return request<{ id: string }>(
       `/api/properties/${propertyId}`,
       { method: 'DELETE' },
+      token
+    );
+  },
+
+  async uploadPropertyPhotos(
+    propertyId: string,
+    photos: CreatePropertyPhotoInput[],
+    token: string
+  ): Promise<LandlordPhoto[]> {
+    return request<LandlordPhoto[]>(
+      `/api/properties/${propertyId}/photos`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ photos }),
+      },
+      token
+    );
+  },
+
+  async deletePropertyPhoto(
+    propertyId: string,
+    photoId: string,
+    token: string
+  ): Promise<{ id: string }> {
+    return request<{ id: string }>(
+      `/api/properties/${propertyId}/photos/${photoId}`,
+      { method: 'DELETE' },
+      token
+    );
+  },
+
+  async setPropertyCoverPhoto(
+    propertyId: string,
+    photoId: string,
+    token: string
+  ): Promise<LandlordPhoto[]> {
+    return request<LandlordPhoto[]>(
+      `/api/properties/${propertyId}/photos/${photoId}/cover`,
+      { method: 'PATCH' },
       token
     );
   },
@@ -271,5 +313,34 @@ export const landlordService = {
       },
       token
     );
+  },
+
+  // ── Maintenance Ticketing ──────────────────────────────────────────────────
+  async getMaintenanceTickets(token: string): Promise<LandlordMaintenanceTicket[]> {
+    return request<LandlordMaintenanceTicket[]>('/api/maintenance', { method: 'GET' }, token);
+  },
+
+  async updateMaintenanceTicket(
+    id: string,
+    data: {
+      status?: 'Reported' | 'Scheduled' | 'In Progress' | 'Resolved';
+      assignedContractor?: string;
+      scheduledDate?: string;
+    },
+    token: string
+  ): Promise<LandlordMaintenanceTicket> {
+    return request<LandlordMaintenanceTicket>(
+      `/api/maintenance/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+      token
+    );
+  },
+
+  // ── Rent Payments Ledger ───────────────────────────────────────────────────
+  async getRentPayments(token: string): Promise<any[]> {
+    return request<any[]>('/api/payments', { method: 'GET' }, token);
   },
 };
