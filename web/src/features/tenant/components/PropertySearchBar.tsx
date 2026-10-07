@@ -72,12 +72,25 @@ export function PropertySearchBar({
             value={filters.searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search neighborhood, street, or property name (e.g. Patan, Sanepa, Jhamsikhel, Lazimpat)..."
-            className="w-full pl-10 pr-24 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+            className="w-full pl-10 pr-28 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
           />
-          {matchedLocation && (
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 bg-brand-50 border border-brand-200 rounded-xl text-[11px] font-semibold text-brand-700 shadow-2xs">
+          {filters.searchQuery && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-colors"
+              title="Clear search"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+          {matchedLocation && !filters.searchQuery.includes(matchedLocation.name) && (
+            <div className="absolute right-9 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 bg-brand-50 border border-brand-200 rounded-xl text-[11px] font-semibold text-brand-700 shadow-2xs">
               <CheckCircle2 className="w-3 h-3 text-brand-600" />
-              <span>Map centered: {matchedLocation.name}</span>
+              <span>Map: {matchedLocation.name}</span>
             </div>
           )}
         </div>

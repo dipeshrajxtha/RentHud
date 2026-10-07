@@ -16,8 +16,8 @@ export function createOperationsRouter(dbInstance?: Kysely<Database>): Router {
     });
   }
 
-  // All endpoints require authentication
-  router.use(authenticate);
+  // Maintenance and payment endpoints require authentication
+  router.use(['/maintenance', '/payments'], authenticate);
 
   // ── Maintenance Endpoints ──────────────────────────────────────────────────
   router.post('/maintenance', operationsController.createMaintenanceTicketHandler);

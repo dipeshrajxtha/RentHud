@@ -145,7 +145,14 @@ export function ApplicationTrackingView({
                   <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">
                     Application Lifecycle Progress
                   </div>
-                  <div className="grid grid-cols-5 gap-2 relative">
+                  <div className="relative">
+                    {/* Progress track connecting line */}
+                    <div className="absolute top-3.5 left-[10%] right-[10%] h-0.5 bg-slate-200 -z-0" />
+                    <div
+                      className="absolute top-3.5 left-[10%] h-0.5 bg-brand-600 transition-all duration-500 -z-0"
+                      style={{ width: `${(Math.min(activeIndex, 4) / 4) * 80}%` }}
+                    />
+                    <div className="grid grid-cols-5 gap-2 relative z-10">
                     {STEPS.map((step, idx) => {
                       const isCompleted = idx <= activeIndex;
                       const isCurrent = idx === activeIndex;
@@ -174,7 +181,8 @@ export function ApplicationTrackingView({
                     })}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
               {/* Bottom Actions & Details */}
               <div className="p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">

@@ -104,15 +104,25 @@ export async function setRoles(roles: ('tenant' | 'landlord')[], accessToken: st
  *
  * Returns null when there is no session to refresh (401/403).
  */
+let inFlightRefresh: Promise<RefreshResponseData | null> | null = null;
+
 export async function refreshSession(): Promise<RefreshResponseData | null> {
-  try {
-    return await post<RefreshResponseData>('/api/auth/refresh');
-  } catch (err) {
-    if (err instanceof AuthApiError && (err.status === 401 || err.status === 403)) {
-      return null; // No valid session — treat as unauthenticated, not error
+  if (inFlightRefresh) return inFlightRefresh;
+
+  inFlightRefresh = (async () => {
+    try {
+      return await post<RefreshResponseData>('/api/auth/refresh');
+    } catch (err) {
+      if (err instanceof AuthApiError && (err.status === 401 || err.status === 403)) {
+        return null; // No valid session — treat as unauthenticated, not error
+      }
+      throw err;
+    } finally {
+      inFlightRefresh = null;
     }
-    throw err;
-  }
+  })();
+
+  return inFlightRefresh;
 }
 
 /**

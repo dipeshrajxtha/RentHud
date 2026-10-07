@@ -280,19 +280,22 @@ export function TenantDashboard() {
 
             <button
               onClick={() => setActiveTab('settings')}
-              className="flex items-center gap-2 text-left p-1 rounded-xl hover:bg-slate-100 transition-colors"
+              className="flex items-center gap-2 text-left p-1.5 px-2 rounded-xl hover:bg-slate-100/80 border border-transparent hover:border-slate-200 transition-all"
             >
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full ring-2 ring-brand-100 object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-brand-600 text-white font-bold text-xs flex items-center justify-center">
-                  {user?.name?.[0] ?? 'T'}
-                </div>
-              )}
+              <div className="relative">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full ring-2 ring-brand-100 object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-brand-600 text-white font-bold text-xs flex items-center justify-center">
+                    {user?.name?.[0] ?? 'T'}
+                  </div>
+                )}
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+              </div>
               <div className="hidden sm:block text-xs">
                 <span className="font-semibold text-slate-900 block leading-tight">{user?.name}</span>
                 <span className="text-[10px] text-slate-400">Kathmandu, NP</span>

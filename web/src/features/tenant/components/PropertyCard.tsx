@@ -29,6 +29,9 @@ export function PropertyCard({
   const [rotateY, setRotateY] = useState(0);
   const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
 
+  const [imageError, setImageError] = useState(false);
+  const fallbackImage = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80';
+
   const minBedrooms = Math.min(...property.units.map((u) => u.bedrooms));
   const maxBedrooms = Math.max(...property.units.map((u) => u.bedrooms));
   const bedroomsLabel = minBedrooms === maxBedrooms ? `${minBedrooms} BHK` : `${minBedrooms}–${maxBedrooms} BHK`;
@@ -84,8 +87,9 @@ export function PropertyCard({
       {/* Photo Header */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 shrink-0">
         <img
-          src={property.coverPhotoUrl}
+          src={imageError ? fallbackImage : (property.coverPhotoUrl || fallbackImage)}
           alt={property.title}
+          onError={() => setImageError(true)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           loading="lazy"
         />

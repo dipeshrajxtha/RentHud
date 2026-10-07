@@ -63,6 +63,29 @@ function clearLegacyBrowserStorage() {
   } catch {}
 }
 
+const SESSION_HINT_KEY = 'rh_session_active';
+
+function hasSessionHint(): boolean {
+  try {
+    return (
+      localStorage.getItem(SESSION_HINT_KEY) === 'true' ||
+      document.cookie.includes('renthub_has_session=1')
+    );
+  } catch {
+    return false;
+  }
+}
+
+function setSessionHint(active: boolean) {
+  try {
+    if (active) {
+      localStorage.setItem(SESSION_HINT_KEY, 'true');
+    } else {
+      localStorage.removeItem(SESSION_HINT_KEY);
+    }
+  } catch {}
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<AuthState>(INITIAL_STATE);
   const isMounted = useRef(true);
@@ -79,11 +102,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clean up any stale legacy cached authentication artifacts
       clearLegacyBrowserStorage();
 
+      // If no session hint exists, user is definitely unauthenticated on this browser.
+      // Avoid firing an unneeded request to /api/auth/refresh that would return 401.
+      if (!hasSessionHint()) {
+        if (!cancelled) {
+          setAuth({ status: 'unauthenticated', user: null, accessToken: null, error: null });
+        }
+        return;
+      }
+
       try {
         const data = await refreshSession();
         if (cancelled) return;
 
         if (data && data.user) {
+          setSessionHint(true);
           // Authoritative source of truth: backend session + HttpOnly cookie
           setAuth({
             status: resolveStatusFromUser(data.user),
@@ -92,10 +125,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error: null,
           });
         } else {
+          setSessionHint(false);
           setAuth({ status: 'unauthenticated', user: null, accessToken: null, error: null });
         }
       } catch {
         if (cancelled) return;
+        setSessionHint(false);
         setAuth({
           status: 'unauthenticated',
           user: null,
@@ -114,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuth(prev => ({ ...prev, error: null }));
     try {
       const data = await googleLogin(idToken);
+      setSessionHint(true);
       if (isMounted.current) {
         setAuth({
           status: resolveStatusFromUser(data.user),
@@ -123,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (err) {
+      setSessionHint(false);
       if (isMounted.current) {
         setAuth(prev => ({ ...prev, status: 'unauthenticated', error: parseAuthError(err) }));
       }
@@ -135,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!auth.accessToken) return;
     try {
       const data = await setRoles([role], auth.accessToken);
+      setSessionHint(true);
       if (isMounted.current) {
         setAuth({
           status: 'authenticated',
@@ -154,6 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   /* ── Sign Out ── */
   const signOut = useCallback(async () => {
     clearLegacyBrowserStorage();
+    setSessionHint(false);
     // Instruct Google Identity Services not to auto-select on next visit
     if (typeof window !== 'undefined' && (window as any).google?.accounts?.id?.disableAutoSelect) {
       try {

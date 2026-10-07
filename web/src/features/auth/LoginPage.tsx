@@ -80,6 +80,10 @@ export function LoginPage() {
     [signInWithGoogle, clearError]
   );
 
+  const handleGoogleError = useCallback(() => {
+    // Google popup was closed or failed — not a hard error
+  }, []);
+
   return (
     <div className="min-h-screen flex bg-slate-50 relative overflow-hidden">
       {/* Haikei architectural background */}
@@ -259,9 +263,7 @@ export function LoginPage() {
                 {/* Width must be in pixels (200-400), percent values are rejected by GSI */}
                 <GoogleLogin
                   onSuccess={handleCredential}
-                  onError={() => {
-                    // Google popup was closed or failed — not a hard error
-                  }}
+                  onError={handleGoogleError}
                   useOneTap={false}
                   auto_select={false}
                   theme="outline"
