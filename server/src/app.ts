@@ -16,6 +16,7 @@ import { createLandlordsRouter } from './modules/landlords/index.js';
 import { createPropertiesRouter } from './modules/properties/index.js';
 import { createTenancyRouter } from './modules/tenancy/index.js';
 import { createOperationsRouter } from './modules/operations/index.js';
+import { createRealtimeRouter } from './modules/realtime/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
@@ -84,6 +85,8 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/properties', createPropertiesRouter(overrideDb));
   app.use('/api/tenancy', createTenancyRouter(overrideDb));
   app.use('/api', createOperationsRouter(overrideDb));
+  app.use('/api/realtime', createRealtimeRouter());
+  app.use('/api/events', createRealtimeRouter());
 
   // ── 404 for unmatched routes — forwarded to centralized error handler
   app.use((_req: Request, _res: Response, next) => {

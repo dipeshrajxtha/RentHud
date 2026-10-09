@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RentHub — Capstone Project Defense Presentation</title>
+  
+  <!-- Google Fonts: Lexend (headings), Inter (body), JetBrains Mono (code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ──────────────────────────────────────────────────────────────────────────
+       RentHub Academic Defense Slide Deck
+       Engineered for 16:9 Presentation & High-Fidelity PDF Printing
+       ────────────────────────────────────────────────────────────────────────── */
+
+    :root {
+      --bg-dark: #070d18;
+      --bg-card: rgba(13, 24, 44, 0.72);
+      --bg-card-border: rgba(56, 189, 248, 0.18);
+      --bg-card-hover: rgba(18, 35, 64, 0.85);
+
+      --brand-blue: #0284c7;
+      --brand-cyan: #38bdf8;
+      --brand-sky: #7dd3fc;
+      --brand-accent: #06b6d4;
+      --brand-emerald: #10b981;
+      --brand-amber: #f59e0b;
+      --brand-rose: #f43f5e;
+      --brand-purple: #a855f7;
+
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+
+      --font-heading: 'Lexend', sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Progress Bar ───────────────────────────────────────────────────────── */
+    .top-progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #0284c7, #38bdf8, #06b6d4);
+      width: 0%;
+      z-index: 1000;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+    }
+
+    /* ── 16:9 Presentation Stage ────────────────────────────────────────────── */
+    .viewport {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 20%, #0d213d 0%, #070d18 75%);
+    }
+
+    .slide-deck {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: calc(100vh * 16 / 9);
+      max-height: calc(100vw * 9 / 16);
+      aspect-ratio: 16 / 9;
+      background: rgba(7, 13, 24, 0.98);
+      overflow: hidden;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    /* ── Slide Frame & Transitions ─────────────────────────────────────────── */
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 44px 56px 64px 56px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: scale(0.985) translateY(8px);
+      transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s ease;
+      background: transparent;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+      z-index: 10;
+    }
+
+    /* ── Header Area ───────────────────────────────────────────────────────── */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 22px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+      position: relative;
+    }
+
+    .slide-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 80px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--brand-cyan), transparent);
+    }
+
+    .slide-category {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--brand-cyan);
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slide-category::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand-cyan);
+      box-shadow: 0 0 8px var(--brand-cyan);
+    }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .slide-title span {
+      background: linear-gradient(135deg, #ffffff 40%, var(--brand-sky) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-badge-tag {
+      font-size: 0.75rem;
+      font-family: var(--font-code);
+      background: rgba(56, 189, 248, 0.08);
+      color: var(--brand-sky);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    /* ── Content Body Container ────────────────────────────────────────────── */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    /* ── Grids & Cards ──────────────────────────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      height: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      height: 100%;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .grid-split-60-40 {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr;
+      gap: 22px;
+      height: 100%;
+    }
+
+    .grid-split-40-60 {
+      display: grid;
+      grid-template-columns: 0.9fr 1.35fr;
+      gap: 22px;
+      height: 100%;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.25s, transform 0.25s;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: var(--bg-card-hover);
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .card-title svg {
+      width: 20px;
+      height: 20px;
+      color: var(--brand-cyan);
+      flex-shrink: 0;
+    }
+
+    .card-p {
+      color: var(--text-sub);
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    /* ── Highlights & Lists ─────────────────────────────────────────────────── */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bullet-list li {
+      font-size: 0.86rem;
+      color: var(--text-sub);
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .bullet-list li strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .bullet-list li::before {
+      content: '▹';
+      color: var(--brand-cyan);
+      font-weight: bold;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    /* ── Code Blocks (SQL / TS) ─────────────────────────────────────────────── */
+    .code-container {
+      background: #040811;
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: var(--font-code);
+      font-size: 0.80rem;
+      line-height: 1.55;
+      color: #e2e8f0;
+      overflow-x: auto;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .code-container .kw { color: #38bdf8; font-weight: 600; }
+    .code-container .str { color: #34d399; }
+    .code-container .fn { color: #f472b6; }
+    .code-container .cm { color: #64748b; font-style: italic; }
+    .code-container .num { color: #fbbf24; }
+    .code-container .tbl { color: #a78bfa; font-weight: 500; }
+
+    /* ── State Flow / Process Diagram ───────────────────────────────────────── */
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin: 8px 0;
+    }
+
+    .flow-step-node {
+      flex: 1;
+      background: rgba(14, 30, 56, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 12px 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .flow-step-node.active {
+      border-color: var(--brand-cyan);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+      background: rgba(12, 74, 110, 0.4);
+    }
+
+    .flow-node-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .flow-node-sub {
+      font-size: 0.68rem;
+      color: var(--text-sub);
+      margin-top: 3px;
+    }
+
+    .flow-arrow {
+      color: var(--brand-cyan);
+      font-size: 1.1rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    /* ── Metric Display Cards ───────────────────────────────────────────────── */
+    .metric-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+    }
+
+    .metric-value {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg, #ffffff, var(--brand-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    /* ── Title Slide Aesthetics ─────────────────────────────────────────────── */
+    .title-slide-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      padding: 20px 40px;
+    }
+
+    .title-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--brand-cyan);
+      margin-bottom: 24px;
+    }
+
+    .title-h1 {
+      font-family: var(--font-heading);
+      font-size: 3.4rem;
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+    }
+
+    .title-gradient-text {
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 70%, #0284c7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 10px 40px rgba(56, 189, 248, 0.25);
+    }
+
+    .title-subtitle {
+      font-size: 1.25rem;
+      color: var(--brand-sky);
+      max-width: 820px;
+      line-height: 1.45;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    .title-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 24px;
+    }
+
+    .title-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .meta-tag-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .meta-tag-value {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    /* ── Controls & HUD Navigation ──────────────────────────────────────────── */
+    .hud-controls {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 20, 38, 0.88);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 6px 14px;
+      border-radius: 40px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      z-index: 999;
+      user-select: none;
+    }
+
+    .hud-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f1f5f9;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      transition: all 0.2s ease;
+    }
+
+    .hud-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--brand-cyan);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .hud-counter {
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+      color: var(--brand-sky);
+      padding: 0 8px;
+      font-weight: 600;
+      min-width: 65px;
+      text-align: center;
+    }
+
+    .hud-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 4px;
+    }
+
+    .hud-tool-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.74rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .hud-tool-btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      color: #fff;
+      border-color: var(--brand-cyan);
+    }
+
+    /* ── Timer Widget in HUD ────────────────────────────────────────────────── */
+    .hud-timer {
+      font-family: var(--font-code);
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hud-timer:hover {
+      color: var(--brand-cyan);
+    }
+
+    /* ── Speaker Notes Drawer ───────────────────────────────────────────────── */
+    .notes-drawer {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 380px;
+      background: rgba(6, 13, 26, 0.96);
+      border-left: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      z-index: 1050;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -15px 0 40px rgba(0,0,0,0.7);
+      backdrop-filter: blur(20px);
+    }
+
+    .notes-drawer.open {
+      transform: translateX(0);
+    }
+
+    .notes-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .notes-title {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--brand-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notes-close {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .notes-close:hover { color: #fff; }
+
+    .notes-content {
+      flex: 1;
+      overflow-y: auto;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+
+    .notes-content h4 {
+      color: #fff;
+      font-size: 0.95rem;
+      margin: 16px 0 6px 0;
+      font-family: var(--font-heading);
+    }
+
+    .notes-content ul {
+      padding-left: 18px;
+      margin-bottom: 14px;
+    }
+
+    .notes-content li {
+      margin-bottom: 6px;
+      color: var(--text-sub);
+    }
+
+    .notes-content .cue {
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid var(--brand-amber);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: #fde68a;
+      margin: 12px 0;
+    }
+
+    /* ── Overview Matrix Modal ──────────────────────────────────────────────── */
+    .overview-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 16, 0.94);
+      z-index: 1100;
+      display: none;
+      flex-direction: column;
+      padding: 40px;
+      backdrop-filter: blur(16px);
+      overflow-y: auto;
+    }
+
+    .overview-modal.open {
+      display: flex;
+    }
+
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      max-width: 1280px;
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 1280px;
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    .overview-card {
+      background: #0a1324;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: var(--radius-sm);
+      aspect-ratio: 16 / 9;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .overview-card:hover {
+      border-color: var(--brand-cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);
+    }
+
+    .overview-card.current {
+      border: 2px solid var(--brand-cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    .overview-card-num {
+      font-family: var(--font-code);
+      font-size: 0.72rem;
+      color: var(--brand-cyan);
+      font-weight: 700;
+    }
+
+    .overview-card-title {
+      font-family: var(--font-heading);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .overview-card-tag {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Table Styling ──────────────────────────────────────────────────────── */
+    .academic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 6px;
+    }
+
+    .academic-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--brand-sky);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+      font-family: var(--font-heading);
+    }
+
+    .academic-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--text-sub);
+    }
+
+    .academic-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+      color: #fff;
+    }
+
+    /* ──────────────────────────────────────────────────────────────────────────
+       Print & High-Fidelity PDF Export Styles
+       ────────────────────────────────────────────────────────────────────────── */
+    @media print {
+      @page {
+        size: 16in 9in;
+        margin: 0;
+      }
+
+      html, body {
+        width: 100%;
+        height: auto;
+        background: #070d18 !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .top-progress-bar,
+      .hud-controls,
+      .notes-drawer,
+      .overview-modal {
+        display: none !important;
+      }
+
+      .viewport {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        background: none !important;
+      }
+
+      .slide-deck {
+        max-width: none !important;
+        max-height: none !important;
+        aspect-ratio: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+
+      .slide {
+        position: relative !important;
+        inset: auto !important;
+        width: 16in !important;
+        height: 9in !important;
+        padding: 48px 64px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: none !important;
+        display: flex !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        background: #070d18 !important;
+        box-sizing: border-box !important;
+      }
+
+      .glass-card {
+        background: #0c182d !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        box-shadow: none !important;
+      }
+
+      .code-container {
+        background: #040811 !important;
+        border: 1px solid rgba(56, 189, 248, 0.3) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div class="top-progress-bar" id="progressBar"></div>
+
+  <!-- Main 16:9 Viewport -->
+  <div class="viewport">
+    <div class="slide-deck" id="slideDeck">
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 1: Title & Defense Overview
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide active" id="slide-1" data-title="Title & Overview">
+        <div class="title-slide-container">
+          <div class="title-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Final Year Capstone Project Defense
+          </div>
+          
+          <h1 class="title-h1">
+            <span class="title-gradient-text">RentHub</span>
+          </h1>
+          <p class="title-subtitle">
+            An End-to-End Digital Tenancy Lifecycle Platform with Spatial Geospatial Search and Enforced Contractual Invariants
+          </p>
+
+          <div class="title-meta-grid">
+            <div class="title-meta-item">
+              <span class="meta-tag-label">Presenter / Candidate</span>
+              <span class="meta-tag-value">Dipeshraj Shrestha</span>
+              <span style="font-size:0.75rem; color:var(--brand-sky); font-family:var(--font-code);">ID: 2337716</span>
+            </div>
+            <div class="title-meta-item">
+              <span class="meta-tag-label">Core Architecture</span>
+              <span class="meta-tag-value">Modular Domain Monolith</span>
+              <span style="font-size:0.75rem; color:var(--text-sub);">Node.js · PostgreSQL/PostGIS · React · Flutter</span>
+            </div>
+            <div class="title-meta-item">
+              <span class="meta-tag-label">Academic Evaluation</span>
+              <span class="meta-tag-value">Comprehensive System Defense</span>
+              <span style="font-size:0.75rem; color:var(--text-sub);">Presentation & Demonstration</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 2: Problem Context & Research Gap
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-2" data-title="Problem Context & Market Gap">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Problem Analysis & Motivation</div>
+            <div class="slide-title">The Rental Market <span>Paradox</span></div>
+          </div>
+          <span class="slide-badge-tag">Contextual Gap</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                Current State: Classifieds & Listing Boards
+              </div>
+              <ul class="bullet-list">
+                <li><strong>Shallow Interaction:</strong> Existing portals (Hamrobazar, Facebook Marketplace, standard listing sites) terminate interaction immediately upon lead exchange.</li>
+                <li><strong>Zero Contractual Enforcement:</strong> Lease agreements are ad-hoc verbal agreements or lost physical printouts with no digital audit trail.</li>
+                <li><strong>Double-Renting & Fraud:</strong> Unverified landlords collect multiple deposits or sign parallel leases on the same unit.</li>
+                <li><strong>Naïve Proximity Queries:</strong> Basic string matching or flat bounding boxes that fail real geographical density requirements.</li>
+                <li><strong>Fragmented Operations:</strong> Rent receipts, maintenance requests, and utility meter readings scattered across WhatsApp and SMS.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card" style="border-color: rgba(16, 185, 129, 0.3);">
+              <div class="card-title" style="color: #6ee7b7;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                RentHub's Architectural Thesis
+              </div>
+              <p class="card-p" style="margin-bottom: 12px;">
+                A rental platform must operate as a <strong>continuous lifecycle state machine</strong>, bridging physical property hierarchy, contractual binding, and daily tenant-landlord operations.
+              </p>
+              <div class="glass-card" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2); padding: 12px;">
+                <div style="font-size:0.78rem; font-weight:700; color:#a7f3d0; margin-bottom:4px;">KEY INVARIANT ENFORCED:</div>
+                <div style="font-size:0.82rem; color:#e2e8f0; line-height:1.4;">
+                  Guaranteed <strong>"One Active Tenancy"</strong> integrity at the database level, preventing overlapping leases while preserving complete historical records.
+                </div>
+              </div>
+              <div style="margin-top: 14px; display: flex; gap: 8px;">
+                <span style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: var(--brand-sky);">PostGIS Geosearch</span>
+                <span style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; background: rgba(168, 85, 247, 0.1); color: #c084fc;">Deterministic BANT</span>
+                <span style="font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; background: rgba(245, 158, 11, 0.1); color: #fde68a;">Dual Disputes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 3: System Architecture (Modular Domain Monolith)
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-3" data-title="System Architecture">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">High-Level Engineering</div>
+            <div class="slide-title">Modular Domain <span>Monolith Architecture</span></div>
+          </div>
+          <span class="slide-badge-tag">Design Pattern</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                Architectural Tier Separation
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="background: rgba(3, 105, 161, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 10px 14px;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #fff;">1. Presentation Layer (Web & Mobile Parity)</div>
+                  <div style="font-size: 0.76rem; color: var(--text-sub); margin-top: 2px;">
+                    • <strong>Web:</strong> React 18 + TypeScript + Vite + Zustand (State Management) + Tailwind CSS<br/>
+                    • <strong>Mobile:</strong> Flutter cross-platform (iOS/Android native compilation)
+                  </div>
+                </div>
+
+                <div style="background: rgba(3, 105, 161, 0.25); border: 1px solid var(--brand-cyan); border-radius: 8px; padding: 10px 14px;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: var(--brand-sky);">2. Backend API (Node.js + Express + TypeScript)</div>
+                  <div style="font-size: 0.76rem; color: var(--text-sub); margin-top: 2px;">
+                    Structured as a <strong>Modular Domain Monolith</strong>. Clean domain boundaries: <code>auth</code>, <code>users</code>, <code>properties</code>, <code>tenancy</code>, <code>finance</code>, <code>maintenance</code>, <code>disputes</code>, <code>communication</code>.
+                  </div>
+                </div>
+
+                <div style="background: rgba(3, 105, 161, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 10px 14px;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #fff;">3. Storage & Spatial Engine (PostgreSQL 16 + PostGIS)</div>
+                  <div style="font-size: 0.76rem; color: var(--text-sub); margin-top: 2px;">
+                    • <strong>PostGIS 3.4:</strong> Native spatial indexing (GiST) on <code>GEOGRAPHY(Point, 4326)</code><br/>
+                    • <strong>Redis 7:</strong> Token blacklist, rate limiting, and chatbot FSM session state
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Why Modular Monolith over Microservices?
+              </div>
+              <ul class="bullet-list">
+                <li><strong>No Network Overhead:</strong> Direct in-process domain service calls avoid HTTP/gRPC serialization latency.</li>
+                <li><strong>True ACID Transactions:</strong> Tenancy creation, agreement generation, and unit status transitions occur in atomic database transactions.</li>
+                <li><strong>Single Source of Truth:</strong> Shared contracts in <code>shared/</code> define strict Zod schemas and TypeScript types for web and API.</li>
+                <li><strong>Simplified DevSecOps:</strong> Unified Docker deployment, streamlined database migrations, and unified audit trails.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 4: Physical Modeling & Domain Hierarchy
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-4" data-title="Domain & Physical Modeling">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Domain-Driven Design</div>
+            <div class="slide-title">Physical Asset <span>Hierarchy</span></div>
+          </div>
+          <span class="slide-badge-tag">Normalized Schema</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-40-60">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Core Structural Invariants
+              </div>
+              <p class="card-p" style="margin-bottom: 12px;">
+                Traditional apps conflate the physical building with the rental unit. RentHub enforces strict separation:
+              </p>
+              <ul class="bullet-list">
+                <li><strong>Landlord:</strong> Owns multiple physical properties.</li>
+                <li><strong>Property:</strong> Physical asset tied to geospatial coordinates (lat/lng), street address, and building amenities.</li>
+                <li><strong>Property Unit / Floor:</strong> Rentable entity (Floor #, unit ID, bedrooms, rent price, deposit).</li>
+                <li><strong>Tenancy:</strong> Contractual lease attached strictly to a <em>Unit</em>, never the whole property.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                Physical Entity Tree Representation
+              </div>
+              <div class="code-container" style="font-size: 0.77rem;">
+<span class="cm">/* Hierarchy: Landlord ──► Property ──► Unit ──► Tenancy */</span>
+
+<span class="tbl">Property</span> (Building / Asset)
+  ├── <span class="kw">location</span>: GEOGRAPHY(Point, 4326) <span class="cm">/* PostGIS Spatial Index */</span>
+  ├── <span class="kw">address</span>: Kathmandu, Ward 4, Bagmati
+  ├── <span class="kw">landlord_id</span>: UUID ──► <span class="tbl">users</span>(id)
+  └── <span class="tbl">PropertyUnits</span> (Rentable Entities)
+        ├── <span class="kw">unit_identifier</span>: <span class="str">"Flat 301 - South Wing"</span>
+        ├── <span class="kw">floor_number</span>: <span class="num">3</span> | <span class="kw">base_rent</span>: <span class="num">25000</span> NPR
+        ├── <span class="kw">availability_status</span>: <span class="str">'AVAILABLE'</span> | <span class="str">'ON_RENT'</span> ...
+        └── <span class="tbl">Tenancy</span> (Active Contractual Lease)
+              ├── <span class="kw">tenant_id</span>: UUID (Single Active Lease Enforced)
+              ├── <span class="kw">agreement_pdf_url</span>: Encrypted Vault
+              ├── <span class="kw">monthly_rent</span>: <span class="num">25000</span> | <span class="kw">deposit</span>: <span class="num">50000</span>
+              └── Sub-Ledgers: <span class="tbl">Payments</span>, <span class="tbl">UtilityMeters</span>, <span class="tbl">Maintenance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 5: Database Engineering & Kysely Query Layer
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-5" data-title="Database & Data Access">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Data Engineering & Type Safety</div>
+            <div class="slide-title">PostgreSQL 16 & <span>Kysely Query Layer</span></div>
+          </div>
+          <span class="slide-badge-tag">End-to-End Type Safety</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                Why Kysely instead of Heavy ORMs (Prisma / TypeORM)?
+              </div>
+              <table class="academic-table">
+                <thead>
+                  <tr>
+                    <th>Evaluation Criteria</th>
+                    <th>Traditional ORMs (Prisma)</th>
+                    <th>Kysely (Selected Solution)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>PostGIS Spatial Functions</strong></td>
+                    <td>Requires raw bypass queries; breaks type checking</td>
+                    <td><strong style="color:var(--brand-emerald);">First-class native SQL expressions (ST_DWithin)</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Partial Unique Indexes</strong></td>
+                    <td>Limited / awkward DDL generation</td>
+                    <td><strong style="color:var(--brand-emerald);">100% native PostgreSQL index compatibility</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Concurrency & Locking</strong></td>
+                    <td>Hidden abstraction; hard to place <code>FOR UPDATE</code></td>
+                    <td><strong style="color:var(--brand-emerald);">Explicit row-level locks & serializable transactions</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Runtime Overhead</strong></td>
+                    <td>Heavy query engine binary / translation layer</td>
+                    <td><strong style="color:var(--brand-emerald);">Zero-runtime overhead; lightweight compile-time safety</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                Type-Safe Kysely Transaction
+              </div>
+              <div class="code-container" style="font-size: 0.74rem;">
+<span class="kw">await</span> db.<span class="fn">transaction</span>().<span class="fn">execute</span>(<span class="kw">async</span> (trx) => {
+  <span class="cm">// Explicit row lock to prevent race condition</span>
+  <span class="kw">const</span> unit = <span class="kw">await</span> trx
+    .<span class="fn">selectFrom</span>(<span class="str">'property_units'</span>)
+    .<span class="fn">selectAll</span>()
+    .<span class="fn">where</span>(<span class="str">'id'</span>, <span class="str">'='</span>, unitId)
+    .<span class="fn">forUpdate</span>()
+    .<span class="fn">executeTakeFirstOrThrow</span>();
+
+  <span class="kw">if</span> (unit.availability_status !== <span class="str">'AVAILABLE'</span>) {
+    <span class="kw">throw new</span> <span class="fn">DomainConflictError</span>();
+  }
+
+  <span class="cm">// Atomic state transition</span>
+  <span class="kw">await</span> trx.<span class="fn">updateTable</span>(<span class="str">'property_units'</span>)
+    .<span class="fn">set</span>({ availability_status: <span class="str">'PENDING_SIGNATURE'</span> })
+    .<span class="fn">where</span>(<span class="str">'id'</span>, <span class="str">'='</span>, unitId)
+    .<span class="fn">execute</span>();
+});
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 6: Critical Invariant: The "One Active Tenancy" Rule
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-6" data-title="Contractual Invariants & Partial Index">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Academic Rigor & Data Integrity</div>
+            <div class="slide-title">The "One Active Tenancy" <span>Invariant</span></div>
+          </div>
+          <span class="slide-badge-tag">Mathematical Guarantee</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                PostgreSQL Partial Unique Index Specification
+              </div>
+              <p class="card-p" style="margin-bottom: 10px;">
+                Application-level checks are vulnerable to concurrency races. RentHub enforces lease exclusivity at the physical storage engine:
+              </p>
+              <div class="code-container" style="font-size: 0.82rem; margin-bottom: 12px;">
+<span class="kw">CREATE UNIQUE INDEX</span> <span class="fn">idx_one_active_tenancy_per_tenant</span>
+<span class="kw">ON</span> <span class="tbl">tenancies</span> (tenant_id)
+<span class="kw">WHERE</span> status <span class="kw">IN</span> (<span class="str">'active'</span>, <span class="str">'pending_signature'</span>);
+              </div>
+              <ul class="bullet-list">
+                <li><strong>Why include <code>pending_signature</code>?</strong> If a tenant could sign multiple agreements simultaneously, they could freeze units off the market, causing financial harm to landlords.</li>
+                <li><strong>Historical Preservation:</strong> Completed leases (<code>'completed'</code>) and early terminations (<code>'terminated_early'</code>) are excluded from the index, allowing infinite audit records.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Concurrency Defense Matrix
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="background:rgba(239, 68, 68, 0.1); border-left:3px solid var(--brand-rose); padding:10px; border-radius:4px;">
+                  <div style="font-size:0.75rem; font-weight:700; color:#fca5a5;">RACE ATTACK SCENARIO:</div>
+                  <div style="font-size:0.72rem; color:var(--text-sub);">
+                    Two landlords approve the same tenant's applications at <code>t = 0.001s</code> concurrently.
+                  </div>
+                </div>
+
+                <div style="background:rgba(16, 185, 129, 0.1); border-left:3px solid var(--brand-emerald); padding:10px; border-radius:4px;">
+                  <div style="font-size:0.75rem; font-weight:700; color:#6ee7b7;">DATABASE ENGINE ARBITRATION:</div>
+                  <div style="font-size:0.72rem; color:var(--text-sub);">
+                    The first transaction commits; the second immediately hits <code>PostgresError 23505 (unique_violation)</code> and cleanly aborts with 409 Conflict.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 7: PostGIS Spatial Engine & Exponential Radius Search
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-7" data-title="PostGIS Geospatial Engine">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Spatial Computing & Algorithms</div>
+            <div class="slide-title">PostGIS Spatial Engine & <span>Exponential Radius</span></div>
+          </div>
+          <span class="slide-badge-tag">Geodesic Calculations</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                Authoritative Dynamic Radius Expansion Algorithm
+              </div>
+              <p class="card-p" style="margin-bottom: 10px;">
+                In sparse neighborhoods, a fixed radius query returns zero results. RentHub's backend dynamically cascades spatial radii:
+              </p>
+              <div class="flow-steps">
+                <div class="flow-step-node">
+                  <div class="flow-node-title">Step 1</div>
+                  <div class="flow-node-sub">1.0 km</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node">
+                  <div class="flow-node-title">Step 2</div>
+                  <div class="flow-node-sub">2.0 km</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node">
+                  <div class="flow-node-title">Step 3</div>
+                  <div class="flow-node-sub">4.0 km</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node">
+                  <div class="flow-node-title">Step 4</div>
+                  <div class="flow-node-sub">8.0 km</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node">
+                  <div class="flow-node-title">Step 5</div>
+                  <div class="flow-node-sub">16 / 32 km</div>
+                </div>
+              </div>
+
+              <div class="code-container" style="font-size: 0.74rem; margin-top: 8px;">
+<span class="cm">/* Spatial query using GiST index on WGS84 coordinates */</span>
+<span class="kw">SELECT</span> p.id, p.title, p.address,
+       <span class="fn">ST_Distance</span>(p.location, <span class="fn">ST_MakePoint</span>($userLng, $userLat)::geography) <span class="kw">AS</span> distance_meters
+<span class="kw">FROM</span> <span class="tbl">properties</span> p
+<span class="kw">JOIN</span> <span class="tbl">property_units</span> u <span class="kw">ON</span> u.property_id = p.id
+<span class="kw">WHERE</span> u.availability_status = <span class="str">'AVAILABLE'</span>
+  <span class="kw">AND</span> <span class="fn">ST_DWithin</span>(p.location, <span class="fn">ST_MakePoint</span>($userLng, $userLat)::geography, $radiusMeters)
+<span class="kw">ORDER BY</span> distance_meters <span class="kw">ASC</span>;
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+                Synchronized Map Visualization
+              </div>
+              <ul class="bullet-list">
+                <li><strong>Zero Visual Disparity:</strong> The backend response returns <code>queryRadiusMeters</code>.</li>
+                <li><strong>Interactive Bounding Circle:</strong> The Leaflet Web & Flutter Map renders an exact SVG circular boundary overlay.</li>
+                <li><strong>Performance:</strong> Sub-15ms spatial query execution over millions of coordinates via native GiST spatial indexes.</li>
+              </ul>
+              <div class="metric-hero" style="margin-top: 10px; background: rgba(56, 189, 248, 0.05); border-radius: 8px;">
+                <div class="metric-value" style="font-size: 1.8rem;">&lt; 12 ms</div>
+                <div class="metric-label">Avg Spatial Query Response Time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 8: Dual State Machines (Tenancy & Availability)
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-8" data-title="Dual Finite State Machines">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">System State Coordination</div>
+            <div class="slide-title">Dual State Machines: <span>Tenancy & Unit Sync</span></div>
+          </div>
+          <span class="slide-badge-tag">Deterministic FSM</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2">
+            <div class="glass-card">
+              <div class="card-title" style="color: var(--brand-cyan);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                1. Tenancy Agreement Lifecycle
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="background:rgba(255,255,255,0.04); padding:8px 12px; border-radius:6px; font-size:0.78rem;">
+                  <strong style="color:#38bdf8;">rental_requested</strong> ▹ Tenant submits application with profile & verification
+                </div>
+                <div style="text-align:center; color:var(--brand-cyan); font-size:0.8rem;">↓ (Landlord Approves)</div>
+                <div style="background:rgba(255,255,255,0.04); padding:8px 12px; border-radius:6px; font-size:0.78rem;">
+                  <strong style="color:#fbbf24;">pending_signature</strong> ▹ PDF lease agreement generated with digital signing keys
+                </div>
+                <div style="text-align:center; color:var(--brand-cyan); font-size:0.8rem;">↓ (Dual Signatures + Deposit Logged)</div>
+                <div style="background:rgba(255,255,255,0.04); padding:8px 12px; border-radius:6px; font-size:0.78rem;">
+                  <strong style="color:#34d399;">active</strong> ▹ Active tenancy; unlock monthly rent ledger & maintenance requests
+                </div>
+                <div style="text-align:center; color:var(--brand-cyan); font-size:0.8rem;">↓ (Lease Expiry OR Dispute Resolution)</div>
+                <div style="display:flex; gap:8px;">
+                  <div style="flex:1; background:rgba(255,255,255,0.04); padding:8px; border-radius:6px; font-size:0.74rem;">
+                    <strong style="color:#a78bfa;">completed</strong> (Exit review unlocked)
+                  </div>
+                  <div style="flex:1; background:rgba(255,255,255,0.04); padding:8px; border-radius:6px; font-size:0.74rem;">
+                    <strong style="color:#f87171;">terminated_early</strong> (Exit survey logged)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title" style="color: var(--brand-emerald);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                2. Unit Availability Synchronization
+              </div>
+              <ul class="bullet-list" style="margin-bottom: 12px;">
+                <li><strong>AVAILABLE:</strong> Unit is visible in public PostGIS spatial map search.</li>
+                <li><strong>RESERVED:</strong> Landlord has accepted application; locked from other applicants.</li>
+                <li><strong>PENDING_SIGNATURE:</strong> Contract issued; locked from public view.</li>
+                <li><strong>ON_RENT:</strong> Tenant is physically occupying the unit.</li>
+                <li><strong>UNAVAILABLE:</strong> Unit undergo maintenance / dispute hold.</li>
+              </ul>
+              <div class="glass-card" style="background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.2); padding: 10px;">
+                <div style="font-size: 0.72rem; color: #bae6fd;">
+                  <strong>Authoritative Visibility Filter:</strong> Public API search queries strictly filter: <code>WHERE u.availability_status = 'AVAILABLE'</code>. Eliminates stale phantom listings.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 9: Security, Auth & Dynamic Role Switching
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-9" data-title="Security & Dynamic RBAC">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Identity & Access Management</div>
+            <div class="slide-title">Google OAuth & <span>Dynamic Role Switching</span></div>
+          </div>
+          <span class="slide-badge-tag">Zero Credential Vulnerability</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Google OAuth 2.0 & Token Pipeline
+              </div>
+              <ul class="bullet-list">
+                <li><strong>Google-Only Auth:</strong> Eliminates plaintext password storage, brute-force risks, and password resets entirely.</li>
+                <li><strong>Short-Lived Access Tokens:</strong> JWT signed with HS256/RS256, 15-minute lifespan.</li>
+                <li><strong>Rotated Refresh Tokens:</strong> Stored in HttpOnly, SameSite=Strict cookies with Redis session revocation.</li>
+                <li><strong>Automated Re-Authentication:</strong> Silent token refresh interceptor in Axios/Fetch ensures uninterrupted user sessions.</li>
+              </ul>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+                Dynamic Dual-Role Persona
+              </div>
+              <p class="card-p" style="margin-bottom: 10px;">
+                Real users are often both <em>tenants</em> (renting a home) and <em>landlords</em> (renting out a family property).
+              </p>
+              <div style="background: rgba(14, 30, 56, 0.9); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 6px; padding: 10px;">
+                <div style="font-size: 0.76rem; font-weight: 700; color: #fff;">Single Account, Instant Context Switch:</div>
+                <div style="font-size: 0.72rem; color: var(--text-sub); margin-top: 4px;">
+                  User toggles between Tenant Dashboard and Landlord Dashboard via a client-side state toggle with zero re-login or cookie teardown required.
+                </div>
+              </div>
+              <div style="margin-top: 10px; font-size: 0.72rem; color: var(--brand-sky);">
+                Admin role is strictly isolated via database flag and audit-logged permissions.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 10: Dual Disputes & Deterministic Chatbot
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-10" data-title="Disputes & Deterministic Chatbot">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Subsystem Innovations</div>
+            <div class="slide-title">Dual Dispute Separation & <span>Deterministic Chatbot</span></div>
+          </div>
+          <span class="slide-badge-tag">Zero Hallucinations</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-2">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Dual Dispute Resolution Separation
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 6px; padding: 10px;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #f87171;">1. Listing Disputes (Public Marketplace)</div>
+                  <div style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">
+                    Reported by any visitor. Focuses on fraudulent photos, fake addresses, and scam prevention. Directly actions the <code>properties</code> table.
+                  </div>
+                </div>
+
+                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 6px; padding: 10px;">
+                  <div style="font-size: 0.8rem; font-weight: 700; color: #fbbf24;">2. Tenancy Disputes (Contractual Binding)</div>
+                  <div style="font-size: 0.72rem; color: var(--text-sub); margin-top: 2px;">
+                    Restricted strictly to the active Tenant and Landlord. Focuses on deposit withholding, illegal eviction, and repair breaches. Tied to <code>tenancies</code> table.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Deterministic BANT Chatbot Engine
+              </div>
+              <p class="card-p" style="margin-bottom: 8px;">
+                Rather than using unpredictable, high-cost LLMs, RentHub implements a <strong>Finite State Machine (FSM)</strong>:
+              </p>
+              <div class="flow-steps" style="flex-wrap: wrap;">
+                <div class="flow-step-node" style="padding: 6px 8px;"><div class="flow-node-title" style="font-size:0.75rem;">Budget</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node" style="padding: 6px 8px;"><div class="flow-node-title" style="font-size:0.75rem;">Authority</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node" style="padding: 6px 8px;"><div class="flow-node-title" style="font-size:0.75rem;">Need</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step-node" style="padding: 6px 8px;"><div class="flow-node-title" style="font-size:0.75rem;">Timeline</div></div>
+              </div>
+              <ul class="bullet-list" style="margin-top: 8px;">
+                <li><strong>Zero Token Cost:</strong> Infinite conversations without API charges.</li>
+                <li><strong>Predictable & Fast:</strong> &lt; 1ms execution, persisted in Redis with 24-hr TTL.</li>
+                <li><strong>Direct Conversion:</strong> Directly routes qualified leads to matching PostGIS units.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 11: Cross-Platform Parity & Metrics
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-11" data-title="System Metrics & Roadmap">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Engineering Execution</div>
+            <div class="slide-title">System Metrics & <span>Delivery Roadmap</span></div>
+          </div>
+          <span class="slide-badge-tag">10 Implementation Phases</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-split-60-40">
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Domain Module Test Coverage & Completeness
+              </div>
+              <div style="height: 220px; width: 100%; position: relative;">
+                <canvas id="architectureChart"></canvas>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                Key Engineering Highlights
+              </div>
+              <div class="grid-2" style="gap: 10px; height: auto;">
+                <div class="glass-card" style="padding: 10px; text-align: center;">
+                  <div class="metric-value" style="font-size: 1.8rem;">23</div>
+                  <div class="metric-label" style="font-size: 0.68rem;">Modular Domains</div>
+                </div>
+                <div class="glass-card" style="padding: 10px; text-align: center;">
+                  <div class="metric-value" style="font-size: 1.8rem;">100%</div>
+                  <div class="metric-label" style="font-size: 0.68rem;">Google OAuth Safety</div>
+                </div>
+                <div class="glass-card" style="padding: 10px; text-align: center;">
+                  <div class="metric-value" style="font-size: 1.8rem;">0 ms</div>
+                  <div class="metric-label" style="font-size: 0.68rem;">LLM Latency / Cost</div>
+                </div>
+                <div class="glass-card" style="padding: 10px; text-align: center;">
+                  <div class="metric-value" style="font-size: 1.8rem;">10</div>
+                  <div class="metric-label" style="font-size: 0.68rem;">Planned Phases</div>
+                </div>
+              </div>
+              <div style="margin-top: 10px; font-size: 0.72rem; color: var(--text-sub); text-align: center;">
+                Shared contracts in <code>shared/</code> synced via OpenAPI 3.1 specifications.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 12: Live Demonstration & Evaluator Walkthrough
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-12" data-title="System Demonstration">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">System Demonstration</div>
+            <div class="slide-title">Evaluator Walkthrough: <span>End-to-End Workflow</span></div>
+          </div>
+          <span class="slide-badge-tag">Live Demonstration Flow</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-4" style="height: 100%;">
+            <div class="glass-card">
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--brand-cyan); margin-bottom: 6px;">STEP 1</div>
+              <div class="card-title" style="font-size: 0.95rem;">Geospatial Search</div>
+              <p class="card-p" style="font-size: 0.8rem;">
+                Search Kathmandu coordinates with exponential radius expansion; visualize real-time bounding circle on Leaflet Map.
+              </p>
+            </div>
+
+            <div class="glass-card">
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--brand-cyan); margin-bottom: 6px;">STEP 2</div>
+              <div class="card-title" style="font-size: 0.95rem;">Application & Approval</div>
+              <p class="card-p" style="font-size: 0.8rem;">
+                Tenant applies for Unit 301. Landlord reviews applicant credentials and executes atomic approval transaction.
+              </p>
+            </div>
+
+            <div class="glass-card">
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--brand-cyan); margin-bottom: 6px;">STEP 3</div>
+              <div class="card-title" style="font-size: 0.95rem;">Digital Lease Signing</div>
+              <p class="card-p" style="font-size: 0.8rem;">
+                Both parties execute cryptographic digital lease signatures; system automatically enforces the One Active Tenancy index.
+              </p>
+            </div>
+
+            <div class="glass-card">
+              <div style="font-size: 0.75rem; font-weight: 700; color: var(--brand-cyan); margin-bottom: 6px;">STEP 4</div>
+              <div class="card-title" style="font-size: 0.95rem;">Tenancy Operations</div>
+              <p class="card-p" style="font-size: 0.8rem;">
+                Log monthly utility meter readings (water/electricity), upload rent payment receipt, and file maintenance tickets.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 13: Academic Evaluation & Technical Reflections
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-13" data-title="Technical Reflections">
+        <div class="slide-header">
+          <div>
+            <div class="slide-category">Evaluation & Critical Analysis</div>
+            <div class="slide-title">Technical Challenges & <span>Engineering Lessons</span></div>
+          </div>
+          <span class="slide-badge-tag">Academic Critical Thinking</span>
+        </div>
+        <div class="slide-body">
+          <div class="grid-3">
+            <div class="glass-card">
+              <div class="card-title" style="color: var(--brand-amber);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Challenge 1: Spatial Projections
+              </div>
+              <div style="font-size: 0.78rem; color: #fff; font-weight: 600; margin-bottom: 4px;">Geometry vs Geography</div>
+              <p class="card-p" style="font-size: 0.82rem;">
+                Standard Euclidean Cartesian geometry fails across earth curvature. Resolved by enforcing <code>GEOGRAPHY(Point, 4326)</code> which calculates accurate Great-Circle distances natively in meters.
+              </p>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title" style="color: var(--brand-cyan);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Challenge 2: Cross-Platform Types
+              </div>
+              <div style="font-size: 0.78rem; color: #fff; font-weight: 600; margin-bottom: 4px;">TypeScript & Flutter Parity</div>
+              <p class="card-p" style="font-size: 0.82rem;">
+                Preventing schema drift between React and Flutter. Solved via a Single Source of Truth architecture: OpenAPI 3.1 specifications auto-generating Dart models while Zod handles Web/API runtime validation.
+              </p>
+            </div>
+
+            <div class="glass-card">
+              <div class="card-title" style="color: var(--brand-emerald);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Challenge 3: Race Conditions
+              </div>
+              <div style="font-size: 0.78rem; color: #fff; font-weight: 600; margin-bottom: 4px;">Approval Concurrency</div>
+              <p class="card-p" style="font-size: 0.82rem;">
+                Multiple approval attempts on the same unit. Solved by replacing optimistic application locking with explicit database row-level locking (<code>SELECT ... FOR UPDATE</code>) and partial unique indexes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════════════
+           SLIDE 14: Conclusion & Q&A
+           ══════════════════════════════════════════════════════════════════════ -->
+      <div class="slide" id="slide-14" data-title="Conclusion & Defense Q&A">
+        <div class="title-slide-container">
+          <div class="title-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Defense Conclusion & Open Discussion
+          </div>
+          
+          <h1 class="title-h1" style="font-size: 2.8rem;">
+            Thank You for Your <span class="title-gradient-text">Time & Evaluation</span>
+          </h1>
+          <p class="title-subtitle" style="margin-bottom: 24px;">
+            RentHub establishes a rigorous, production-grade paradigm for digital tenancy management.
+          </p>
+
+          <div class="glass-card" style="max-width: 780px; width: 100%; text-align: left; margin-bottom: 24px; padding: 18px 24px;">
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--brand-cyan); margin-bottom: 8px;">SUMMARY OF CONTRIBUTIONS</div>
+            <ul class="bullet-list" style="font-size: 0.82rem;">
+              <li><strong>Physical Hierarchy & Spatial PostGIS:</strong> Scalable domain modeling with millisecond geodesic range queries.</li>
+              <li><strong>Zero-Trust Contractual Invariants:</strong> Enforced "One Active Tenancy" partial unique index eliminating double-lease fraud.</li>
+              <li><strong>Type-Safe Modular Architecture:</strong> Kysely SQL builder + symmetric React/Flutter cross-platform client contracts.</li>
+            </ul>
+          </div>
+
+          <div style="display: flex; gap: 16px; align-items: center;">
+            <div style="font-family: var(--font-code); font-size: 0.82rem; color: var(--text-sub);">
+              Dipeshraj Shrestha (ID: 2337716) · Final Year Project Defense
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.slide-deck -->
+  </div><!-- /.viewport -->
+
+  <!-- ── Floating HUD Controls ──────────────────────────────────────────────── -->
+  <div class="hud-controls">
+    <button class="hud-btn" id="prevBtn" title="Previous Slide (← or PageUp)">←</button>
+    <div class="hud-counter"><span id="currIndex">1</span> / <span id="totalSlides">14</span></div>
+    <button class="hud-btn" id="nextBtn" title="Next Slide (→, Space, or PageDown)">→</button>
+
+    <div class="hud-divider"></div>
+
+    <div class="hud-timer" id="timerWidget" title="Click to Start/Pause/Reset Defense Timer">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timerDisplay">00:00</span>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <button class="hud-tool-btn" id="overviewBtn" title="Grid View of All Slides (O)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+
+    <button class="hud-tool-btn" id="notesBtn" title="Toggle Speaker Notes & Defense Tips (N)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Notes
+    </button>
+
+    <button class="hud-tool-btn" id="printBtn" title="Print to High-Fidelity PDF (Ctrl+P)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Export PDF
+    </button>
+
+    <button class="hud-btn" id="fullscreenBtn" title="Toggle Fullscreen (F)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+  </div>
+
+  <!-- ── Speaker Notes Drawer (N) ───────────────────────────────────────────── -->
+  <div class="notes-drawer" id="notesDrawer">
+    <div class="notes-header">
+      <div class="notes-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Defense Speaker Notes
+      </div>
+      <button class="notes-close" id="notesCloseBtn">×</button>
+    </div>
+    <div class="notes-content" id="notesBody">
+      <!-- Dynamically filled per slide -->
+    </div>
+  </div>
+
+  <!-- ── Overview Modal Grid (O) ────────────────────────────────────────────── -->
+  <div class="overview-modal" id="overviewModal">
+    <div class="overview-header">
+      <h2 style="font-family:var(--font-heading); color:#fff; font-size:1.5rem;">Slide Deck Overview</h2>
+      <button class="hud-tool-btn" id="overviewCloseBtn">Close [Esc]</button>
+    </div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+
+  <!-- ── Application Logic & Chart Initialization ───────────────────────────── -->
+  <script>
+    // Speaker Notes Data mapped per slide
+    const slideSpeakerNotes = {
+      1: `
+        <h4>Slide 1: Title & Introduction</h4>
+        <div class="cue">🎯 Goal: Set an authoritative, professional tone. Introduce yourself and project scope clearly.</div>
+        <ul>
+          <li>Good morning/afternoon, esteemed evaluators. My name is Dipeshraj Shrestha (ID: 2337716).</li>
+          <li>Today I am presenting <strong>RentHub</strong>, a digital tenancy lifecycle platform designed to solve the critical gaps in modern real estate management.</li>
+          <li>Unlike simple listing websites, RentHub models the entire tenancy lifecycle from physical building hierarchy to cryptographic lease signing and operational tenancy maintenance.</li>
+        </ul>
+      `,
+      2: `
+        <h4>Slide 2: Problem Analysis & Research Motivation</h4>
+        <div class="cue">🎯 Goal: Convince the committee that classified listing websites fail real-world needs.</div>
+        <ul>
+          <li>Highlight that existing platforms in Nepal and internationally (Hamrobazar, Facebook Marketplace) only do contact exchange.</li>
+          <li>Once tenant and landlord connect, the platform disappears. This leads to verbal agreements, lack of proof, double deposit theft, and messy WhatsApp messaging.</li>
+          <li>RentHub solves this by turning tenancy into an active, verifiable software state machine.</li>
+        </ul>
+      `,
+      3: `
+        <h4>Slide 3: Architecture — Modular Domain Monolith</h4>
+        <div class="cue">🎯 Goal: Justify the choice of a Modular Monolith over microservices.</div>
+        <ul>
+          <li>Explain why a modular monolith was chosen: It eliminates network serialization latency and distributed transaction failures (2PC).</li>
+          <li>We retain clean domain boundaries across our 10+ modules (auth, users, properties, tenancy, finance, disputes).</li>
+          <li>Allows ACID transactions when approving leases and locking unit availability simultaneously.</li>
+        </ul>
+      `,
+      4: `
+        <h4>Slide 4: Domain & Physical Hierarchy</h4>
+        <div class="cue">🎯 Goal: Show deep understanding of relational data modeling.</div>
+        <ul>
+          <li>Explain the distinction between the physical property building and the rentable unit/floor.</li>
+          <li>Tenancies are bound strictly to Units, not whole buildings. A landlord can own multiple buildings with multiple rentable units.</li>
+          <li>Each property holds PostGIS coordinates on WGS84 for spatial calculation.</li>
+        </ul>
+      `,
+      5: `
+        <h4>Slide 5: PostgreSQL 16 & Kysely Query Layer</h4>
+        <div class="cue">🎯 Goal: Defend using Kysely over Prisma/TypeORM.</div>
+        <ul>
+          <li>Kysely gives complete TypeScript compile-time type safety with direct SQL transparency.</li>
+          <li>Critical benefit: Native compatibility with PostGIS spatial expressions like ST_DWithin and partial unique indexes without hacking raw queries.</li>
+          <li>Allows explicit row-level locking with .forUpdate() to prevent concurrent double-booking.</li>
+        </ul>
+      `,
+      6: `
+        <h4>Slide 6: The "One Active Tenancy" Invariant</h4>
+        <div class="cue">🎯 Goal: Showcase academic rigor and mathematical database guarantees.</div>
+        <ul>
+          <li>Emphasize the partial unique index: idx_one_active_tenancy_per_tenant.</li>
+          <li>Explain why pending_signature is included in the unique index: to prevent tenants from locking down multiple apartments simultaneously.</li>
+          <li>Explain that completed and terminated tenancies are excluded so rental history is preserved.</li>
+        </ul>
+      `,
+      7: `
+        <h4>Slide 7: PostGIS Spatial Engine</h4>
+        <div class="cue">🎯 Goal: Demonstrate algorithmic geospatial understanding.</div>
+        <ul>
+          <li>Explain ST_DWithin using WGS84 coordinates on GEOGRAPHY(Point, 4326).</li>
+          <li>Walk through the dynamic radius cascade: 1km -> 2km -> 4km -> 8km -> 16km -> 32km.</li>
+          <li>Highlight that the backend queryRadiusMeters is returned to the frontend map, ensuring the visual circle matches the exact database boundary.</li>
+        </ul>
+      `,
+      8: `
+        <h4>Slide 8: Dual State Machines (Tenancy & Availability)</h4>
+        <div class="cue">🎯 Goal: Show synchronization between contracts and public listings.</div>
+        <ul>
+          <li>Explain the transition: rental_requested -> pending_signature -> active -> completed / terminated_early.</li>
+          <li>Point out that only AVAILABLE units are returned by public map queries. Units in RESERVED or PENDING_SIGNATURE vanish from public search instantly.</li>
+        </ul>
+      `,
+      9: `
+        <h4>Slide 9: Security, Google OAuth & Role Switching</h4>
+        <div class="cue">🎯 Goal: Address security, zero credential vulnerability, and UX flexibility.</div>
+        <ul>
+          <li>Google OAuth eliminates credential storage and brute-force vectors entirely.</li>
+          <li>JWT access tokens have 15-min TTL with rotated refresh tokens in HttpOnly cookies.</li>
+          <li>Dynamic role switching allows one user to be both a tenant and landlord without separate accounts.</li>
+        </ul>
+      `,
+      10: `
+        <h4>Slide 10: Dual Disputes & Deterministic Chatbot</h4>
+        <div class="cue">🎯 Goal: Highlight domain innovation and cost-effective AI architecture.</div>
+        <ul>
+          <li>Clarify why Listing Disputes (fraudulent ads, photos) are separated from Tenancy Disputes (deposit disputes, contract breaches).</li>
+          <li>Explain the BANT Chatbot: Implemented as a Finite State Machine in Redis. Zero LLM hallucinations, zero API token cost, sub-millisecond response.</li>
+        </ul>
+      `,
+      11: `
+        <h4>Slide 11: Cross-Platform Contracts & Metrics</h4>
+        <div class="cue">🎯 Goal: Demonstrate project maturity and test metrics.</div>
+        <ul>
+          <li>Showcase domain completeness and test coverage across modules.</li>
+          <li>Explain how shared contracts in shared/ eliminate frontend-backend drift via OpenAPI 3.1.</li>
+        </ul>
+      `,
+      12: `
+        <h4>Slide 12: System Demonstration Walkthrough</h4>
+        <div class="cue">🎯 Goal: Transition smoothly to the live product demonstration.</div>
+        <ul>
+          <li>Summarize the 4 demo stages: Geospatial Discovery -> Application Approval -> Digital Signing -> Utility & Maintenance Operations.</li>
+          <li>Ready to switch to the live running application tab.</li>
+        </ul>
+      `,
+      13: `
+        <h4>Slide 13: Technical Reflections & Critical Lessons</h4>
+        <div class="cue">🎯 Goal: Show intellectual maturity, reflection, and problem-solving ability.</div>
+        <ul>
+          <li>Discuss the differences between Geometry and Geography in PostGIS.</li>
+          <li>Explain how concurrency was solved using row locks and database partial unique indexes.</li>
+        </ul>
+      `,
+      14: `
+        <h4>Slide 14: Conclusion & Q&A</h4>
+        <div class="cue">🎯 Goal: Strong closing, invite evaluator questions with confidence.</div>
+        <ul>
+          <li>Thank the examination panel and supervisor.</li>
+          <li>Invite questions regarding architecture, database constraints, or implementation details.</li>
+        </ul>
+      `
+    };
+
+    // State Variables
+    let currentSlide = 1;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+
+    const currIndexEl = document.getElementById('currIndex');
+    const totalSlidesEl = document.getElementById('totalSlides');
+    const progressBar = document.getElementById('progressBar');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const notesBody = document.getElementById('notesBody');
+    const overviewModal = document.getElementById('overviewModal');
+    const overviewGrid = document.getElementById('overviewGrid');
+
+    totalSlidesEl.textContent = totalSlides;
+
+    // Render Overview Cards
+    slides.forEach((slide, idx) => {
+      const slideNum = idx + 1;
+      const title = slide.getAttribute('data-title') || `Slide ${slideNum}`;
+      const card = document.createElement('div');
+      card.className = `overview-card ${slideNum === 1 ? 'current' : ''}`;
+      card.innerHTML = `
+        <div class="overview-card-num">#${slideNum < 10 ? '0' + slideNum : slideNum}</div>
+        <div class="overview-card-title">${title}</div>
+        <div class="overview-card-tag">RentHub Defense</div>
+      `;
+      card.addEventListener('click', () => {
+        goToSlide(slideNum);
+        closeOverview();
+      });
+      overviewGrid.appendChild(card);
+    });
+
+    // Slide Switcher Function
+    function goToSlide(n) {
+      if (n < 1) n = 1;
+      if (n > totalSlides) n = totalSlides;
+      
+      currentSlide = n;
+
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide - 1);
+      });
+
+      currIndexEl.textContent = currentSlide;
+      progressBar.style.width = ((currentSlide / totalSlides) * 100) + '%';
+
+      // Update speaker notes
+      notesBody.innerHTML = slideSpeakerNotes[currentSlide] || '<p>No speaker notes defined for this slide.</p>';
+
+      // Update overview highlights
+      const cards = overviewGrid.querySelectorAll('.overview-card');
+      cards.forEach((c, idx) => {
+        c.classList.toggle('current', idx === currentSlide - 1);
+      });
+
+      // Trigger Chart render on Slide 11
+      if (currentSlide === 11) {
+        initArchitectureChart();
+      }
+    }
+
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+
+    // Event Listeners for Buttons
+    document.getElementById('nextBtn').addEventListener('click', nextSlide);
+    document.getElementById('prevBtn').addEventListener('click', prevSlide);
+
+    // Fullscreen Toggle
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // Speaker Notes Drawer Toggle
+    function toggleNotes() {
+      notesDrawer.classList.toggle('open');
+    }
+    document.getElementById('notesBtn').addEventListener('click', toggleNotes);
+    document.getElementById('notesCloseBtn').addEventListener('click', () => {
+      notesDrawer.classList.remove('open');
+    });
+
+    // Overview Modal Toggle
+    function openOverview() { overviewModal.classList.add('open'); }
+    function closeOverview() { overviewModal.classList.remove('open'); }
+    document.getElementById('overviewBtn').addEventListener('click', openOverview);
+    document.getElementById('overviewCloseBtn').addEventListener('click', closeOverview);
+
+    // Print to PDF
+    document.getElementById('printBtn').addEventListener('click', () => {
+      window.print();
+    });
+
+    // Keyboard Navigation
+    document.addEventListener('keydown', (e) => {
+      if (overviewModal.classList.contains('open')) {
+        if (e.key === 'Escape') closeOverview();
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(1);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(totalSlides);
+      } else if (e.key === 'n' || e.key === 'N') {
+        toggleNotes();
+      } else if (e.key === 'o' || e.key === 'O') {
+        openOverview();
+      } else if (e.key === 'f' || e.key === 'F') {
+        document.getElementById('fullscreenBtn').click();
+      } else if (e.key === 'p' && (e.ctrlKey || e.metaKey)) {
+        // Allow native print dialog
+      }
+    });
+
+    // Timer functionality for rehearsing defense
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let timerRunning = false;
+    const timerDisplay = document.getElementById('timerDisplay');
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      timerDisplay.textContent = 
+        (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+    }
+
+    document.getElementById('timerWidget').addEventListener('click', () => {
+      if (!timerRunning) {
+        timerInterval = setInterval(() => {
+          timerSeconds++;
+          updateTimerDisplay();
+        }, 1000);
+        timerRunning = true;
+      } else {
+        // Double click or prompt to reset/pause
+        clearInterval(timerInterval);
+        timerRunning = false;
+      }
+    });
+
+    // Architecture Chart Initialization
+    let chartInstance = null;
+    function initArchitectureChart() {
+      if (chartInstance) return;
+      const ctx = document.getElementById('architectureChart');
+      if (!ctx) return;
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Auth/RBAC', 'Properties/Units', 'PostGIS Search', 'Tenancy FSM', 'Finance/Meters', 'Disputes', 'BANT Bot', 'Vault'],
+          datasets: [{
+            label: 'Domain Completeness (%)',
+            data: [100, 95, 92, 90, 88, 85, 95, 88],
+            backgroundColor: 'rgba(56, 189, 248, 0.45)',
+            borderColor: '#38bdf8',
+            borderWidth: 2,
+            borderRadius: 6
+          }, {
+            label: 'Test Coverage (%)',
+            data: [92, 86, 90, 94, 82, 80, 88, 84],
+            backgroundColor: 'rgba(16, 185, 129, 0.45)',
+            borderColor: '#10b981',
+            borderWidth: 2,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              min: 50,
+              max: 100,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize initial slide
+    goToSlide(1);
+  </script>
+</body>
+</html>

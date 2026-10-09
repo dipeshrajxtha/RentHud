@@ -264,8 +264,20 @@ export async function payRentRecord(
     throw new NotFoundError('Payment record not found');
   }
 
-  if (payment.tenant_id !== userId) {
-    throw new ForbiddenError('Not authorized to pay this invoice');
+  let isAuthorized = payment.tenant_id === userId;
+  if (!isAuthorized) {
+    const prop = await db
+      .selectFrom('properties')
+      .select('landlord_id')
+      .where('id', '=', payment.property_id)
+      .executeTakeFirst();
+    if (prop && prop.landlord_id === userId) {
+      isAuthorized = true;
+    }
+  }
+
+  if (!isAuthorized) {
+    throw new ForbiddenError('Not authorized to settle this payment');
   }
 
   if (payment.status === 'PAID') {

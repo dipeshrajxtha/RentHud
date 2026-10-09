@@ -18,6 +18,7 @@ import {
   setPropertyCoverPhoto,
 } from './properties.service.js';
 import { sendSuccess } from '../../common/utils/response.js';
+import { realtimeHub } from '../realtime/index.js';
 import type {
   PropertySearchQuery,
   PropertyIdParam,
@@ -83,6 +84,7 @@ export async function createPropertyHandler(
   try {
     const db = getDb(req);
     const result = await createProperty(db, req.user!.id, req.body);
+    realtimeHub.emitEvent('property:created', result);
     sendSuccess(res, result, 201);
   } catch (err) {
     next(err);
@@ -119,6 +121,7 @@ export async function updatePropertyHandler(
   try {
     const db = getDb(req);
     const result = await updateProperty(db, req.params.id, req.user!.id, req.body);
+    realtimeHub.emitEvent('property:updated', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -137,6 +140,7 @@ export async function deletePropertyHandler(
   try {
     const db = getDb(req);
     const result = await deleteProperty(db, req.params.id, req.user!.id);
+    realtimeHub.emitEvent('property:deleted', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -155,6 +159,7 @@ export async function createUnitHandler(
   try {
     const db = getDb(req);
     const result = await createUnit(db, req.params.id, req.user!.id, req.body);
+    realtimeHub.emitEvent('unit:created', result);
     sendSuccess(res, result, 201);
   } catch (err) {
     next(err);
@@ -197,6 +202,7 @@ export async function updateUnitHandler(
       req.user!.id,
       req.body
     );
+    realtimeHub.emitEvent('unit:updated', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -220,6 +226,7 @@ export async function deleteUnitHandler(
       req.params.unitId,
       req.user!.id
     );
+    realtimeHub.emitEvent('unit:deleted', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "presentation": "node -e \"const http = require('http'); const fs = require('fs'); const path = require('path'); const { exec } = require('child_process'); const server = http.createServer((req, res) => { const filePath = path.join(__dirname, 'presentation', req.url === '/' ? 'index.html' : req.url); fs.readFile(filePath, (err, data) => { if (err) { res.writeHead(404); res.end('Not found'); } else { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end(data); } }); }); server.listen(4123, () => { console.log('Slide deck running on http://localhost:4123'); exec('start http://localhost:4123'); });\""
+  },
   "dependencies": {
     "dash": "^7.1.1",
     "g": "^2.0.1",

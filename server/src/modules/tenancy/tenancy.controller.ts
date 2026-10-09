@@ -23,6 +23,7 @@ import type {
   CreateTenancyDisputeInput,
 } from './tenancy.lease.schemas.js';
 import { sendSuccess } from '../../common/utils/response.js';
+import { realtimeHub } from '../realtime/index.js';
 import type {
   CreateRentalRequestInput,
   RentalRequestIdParam,
@@ -46,6 +47,7 @@ export async function createRentalApplication(
   try {
     const db = getDb(req);
     const result = await submitRentalRequest(db, req.user!.id, req.body);
+    realtimeHub.emitEvent('tenancy:application_created', result);
     sendSuccess(res, result, 201);
   } catch (err) {
     next(err);
@@ -111,6 +113,7 @@ export async function cancelApplication(
   try {
     const db = getDb(req);
     const result = await cancelRentalRequest(db, req.params.id, req.user!.id);
+    realtimeHub.emitEvent('tenancy:application_cancelled', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -129,6 +132,7 @@ export async function rejectApplication(
   try {
     const db = getDb(req);
     const result = await rejectRentalRequest(db, req.params.id, req.user!.id);
+    realtimeHub.emitEvent('tenancy:application_rejected', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -147,6 +151,7 @@ export async function approveApplication(
   try {
     const db = getDb(req);
     const result = await approveRentalRequest(db, req.params.id, req.user!.id);
+    realtimeHub.emitEvent('tenancy:application_approved', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -218,6 +223,7 @@ export async function signLeaseAgreement(
       req.user!.id,
       req.user!.roles as UserRole[]
     );
+    realtimeHub.emitEvent('tenancy:lease_signed', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -236,6 +242,7 @@ export async function terminateLeaseAgreement(
   try {
     const db = getDb(req);
     const result = await terminateLease(db, req.params.id, req.user!.id, req.body);
+    realtimeHub.emitEvent('tenancy:lease_terminated', result);
     sendSuccess(res, result, 200);
   } catch (err) {
     next(err);
@@ -254,6 +261,7 @@ export async function createDisputeHandler(
   try {
     const db = getDb(req);
     const result = await createTenancyDispute(db, req.user!.id, req.body);
+    realtimeHub.emitEvent('dispute:created', result);
     sendSuccess(res, result, 201);
   } catch (err) {
     next(err);
