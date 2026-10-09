@@ -1,5 +1,5 @@
-/**
- * EarlyTerminationModal Component — Manus / Aceternity Dark Notice Modal
+﻿/**
+ * EarlyTerminationModal Component — Clean Light Mode
  *
  * Early Lease Termination workflow:
  * - Legal 35-day notice period calculation
@@ -67,104 +67,79 @@ export function EarlyTerminationModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
+      <div className=fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg card-premium overflow-hidden"
-          style={{
-            background: 'linear-gradient(145deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 35px rgba(244,63,94,0.1)',
-          }}
+          className=relative w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden
         >
           {/* Header */}
-          <div
-            className="flex items-center justify-between px-6 py-5"
-            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-400"
-                style={{
-                  background: 'rgba(244, 63, 94, 0.15)',
-                  border: '1px solid rgba(244, 63, 94, 0.3)',
-                }}
-              >
-                <AlertTriangle className="w-5 h-5" />
+          <div className=flex items-center justify-between px-6 py-5 bg-slate-50 border-b border-slate-200/80>
+            <div className=flex items-center gap-3>
+              <div className=w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600>
+                <AlertTriangle className=w-5 h-5 />
               </div>
               <div>
-                <h2 className="text-base font-display font-bold text-white">
+                <h2 className=text-base font-display font-bold text-slate-900>
                   Request Early Lease Termination
                 </h2>
-                <p className="text-xs font-mono" style={{ color: '#5a7299' }}>Lease #{lease.id}</p>
+                <p className=text-xs font-mono text-slate-500>Lease #{lease.id}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors hover:text-white"
-              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
-              aria-label="Close"
+              className=p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors
+              aria-label=Close
             >
-              <X className="w-5 h-5" />
+              <X className=w-5 h-5 />
             </button>
           </div>
 
           {success ? (
-            <div className="p-8 text-center space-y-4">
+            <div className=p-8 text-center space-y-4>
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-                style={{
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                }}
+                className=w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto text-emerald-600 shadow-sm
               >
-                <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+                <CheckCircle2 className=w-9 h-9 />
               </motion.div>
-              <h3 className="text-xl font-display font-bold text-white">Termination Recorded</h3>
-              <p className="text-xs leading-relaxed max-w-sm mx-auto" style={{ color: '#94aac5' }}>
+              <h3 className=text-xl font-display font-bold text-slate-900>Termination Recorded</h3>
+              <p className=text-xs leading-relaxed max-w-sm mx-auto text-slate-600>
                 Your formal early termination request has been registered in the platform audit log.
                 Your landlord ({lease.landlordName}) has been formally notified for key handover and
                 security deposit settlement.
               </p>
               <button
-                type="button"
+                type=button
                 onClick={onClose}
-                className="btn-primary btn-md w-full mt-4 font-display shine-hover"
+                className=btn-primary btn-md w-full mt-4 font-display
               >
                 Return to Tenancy Dashboard
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs" style={{ color: '#c8d8f0' }}>
+            <form onSubmit={handleSubmit} className=p-6 space-y-4 text-xs text-slate-700>
               {/* Summary Card */}
-              <div
-                className="p-4 rounded-2xl space-y-2"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
-                }}
-              >
-                <div className="flex justify-between">
-                  <span style={{ color: '#5a7299' }}>Premises:</span>
-                  <strong className="text-white font-semibold font-display">
+              <div className=p-4 rounded-2xl space-y-2 bg-slate-50 border border-slate-200/80>
+                <div className=flex justify-between>
+                  <span className=text-slate-500>Premises:</span>
+                  <strong className=text-slate-900 font-bold font-display>
                     {lease.unitIdentifier}, {lease.propertyTitle}
                   </strong>
                 </div>
-                <div className="flex justify-between">
-                  <span style={{ color: '#5a7299' }}>Monthly Rent:</span>
-                  <span className="text-white font-display">
+                <div className=flex justify-between>
+                  <span className=text-slate-500>Monthly Rent:</span>
+                  <span className=text-slate-900 font-bold font-display>
                     NPR {lease.agreedMonthlyRent.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span style={{ color: '#5a7299' }}>Deposit on Hold:</span>
-                  <span className="text-white font-display">
+                <div className=flex justify-between>
+                  <span className=text-slate-500>Deposit on Hold:</span>
+                  <span className=text-slate-900 font-bold font-display>
                     NPR {lease.agreedDeposit.toLocaleString()}
                   </span>
                 </div>
@@ -172,13 +147,13 @@ export function EarlyTerminationModal({
 
               {/* Reason Selector */}
               <div>
-                <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+                <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                   Primary Reason for Early Termination
                 </label>
                 <select
                   value={reasonCode}
                   onChange={(e) => setReasonCode(e.target.value)}
-                  className="form-select text-xs"
+                  className=form-select text-xs
                 >
                   {REASON_CODES.map((r) => (
                     <option key={r.code} value={r.code}>
@@ -190,77 +165,70 @@ export function EarlyTerminationModal({
 
               {/* Target Move Out */}
               <div>
-                <label className="text-xs font-semibold block mb-1.5 flex items-center gap-1.5 font-display" style={{ color: '#94aac5' }}>
-                  <Calendar className="w-3.5 h-3.5 text-brand-400" /> Proposed Vacancy / Handover Date
+                <label className=text-xs font-bold block mb-1.5 flex items-center gap-1.5 font-display text-slate-700>
+                  <Calendar className=w-3.5 h-3.5 text-blue-600 /> Proposed Vacancy / Handover Date
                 </label>
                 <input
-                  type="date"
+                  type=date
                   required
                   value={targetMoveOut}
                   onChange={(e) => setTargetMoveOut(e.target.value)}
-                  className="form-input text-xs"
+                  className=form-input text-xs
                 />
               </div>
 
               {/* Narrative */}
               <div>
-                <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+                <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                   Narrative & Handover Statement
                 </label>
                 <textarea
                   rows={3}
                   value={narrative}
                   onChange={(e) => setNarrative(e.target.value)}
-                  placeholder="Explain any details regarding premises handover and outstanding utilities..."
-                  className="form-input text-xs resize-none"
+                  placeholder=Explain any details regarding premises handover and outstanding utilities...
+                  className=form-input text-xs resize-none
                 />
               </div>
 
               {/* Warning Notice */}
-              <div
-                className="p-3.5 rounded-xl space-y-1 text-[11px]"
-                style={{
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.25)',
-                  color: '#fde68a',
-                }}
-              >
-                <div className="flex items-center gap-1.5 font-bold font-display">
-                  <ShieldAlert className="w-4 h-4 text-amber-400" /> Notice Period & Deposit Handover
+              <div className=p-4 rounded-2xl space-y-1 text-[11px] bg-amber-50 border border-amber-200 text-amber-900>
+                <div className=flex items-center gap-1.5 font-bold font-display text-amber-950>
+                  <ShieldAlert className=w-4 h-4 text-amber-600 /> Notice Period & Deposit Handover
                 </div>
-                <p>
+                <p className=leading-relaxed>
                   Per the Tenancy Agreement, standard notice is 35 days. Outstanding electricity, water,
                   and waste bills will be reconciled against the security deposit during the move-out inspection.
                 </p>
               </div>
 
               {/* Confirmation checkbox */}
-              <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+              <label className=flex items-start gap-2.5 cursor-pointer pt-1>
                 <input
-                  type="checkbox"
+                  type=checkbox
                   checked={acknowledged}
                   onChange={(e) => setAcknowledged(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-700 bg-slate-900 text-rose-600 focus:ring-rose-500"
+                  className=mt-0.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500
                 />
-                <span className="leading-normal" style={{ color: '#94aac5' }}>
+                <span className=leading-normal text-slate-600 text-xs>
                   I understand that submitting this request updates my tenancy status to{' '}
-                  <strong className="text-rose-400">terminated early</strong> and begins the legal handover procedure.
+                  <strong className=text-rose-700 font-bold>terminated early</strong> and begins the legal handover procedure.
                 </span>
               </label>
 
               {/* Actions */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className=flex items-center gap-3 pt-2>
                 <button
-                  type="button"
+                  type=button
                   onClick={onClose}
-                  className="btn-ghost btn-md flex-1 font-display"
+                  className=btn-secondary btn-md flex-1 font-display
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type=submit
                   disabled={!acknowledged || isSubmitting}
-                  className="btn-danger btn-md flex-1 font-display disabled:opacity-50"
+                  className=btn-danger btn-md flex-1 font-display disabled:opacity-50
                 >
                   {isSubmitting ? 'Recording…' : 'Confirm Early Termination'}
                 </button>

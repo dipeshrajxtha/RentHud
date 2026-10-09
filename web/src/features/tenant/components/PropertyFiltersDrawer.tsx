@@ -1,5 +1,5 @@
-/**
- * PropertyFiltersDrawer Component — Manus / Aceternity Dark Filter Drawer
+﻿/**
+ * PropertyFiltersDrawer Component — Clean Light Mode
  *
  * Advanced filter drawer for Kathmandu Valley property discovery:
  * - Min/Max monthly rent numeric sliders / inputs
@@ -48,14 +48,14 @@ export function PropertyFiltersDrawer({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+      <div className=fixed inset-0 z-50 overflow-hidden flex justify-end>
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 modal-overlay"
+          className=fixed inset-0 modal-overlay
         />
 
         {/* Drawer Panel */}
@@ -64,69 +64,57 @@ export function PropertyFiltersDrawer({
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-          className="relative w-full max-w-md h-full flex flex-col z-10"
-          style={{
-            background: 'linear-gradient(180deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
-            borderLeft: '1px solid rgba(46, 139, 255, 0.25)',
-            boxShadow: '-20px 0 60px rgba(0,0,0,0.8)',
-          }}
+          className=relative w-full max-w-md h-full bg-white flex flex-col z-10 border-l border-slate-200 shadow-2xl
         >
           {/* Header */}
-          <div
-            className="flex items-center justify-between px-6 py-5"
-            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
-          >
+          <div className=flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/60>
             <div>
-              <h2 className="text-lg font-display font-bold text-white">Filter Properties</h2>
-              <p className="text-xs" style={{ color: '#5a7299' }}>
-                Tune specific requirements for Kathmandu Valley
-              </p>
+              <h2 className=text-base font-display font-bold text-slate-900>
+                Search & Filter
+              </h2>
+              <p className=text-xs text-slate-500>Fine-tune your Kathmandu rental search</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors hover:text-white"
-              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
-              aria-label="Close"
+              className=p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors
+              aria-label=Close
             >
-              <X className="w-5 h-5" />
+              <X className=w-5 h-5 />
             </button>
           </div>
 
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs" style={{ color: '#c8d8f0' }}>
-            {/* Rent Range (NPR) */}
+          {/* Scrollable Form Body */}
+          <div className=flex-1 overflow-y-auto p-6 space-y-6 text-xs text-slate-700>
+            {/* Rent Range */}
             <div>
-              <label
-                className="text-xs font-bold uppercase tracking-wider block mb-2.5 font-display"
-                style={{ color: '#5a7299' }}
-              >
+              <label className=text-xs font-bold uppercase tracking-wider block mb-2 font-display text-slate-700>
                 Monthly Rent (NPR)
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className=grid grid-cols-2 gap-3>
                 <div>
-                  <span className="text-[11px] block mb-1 font-display" style={{ color: '#7187a5' }}>
+                  <span className=text-[11px] block mb-1 font-display text-slate-500>
                     Min Rent
                   </span>
                   <input
-                    type="number"
-                    step="5000"
+                    type=number
+                    step=5000
                     value={filters.minRent || ''}
                     onChange={(e) => onChange({ minRent: Number(e.target.value) || 0 })}
-                    placeholder="Min (e.g. 15000)"
-                    className="form-input text-xs"
+                    placeholder=Min (e.g. 15000)
+                    className=form-input text-xs
                   />
                 </div>
                 <div>
-                  <span className="text-[11px] block mb-1 font-display" style={{ color: '#7187a5' }}>
+                  <span className=text-[11px] block mb-1 font-display text-slate-500>
                     Max Rent
                   </span>
                   <input
-                    type="number"
-                    step="5000"
+                    type=number
+                    step=5000
                     value={filters.maxRent || ''}
                     onChange={(e) => onChange({ maxRent: Number(e.target.value) || 0 })}
-                    placeholder="Max (e.g. 60000)"
-                    className="form-input text-xs"
+                    placeholder=Max (e.g. 60000)
+                    className=form-input text-xs
                   />
                 </div>
               </div>
@@ -134,29 +122,20 @@ export function PropertyFiltersDrawer({
 
             {/* Bedrooms */}
             <div>
-              <label
-                className="text-xs font-bold uppercase tracking-wider block mb-2.5 font-display"
-                style={{ color: '#5a7299' }}
-              >
+              <label className=text-xs font-bold uppercase tracking-wider block mb-2 font-display text-slate-700>
                 Bedrooms
               </label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className=grid grid-cols-5 gap-2>
                 {(['all', 1, 2, 3, 4] as const).map((b) => {
                   const isSelected = filters.bedrooms === b;
                   return (
                     <button
                       key={String(b)}
-                      type="button"
+                      type=button
                       onClick={() => onChange({ bedrooms: b })}
-                      className={`py-2 text-xs font-bold rounded-xl transition-all font-display ${
-                        isSelected ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                      style={{
-                        background: isSelected ? 'rgba(46, 139, 255, 0.25)' : 'rgba(255, 255, 255, 0.02)',
-                        border: isSelected ? '1px solid rgba(46, 139, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.06)',
-                      }}
+                      className={py-2 text-xs font-bold rounded-xl transition-all font-display border }
                     >
-                      {b === 'all' ? 'Any' : `${b} BHK`}
+                      {b === 'all' ? 'Any' : ${b} BHK}
                     </button>
                   );
                 })}
@@ -165,29 +144,20 @@ export function PropertyFiltersDrawer({
 
             {/* Bathrooms */}
             <div>
-              <label
-                className="text-xs font-bold uppercase tracking-wider block mb-2.5 font-display"
-                style={{ color: '#5a7299' }}
-              >
+              <label className=text-xs font-bold uppercase tracking-wider block mb-2 font-display text-slate-700>
                 Bathrooms
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className=grid grid-cols-4 gap-2>
                 {(['all', 1, 2, 3] as const).map((b) => {
                   const isSelected = filters.bathrooms === b;
                   return (
                     <button
                       key={String(b)}
-                      type="button"
+                      type=button
                       onClick={() => onChange({ bathrooms: b })}
-                      className={`py-2 text-xs font-bold rounded-xl transition-all font-display ${
-                        isSelected ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                      style={{
-                        background: isSelected ? 'rgba(46, 139, 255, 0.25)' : 'rgba(255, 255, 255, 0.02)',
-                        border: isSelected ? '1px solid rgba(46, 139, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.06)',
-                      }}
+                      className={py-2 text-xs font-bold rounded-xl transition-all font-display border }
                     >
-                      {b === 'all' ? 'Any' : `${b}+ Bath`}
+                      {b === 'all' ? 'Any' : ${b}+ Bath}
                     </button>
                   );
                 })}
@@ -196,13 +166,10 @@ export function PropertyFiltersDrawer({
 
             {/* Priority Amenities */}
             <div>
-              <label
-                className="text-xs font-bold uppercase tracking-wider block mb-2.5 font-display"
-                style={{ color: '#5a7299' }}
-              >
+              <label className=text-xs font-bold uppercase tracking-wider block mb-2 font-display text-slate-700>
                 Must-Have Amenities
               </label>
-              <div className="space-y-2">
+              <div className=space-y-2>
                 {AMENITIES_LIST.map((am) => {
                   const Icon = am.icon;
                   const isChecked = filters.amenities.includes(am.id);
@@ -211,24 +178,18 @@ export function PropertyFiltersDrawer({
                     <div
                       key={am.id}
                       onClick={() => toggleAmenity(am.id)}
-                      className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all"
-                      style={{
-                        background: isChecked ? 'rgba(46, 139, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                        border: isChecked ? '1px solid rgba(46, 139, 255, 0.35)' : '1px solid rgba(255, 255, 255, 0.06)',
-                      }}
+                      className={lex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all border-2 }
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className="w-4 h-4 text-brand-400" />
-                        <span className="text-xs font-medium text-white font-display">{am.label}</span>
+                      <div className=flex items-center gap-2.5>
+                        <Icon className=w-4 h-4 text-blue-600 />
+                        <span className={	ext-xs font-bold font-display }>
+                          {am.label}
+                        </span>
                       </div>
                       <div
-                        className="w-4 h-4 rounded border flex items-center justify-center transition-all"
-                        style={{
-                          borderColor: isChecked ? '#2e8bff' : 'rgba(255, 255, 255, 0.2)',
-                          background: isChecked ? '#2e8bff' : 'transparent',
-                        }}
+                        className={w-4 h-4 rounded border-2 flex items-center justify-center transition-all }
                       >
-                        {isChecked && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
+                        {isChecked && <Check className=w-2.5 h-2.5 stroke-[3] />}
                       </div>
                     </div>
                   );
@@ -237,53 +198,44 @@ export function PropertyFiltersDrawer({
             </div>
 
             {/* Verified Listings Only Toggle */}
-            <div className="pt-3" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-              <label className="flex items-center justify-between cursor-pointer py-2">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-emerald-400"
-                    style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)' }}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
+            <div className=pt-2>
+              <label className=flex items-center justify-between cursor-pointer p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80>
+                <div className=flex items-center gap-3>
+                  <div className=w-8 h-8 rounded-xl flex items-center justify-center text-emerald-600 bg-emerald-50 border border-emerald-200>
+                    <ShieldCheck className=w-4 h-4 />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-white block font-display">Verified Listings Only</span>
-                    <span className="text-[11px]" style={{ color: '#7187a5' }}>
+                    <span className=text-xs font-bold text-slate-900 block font-display>Verified Listings Only</span>
+                    <span className=text-[11px] text-slate-500>
                       Filter for title-deed verified landlords
                     </span>
                   </div>
                 </div>
                 <input
-                  type="checkbox"
+                  type=checkbox
                   checked={filters.verifiedOnly}
                   onChange={(e) => onChange({ verifiedOnly: e.target.checked })}
-                  className="rounded border-slate-700 bg-slate-900 text-brand-600 focus:ring-brand-500 w-4 h-4"
+                  className=rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4
                 />
               </label>
             </div>
           </div>
 
           {/* Footer */}
-          <div
-            className="p-4 flex items-center justify-between gap-3"
-            style={{
-              background: 'rgba(8, 13, 20, 0.95)',
-              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            }}
-          >
+          <div className=p-4 flex items-center justify-between gap-3 bg-slate-50 border-t border-slate-200/80>
             <button
-              type="button"
+              type=button
               onClick={onReset}
-              className="btn-ghost btn-sm font-display flex items-center gap-1.5"
+              className=btn-secondary btn-sm font-display flex items-center gap-1.5
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className=w-3.5 h-3.5 />
               <span>Reset All</span>
             </button>
 
             <button
-              type="button"
+              type=button
               onClick={onClose}
-              className="btn-primary btn-md font-display shine-hover"
+              className=btn-primary btn-md font-display
             >
               Show Results
             </button>

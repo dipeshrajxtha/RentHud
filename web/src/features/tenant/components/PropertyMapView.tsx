@@ -229,10 +229,10 @@ export function PropertyMapView({
         </div>
 
         {/* Counter Pill with Red Pin Icon */}
-        <div className="bg-brand-950/85 backdrop-blur-md text-white px-3 py-2 rounded-2xl text-xs font-semibold shadow-sm flex items-center gap-1.5 border border-brand-800">
+        <div className="bg-white/95 backdrop-blur-md text-slate-800 px-3 py-2 rounded-2xl text-xs font-semibold shadow-sm flex items-center gap-1.5 border border-slate-200">
           <img src={locationPlaceholderPin} alt="House Pin" className="w-3.5 h-4.5 object-contain inline-block" />
           <span>
-            <strong className="text-white font-bold">{properties.length}</strong> {properties.length === 1 ? 'house' : 'houses'} found {radiusKm > 0 ? `in ${radiusKm}km radius` : 'in Valley'}
+            <strong className="text-blue-600 font-bold">{properties.length}</strong> {properties.length === 1 ? 'house' : 'houses'} found {radiusKm > 0 ? `in ${radiusKm}km radius` : 'in Valley'}
           </span>
         </div>
 

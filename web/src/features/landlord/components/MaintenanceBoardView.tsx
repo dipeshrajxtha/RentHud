@@ -1,5 +1,5 @@
 /**
- * MaintenanceBoardView — Ultra-Premium Dark Portal
+ * MaintenanceBoardView — Clean Light Modern Portal
  *
  * Work order tracking & contractor dispatch hub:
  *  - Filter by category and urgency (Emergency / High / Normal / Low)
@@ -13,7 +13,7 @@ import {
   Wrench, AlertTriangle, Clock, CheckCircle2,
   User, Building,
   Zap, Droplets, Wind, Lock,
-  X, ArrowRight, Sparkles, Calendar, Check,
+  X, ArrowRight, Sparkles, Check,
 } from 'lucide-react';
 import type { LandlordMaintenanceTicket } from '@/types/landlord';
 
@@ -26,6 +26,7 @@ interface MaintenanceBoardViewProps {
       status?: LandlordMaintenanceTicket['status'];
       assignedContractor?: string;
       scheduledDate?: string;
+      landlordNotes?: string;
     }
   ) => Promise<void>;
 }
@@ -33,8 +34,8 @@ interface MaintenanceBoardViewProps {
 const URGENCY_CONFIG = {
   Emergency: { badgeClass: 'badge-error', icon: AlertTriangle, dot: 'bg-rose-500' },
   High: { badgeClass: 'badge-warning', icon: Zap, dot: 'bg-amber-500' },
-  Normal: { badgeClass: 'badge-info', icon: Clock, dot: 'bg-brand-500' },
-  Low: { badgeClass: 'badge-neutral', icon: Clock, dot: 'bg-slate-500' },
+  Normal: { badgeClass: 'badge-info', icon: Clock, dot: 'bg-blue-500' },
+  Low: { badgeClass: 'badge-neutral', icon: Clock, dot: 'bg-slate-400' },
 };
 
 const STATUS_CONFIG = {
@@ -141,22 +142,15 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2"
-            style={{
-              background: 'rgba(244,63,94,0.12)',
-              border: '1px solid rgba(244,63,94,0.25)',
-              color: '#fb7185',
-              fontFamily: 'Space Grotesk, sans-serif',
-            }}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 bg-rose-50 border border-rose-200 text-rose-700 font-display">
+            <Sparkles className="w-3.5 h-3.5 text-rose-600" />
             Property Facility SLA
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-blue" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-display">
             Maintenance & Work Orders
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            {openCount} active request(s){emergencyCount > 0 && <span className="text-rose-400 font-semibold"> · {emergencyCount} emergency</span>}
+          <p className="text-sm mt-1 text-slate-500">
+            {openCount} active request(s){emergencyCount > 0 && <span className="text-rose-600 font-semibold"> · {emergencyCount} emergency</span>}
           </p>
         </div>
       </div>
@@ -170,8 +164,8 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
               onClick={() => setFilterUrgency(u)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 filterUrgency === u
-                  ? 'btn-primary shadow-brand-sm'
-                  : 'btn-ghost'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {u !== 'ALL' && <span className={`w-2 h-2 rounded-full ${URGENCY_CONFIG[u].dot}`} />}
@@ -186,8 +180,8 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
               onClick={() => setFilterStatus(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 filterStatus === s
-                  ? 'btn-primary shadow-brand-sm'
-                  : 'btn-ghost'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               {s === 'ALL' ? 'All Status' : s}
@@ -198,12 +192,12 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
 
       {/* Ticket list */}
       {filtered.length === 0 ? (
-        <div className="card-premium text-center py-20 px-6 border-dashed">
-          <Wrench className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="font-semibold text-base" style={{ color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>
+        <div className="bg-white border border-dashed border-slate-300 rounded-2xl text-center py-20 px-6">
+          <Wrench className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+          <p className="font-semibold text-base text-slate-800 font-display">
             No maintenance work orders found
           </p>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs mt-1 text-slate-500">
             When tenants submit repair or maintenance tickets, they will appear here.
           </p>
         </div>
@@ -218,20 +212,14 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
               <motion.div
                 key={ticket.id}
                 layout
-                className="card-premium overflow-hidden cursor-pointer transition-all hover:border-brand-500/40"
+                className="bg-white border border-slate-200 rounded-2xl overflow-hidden cursor-pointer shadow-xs hover:shadow-md hover:border-slate-300 transition-all"
                 onClick={() => openDetail(ticket)}
               >
                 {/* Urgency accent bar */}
                 <div className={`h-1 w-full ${urgCfg.dot}`} />
                 <div className="p-5 flex items-start gap-4">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    <CatIcon className="w-5 h-5 text-brand-400" />
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 border border-blue-100 text-blue-600">
+                    <CatIcon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -245,30 +233,30 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                         {ticket.category}
                       </span>
                     </div>
-                    <h3 className="text-sm font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <h3 className="text-sm font-bold text-slate-900 font-display">
                       {ticket.title}
                     </h3>
-                    <p className="text-xs mt-1 line-clamp-1" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-xs mt-1 line-clamp-1 text-slate-500">
                       {ticket.description}
                     </p>
                     <div className="flex items-center gap-4 mt-2.5 flex-wrap">
-                      <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <Building className="w-3.5 h-3.5 text-brand-400" />
+                      <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Building className="w-3.5 h-3.5 text-blue-600" />
                         {ticket.propertyTitle} · {ticket.unitIdentifier}
                       </span>
-                      <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <User className="w-3.5 h-3.5 text-brand-400" />
+                      <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <User className="w-3.5 h-3.5 text-blue-600" />
                         {ticket.reportedBy}
                       </span>
-                      <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                        <Clock className="w-3.5 h-3.5 text-brand-400" />
+                      <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <Clock className="w-3.5 h-3.5 text-blue-600" />
                         {new Date(ticket.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     {ticket.assignedContractor && (
-                      <p className="text-xs text-brand-300 mt-2 font-medium flex items-center gap-1.5">
-                        <Wrench className="w-3 h-3 text-brand-400" />
-                        Contractor: <strong className="text-white">{ticket.assignedContractor}</strong>
+                      <p className="text-xs text-blue-800 bg-blue-50 border border-blue-200/80 rounded-lg px-2.5 py-1 mt-2 font-medium inline-flex items-center gap-1.5">
+                        <Wrench className="w-3 h-3 text-blue-600" />
+                        Contractor: <strong className="text-blue-950 font-semibold">{ticket.assignedContractor}</strong>
                         {ticket.scheduledDate && ` · Scheduled: ${new Date(ticket.scheduledDate).toLocaleDateString()}`}
                       </p>
                     )}
@@ -277,14 +265,14 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                     {ticket.status !== 'Resolved' && (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleAdvanceStatus(ticket.id); }}
-                        className="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
                       >
                         Advance
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     )}
                     {ticket.status === 'Resolved' && (
-                      <span className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                      <span className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600">
                         <CheckCircle2 className="w-5 h-5" />
                       </span>
                     )}
@@ -312,16 +300,16 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md card-auth rounded-none sm:rounded-l-3xl flex flex-col overflow-hidden"
+              className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white border-l border-slate-200 shadow-2xl flex flex-col overflow-hidden"
             >
-              <div className="px-6 py-5 border-b border-white/10 bg-brand-950/60 flex items-center justify-between">
+              <div className="px-6 py-5 border-b border-slate-200 bg-slate-50/75 flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  <h2 className="text-base font-bold text-slate-900 font-display">
                     Work Order Details
                   </h2>
-                  <p className="text-xs text-text-muted">{selected.category} · {selected.urgency}</p>
+                  <p className="text-xs text-slate-500">{selected.category} · {selected.urgency}</p>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-2 rounded-xl text-text-muted hover:text-white transition-colors">
+                <button onClick={() => setSelected(null)} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -329,7 +317,7 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
                 {/* Status stepper */}
                 <div>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Resolution Pipeline</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 font-display">Resolution Pipeline</p>
                   <div className="flex items-center gap-1">
                     {STATUS_PIPELINE.map((step, idx) => {
                       const isActive = selected.status === step;
@@ -338,18 +326,18 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                         <React.Fragment key={step}>
                           <div className="flex flex-col items-center flex-1">
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                              isDone ? 'bg-emerald-500 text-white' :
-                              isActive ? 'bg-brand-500 text-white shadow-brand-sm' :
-                              'bg-surface-3 text-text-muted border border-white/5'
+                              isDone ? 'bg-emerald-600 text-white' :
+                              isActive ? 'bg-blue-600 text-white shadow-sm' :
+                              'bg-slate-100 text-slate-400 border border-slate-200'
                             }`}>
                               {isDone ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : idx + 1}
                             </div>
-                            <span className={`text-[10px] mt-1.5 text-center font-medium ${isActive ? 'text-brand-300 font-bold' : 'text-text-muted'}`}>
+                            <span className={`text-[10px] mt-1.5 text-center font-medium ${isActive ? 'text-blue-600 font-bold' : 'text-slate-500'}`}>
                               {step}
                             </span>
                           </div>
                           {idx < STATUS_PIPELINE.length - 1 && (
-                            <div className={`h-0.5 flex-1 ${isDone ? 'bg-emerald-500' : 'bg-surface-4'}`} />
+                            <div className={`h-0.5 flex-1 ${isDone ? 'bg-emerald-500' : 'bg-slate-200'}`} />
                           )}
                         </React.Fragment>
                       );
@@ -359,8 +347,8 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
 
                 {/* Description */}
                 <div>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Tenant Issue Description</p>
-                  <p className="text-sm text-slate-200 leading-relaxed card-premium p-3.5">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 font-display">Tenant Issue Description</p>
+                  <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3.5">
                     {selected.description}
                   </p>
                 </div>
@@ -407,7 +395,7 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                 </div>
               </div>
 
-              <div className="px-6 py-4 border-t border-white/10 bg-surface-1 flex gap-3">
+              <div className="px-6 py-4 border-t border-slate-200 bg-slate-50/75 flex gap-3">
                 {selected.status !== 'Resolved' && (
                   <button
                     onClick={() => { handleAdvanceStatus(selected.id); setSelected(null); }}

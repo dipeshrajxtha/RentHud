@@ -1,5 +1,5 @@
 /**
- * LandlordDisputesView — Ultra-Premium Dark Portal
+ * LandlordDisputesView — Clean Light Modern Portal
  *
  * Legal Dispute Mediation Center (Muluki Civil Code 2074 § 398)
  * Connected to live tenancy dispute arbitration records.
@@ -33,7 +33,7 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2].map((i) => <div key={i} className="h-32 rounded-2xl card-premium animate-pulse" />)}
+        {[1, 2].map((i) => <div key={i} className="h-32 rounded-2xl bg-white border border-slate-200 animate-pulse" />)}
       </div>
     );
   }
@@ -43,42 +43,35 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2"
-            style={{
-              background: 'rgba(124,58,237,0.12)',
-              border: '1px solid rgba(124,58,237,0.25)',
-              color: '#c4b5fd',
-              fontFamily: 'Space Grotesk, sans-serif',
-            }}
-          >
-            <Scale className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 bg-violet-50 border border-violet-200 text-violet-700 font-display">
+            <Scale className="w-3.5 h-3.5 text-violet-600" />
             Muluki Civil Code 2074 § 398
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-blue" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-display">
             Legal Dispute & Mediation Center
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm mt-1 text-slate-500">
             Digital arbitration tribunal records and formal tenancy claims.
           </p>
         </div>
       </div>
 
       {/* Legal statutory banner */}
-      <div className="card-premium p-4 flex gap-3 border-violet-500/20 bg-violet-500/5">
-        <ShieldAlert className="w-4 h-4 text-violet-400 shrink-0 mt-0.5" />
-        <div className="text-xs leading-relaxed text-violet-300/90">
-          <strong className="text-violet-200">§ 398 — Dispute Resolution:</strong> Any dispute arising from a tenancy agreement shall first be referred to RentHub's structured digital mediation process. If mutual settlement is not reached within 30 days, both parties receive a certified claim statement for submission to the Kathmandu District Court.
+      <div className="bg-violet-50/80 border border-violet-200 rounded-2xl p-4 flex gap-3 text-violet-900">
+        <ShieldAlert className="w-4 h-4 text-violet-600 shrink-0 mt-0.5" />
+        <div className="text-xs leading-relaxed">
+          <strong className="text-violet-950 font-bold">§ 398 — Dispute Resolution:</strong> Any dispute arising from a tenancy agreement shall first be referred to RentHub's structured digital mediation process. If mutual settlement is not reached within 30 days, both parties receive a certified claim statement for submission to the Kathmandu District Court.
         </div>
       </div>
 
       {/* Disputes list */}
       {disputes.length === 0 ? (
-        <div className="card-premium text-center py-20 px-6 border-dashed">
-          <Scale className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <p className="font-semibold text-base" style={{ color: 'var(--text-primary)', fontFamily: 'Space Grotesk, sans-serif' }}>
+        <div className="bg-white border border-dashed border-slate-300 rounded-2xl text-center py-20 px-6">
+          <Scale className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+          <p className="font-semibold text-base text-slate-800 font-display">
             No legal disputes on record
           </p>
-          <p className="text-xs mt-1 max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs mt-1 max-w-sm mx-auto text-slate-500">
             All tenancy agreements are currently in good standing with zero active claims or arbitration notices.
           </p>
         </div>
@@ -93,17 +86,11 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
                 key={dispute.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card-premium p-5 sm:p-6"
+                className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md hover:border-slate-300 transition-all"
               >
                 <div className="flex items-start gap-4">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
-                    <StatusIcon className="w-5 h-5 text-violet-400" />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-violet-50 border border-violet-100 text-violet-600">
+                    <StatusIcon className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -114,34 +101,34 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
                         {dispute.category.replace(/_/g, ' ')}
                       </span>
                     </div>
-                    <h3 className="text-base font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <h3 className="text-base font-bold text-slate-900 font-display">
                       {dispute.title}
                     </h3>
-                    <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-xs mt-1 leading-relaxed text-slate-500">
                       {dispute.description}
                     </p>
 
                     <div className="flex items-center gap-4 sm:gap-6 mt-3 flex-wrap">
                       {dispute.propertyTitle && (
-                        <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                          <FileText className="w-3.5 h-3.5 text-brand-400" />
+                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                          <FileText className="w-3.5 h-3.5 text-blue-600" />
                           {dispute.propertyTitle}
                           {dispute.unitIdentifier && ` — ${dispute.unitIdentifier}`}
                         </span>
                       )}
                       {dispute.claimAmount > 0 && (
-                        <span className="flex items-center gap-1.5 text-xs text-rose-400 font-semibold font-display">
+                        <span className="flex items-center gap-1.5 text-xs text-rose-600 font-semibold font-display">
                           <DollarSign className="w-3.5 h-3.5" />
                           Claimed Damages: NPR {dispute.claimAmount.toLocaleString()}
                         </span>
                       )}
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <span className="text-xs text-slate-500">
                         Filed on {new Date(dispute.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     {dispute.resolutionSummary && (
-                      <div className="mt-3 p-3 rounded-xl badge-success border border-emerald-500/20 w-full">
+                      <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 w-full">
                         <p className="text-xs">
                           <strong>Arbitration Settlement:</strong> {dispute.resolutionSummary}
                         </p>
@@ -156,10 +143,10 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn-ghost btn-sm text-[11px] py-1 px-2.5 flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-[11px] font-semibold flex items-center gap-1 transition-colors"
                           >
                             Evidence Doc #{i + 1}
-                            <ExternalLink className="w-3 h-3 text-brand-400" />
+                            <ExternalLink className="w-3 h-3 text-blue-600" />
                           </a>
                         ))}
                       </div>
@@ -173,16 +160,16 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
       )}
 
       {/* Help card */}
-      <div className="card-premium p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <h3 className="text-sm font-bold text-slate-900 font-display">
             Need to file a formal claim under § 398?
           </h3>
-          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs mt-1 text-slate-500">
             To dispute non-payment of rent, structural property damage, or unlawful subletting, initiate a claim from the Tenancies & Leases tab.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-brand-400 font-semibold shrink-0">
+        <div className="flex items-center gap-2 text-xs text-blue-600 font-semibold shrink-0">
           <span>Navigate to Leases</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </div>

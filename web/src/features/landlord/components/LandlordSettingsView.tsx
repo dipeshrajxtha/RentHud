@@ -1,5 +1,5 @@
 /**
- * LandlordSettingsView — Ultra-Premium Dark Portal
+ * LandlordSettingsView — Clean Light Modern Portal
  *
  * Profile management, Lalpurja/KYC verification status, payout accounts.
  * Connects to live landlord profile endpoints.
@@ -8,7 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
-  Settings, User, Shield, ShieldCheck, ShieldAlert, ShieldX,
+  User, Shield, ShieldCheck, ShieldAlert, ShieldX,
   Phone, Mail, CreditCard, Building,
   Clock, Upload, Info, Edit2, Save, Sparkles,
 } from 'lucide-react';
@@ -133,8 +133,8 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
   if (loadingProfile) {
     return (
       <div className="space-y-4">
-        <div className="h-32 rounded-2xl card-premium animate-pulse" />
-        <div className="h-48 rounded-2xl card-premium animate-pulse" />
+        <div className="h-32 rounded-2xl bg-white border border-slate-200 animate-pulse" />
+        <div className="h-48 rounded-2xl bg-white border border-slate-200 animate-pulse" />
       </div>
     );
   }
@@ -146,36 +146,29 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2"
-          style={{
-            background: 'rgba(46,139,255,0.12)',
-            border: '1px solid rgba(46,139,255,0.25)',
-            color: '#59aaff',
-            fontFamily: 'Space Grotesk, sans-serif',
-          }}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2 bg-blue-50 border border-blue-200 text-blue-700 font-display">
+          <Sparkles className="w-3.5 h-3.5 text-blue-600" />
           Account & Legal Security
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-blue" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 font-display">
           Settings & Asset Verification
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-sm mt-1 text-slate-500">
           Manage your verified landlord profile, Lalpurja deeds, and automated payout routes.
         </p>
       </div>
 
       {/* ── Profile Card ─────────────────────────────────────────────── */}
-      <div className="card-premium overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 bg-surface-1 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            <User className="w-4 h-4 text-brand-400" />
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/75 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 font-display">
+            <User className="w-4 h-4 text-blue-600" />
             Landlord Profile
           </h2>
           {!editingProfile && (
             <button
               onClick={() => setEditingProfile(true)}
-              className="btn-ghost btn-sm text-xs flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
               <Edit2 className="w-3.5 h-3.5" />
               Edit Profile
@@ -185,21 +178,21 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
         <div className="p-6">
           <div className="flex items-center gap-4 mb-6">
             {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-brand-500/30 shadow-brand-sm" />
+              <img src={profile.avatarUrl} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-blue-500/20 shadow-xs" />
             ) : (
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-600 to-accent-violet flex items-center justify-center text-white text-2xl font-bold font-display shadow-brand-sm">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold font-display shadow-xs">
                 {profile?.name?.[0]?.toUpperCase() ?? 'L'}
               </div>
             )}
             <div>
-              <p className="font-bold text-lg text-slate-100 font-display">{profile?.name}</p>
-              <p className="text-xs flex items-center gap-1.5 mt-1" style={{ color: 'var(--text-muted)' }}>
-                <Mail className="w-3.5 h-3.5 text-brand-400" />
+              <p className="font-bold text-lg text-slate-900 font-display">{profile?.name}</p>
+              <p className="text-xs flex items-center gap-1.5 mt-1 text-slate-500">
+                <Mail className="w-3.5 h-3.5 text-blue-600" />
                 {profile?.email}
               </p>
               {profile?.phone && (
-                <p className="text-xs flex items-center gap-1.5 mt-1" style={{ color: 'var(--text-muted)' }}>
-                  <Phone className="w-3.5 h-3.5 text-brand-400" />
+                <p className="text-xs flex items-center gap-1.5 mt-1 text-slate-500">
+                  <Phone className="w-3.5 h-3.5 text-blue-600" />
                   {profile.phone}
                 </p>
               )}
@@ -210,7 +203,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
             <motion.div
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4 pt-4 border-t border-white/5"
+              className="space-y-4 pt-4 border-t border-slate-200"
             >
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -236,7 +229,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setEditingProfile(false)}
-                  className="btn-ghost flex-1 py-2.5 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
@@ -254,7 +247,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
               </div>
             </motion.div>
           ) : (
-            <div className="text-xs pt-4 border-t border-white/5 flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
+            <div className="text-xs pt-4 border-t border-slate-100 flex items-center justify-between text-slate-500">
               <span>Registered on RentHub since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}</span>
               <span className="badge-info text-[10px]">Verified Host</span>
             </div>
@@ -262,15 +255,15 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
         </div>
       </div>
 
-      {/* ── KYC Verification ─────────────────────────────────────────── */}
-      <div className="card-premium overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 bg-surface-1 flex items-center justify-between">
+      {/* ── KYC Verification ───────────────────────────────────────── */}
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/75 flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              <Shield className="w-4 h-4 text-emerald-400" />
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 font-display">
+              <Shield className="w-4 h-4 text-emerald-600" />
               Ownership & Deed Verification (KYC)
             </h2>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs mt-0.5 text-slate-500">
               Verify title deeds to grant your properties verified listing status across Nepal.
             </p>
           </div>
@@ -284,7 +277,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
              'Action Required'}
           </span>
         </div>
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-slate-100">
           {kycDocs.map((doc) => {
             const cfg = KYC_STATUS_CONFIG[doc.status];
             const DocIcon = doc.icon;
@@ -292,29 +285,23 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
 
             return (
               <div key={doc.id} className="p-5 flex items-start gap-4">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <DocIcon className="w-5 h-5 text-brand-400" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50 border border-blue-100 text-blue-600">
+                  <DocIcon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="text-sm font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{doc.name}</p>
+                    <p className="text-sm font-bold text-slate-900 font-display">{doc.name}</p>
                     <span className={cfg.badgeClass}>
                       <StatusIcon className="w-3 h-3" />
                       {cfg.label}
                     </span>
                   </div>
-                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{doc.description}</p>
-                  <p className="text-[11px] mt-1 text-brand-300 font-medium">Compliance: {doc.requiredFor}</p>
+                  <p className="text-xs leading-relaxed text-slate-500">{doc.description}</p>
+                  <p className="text-[11px] mt-1 text-blue-700 font-medium">Compliance: {doc.requiredFor}</p>
                 </div>
                 {doc.status === 'not_submitted' && (
-                  <button className="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
+                  <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer shadow-xs">
+                    <Upload className="w-3.5 h-3.5 text-blue-600" />
                     Upload Scan
                   </button>
                 )}
@@ -322,22 +309,22 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
             );
           })}
         </div>
-        <div className="px-6 py-3.5 bg-surface-1 border-t border-white/5">
-          <div className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand-400" />
+        <div className="px-6 py-3.5 bg-slate-50/75 border-t border-slate-200">
+          <div className="flex items-start gap-2 text-xs text-slate-500">
+            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-600" />
             <span>Title deed documents are securely reviewed by RentHub compliance personnel and are never exposed publicly or shared with tenants.</span>
           </div>
         </div>
       </div>
 
       {/* ── Payout Accounts ──────────────────────────────────────────── */}
-      <div className="card-premium overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/5 bg-surface-1">
-          <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            <CreditCard className="w-4 h-4 text-brand-400" />
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/75">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 font-display">
+            <CreditCard className="w-4 h-4 text-blue-600" />
             Rent Payout Accounts & Direct Settlement
           </h2>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-xs mt-0.5 text-slate-500">
             Configure your commercial bank account or digital wallet for automated rent clearing.
           </p>
         </div>
@@ -350,8 +337,8 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
                 onChange={(e) => setPayoutForm((f) => ({ ...f, bankCode: e.target.value }))}
                 className="form-select text-xs"
               >
-                <option value="" className="bg-surface-2 text-white">Select bank…</option>
-                {PAYOUT_BANKS.map((b) => <option key={b.code} value={b.code} className="bg-surface-2 text-white">{b.name}</option>)}
+                <option value="">Select bank…</option>
+                {PAYOUT_BANKS.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
               </select>
             </div>
             <div>
@@ -378,7 +365,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
             </div>
             <div>
               <label className="form-label text-xs">
-                Mobile Wallet (eSewa / Khalti) <span className="text-text-muted font-normal">(optional)</span>
+                Mobile Wallet (eSewa / Khalti) <span className="text-slate-400 font-normal">(optional)</span>
               </label>
               <input
                 type="text"
@@ -406,14 +393,14 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
       </div>
 
       {/* ── Account Role & Authorization ── */}
-      <div className="card-premium overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
         <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Building className="w-4 h-4 text-brand-400" />
-              <strong className="text-slate-100 font-semibold font-display">Active Role: Landlord (Asset Owner)</strong>
+              <Building className="w-4 h-4 text-blue-600" />
+              <strong className="text-slate-900 font-semibold font-display">Active Role: Landlord (Asset Owner)</strong>
             </div>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-xs text-slate-500">
               Authorized for listing properties, managing residential units, executing digital leases, and rent ledger tracking.
             </p>
           </div>

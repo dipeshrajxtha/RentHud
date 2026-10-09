@@ -1,9 +1,9 @@
-/**
- * NewDisputeModal Component — Manus / Aceternity Dark Legal Modal
+﻿/**
+ * NewDisputeModal Component — Clean Light Mode
  *
- * Tenancy Dispute Filing Modal:
- * - Category selection under Nepal Muluki Civil Code
- * - Disputed claim monetary quantification
+ * Tenancy Dispute Resolution filing modal:
+ * - Category classification
+ * - Claim amount specification
  * - Detailed statement of facts & evidence
  * - Platform legal mediation notice
  */
@@ -71,63 +71,48 @@ export function NewDisputeModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
+      <div className=fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg card-premium overflow-hidden"
-          style={{
-            background: 'linear-gradient(145deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
-            border: '1px solid rgba(46, 139, 255, 0.25)',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 35px rgba(46,139,255,0.1)',
-          }}
+          className=relative w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden
         >
           {/* Header */}
-          <div
-            className="flex items-center justify-between px-6 py-5"
-            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-brand-400"
-                style={{
-                  background: 'rgba(46, 139, 255, 0.15)',
-                  border: '1px solid rgba(46, 139, 255, 0.3)',
-                }}
-              >
-                <Scale className="w-5 h-5" />
+          <div className=flex items-center justify-between px-6 py-5 bg-slate-50 border-b border-slate-200/80>
+            <div className=flex items-center gap-3>
+              <div className=w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600>
+                <Scale className=w-5 h-5 />
               </div>
               <div>
-                <h2 className="text-base font-display font-bold text-white">
+                <h2 className=text-base font-display font-bold text-slate-900>
                   File Tenancy Dispute
                 </h2>
-                <p className="text-xs" style={{ color: '#5a7299' }}>
+                <p className=text-xs text-slate-500>
                   {lease.unitIdentifier}, {lease.propertyTitle}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors hover:text-white"
-              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
-              aria-label="Close"
+              className=p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors
+              aria-label=Close
             >
-              <X className="w-5 h-5" />
+              <X className=w-5 h-5 />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs" style={{ color: '#c8d8f0' }}>
+          <form onSubmit={handleSubmit} className=p-6 space-y-4 text-xs text-slate-700>
             {/* Category */}
             <div>
-              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+              <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                 Dispute Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="form-select text-xs"
+                className=form-select text-xs
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -139,38 +124,38 @@ export function NewDisputeModal({
 
             {/* Title */}
             <div>
-              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+              <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                 Dispute Title
               </label>
               <input
-                type="text"
+                type=text
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Unwarranted security deposit deduction for normal wear"
-                className="form-input text-xs"
+                placeholder=e.g. Unwarranted security deposit deduction for normal wear
+                className=form-input text-xs
               />
             </div>
 
             {/* Disputed Claim Amount */}
             <div>
-              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+              <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                 Disputed Claim Amount (NPR) — Optional
               </label>
               <input
-                type="number"
-                min="0"
-                step="1000"
+                type=number
+                min=0
+                step=1000
                 value={claimAmount || ''}
                 onChange={(e) => setClaimAmount(Number(e.target.value) || 0)}
-                placeholder="Enter disputed NPR amount if monetary claim (e.g. 42000)"
-                className="form-input text-xs font-mono"
+                placeholder=Enter disputed NPR amount if monetary claim (e.g. 42000)
+                className=form-input text-xs font-mono
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+              <label className=text-xs font-bold block mb-1.5 font-display text-slate-700>
                 Statement of Facts & Evidence Summary
               </label>
               <textarea
@@ -178,42 +163,35 @@ export function NewDisputeModal({
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="State the facts clearly, citing lease clauses, dates, communication attempts, and requested remedy..."
-                className="form-input text-xs resize-none"
+                placeholder=State the facts clearly, citing lease clauses, dates, communication attempts, and requested remedy...
+                className=form-input text-xs resize-none
               />
             </div>
 
             {/* Platform Mediation Notice */}
-            <div
-              className="p-3.5 rounded-xl space-y-1.5 text-[11px]"
-              style={{
-                background: 'rgba(46, 139, 255, 0.08)',
-                border: '1px solid rgba(46, 139, 255, 0.2)',
-                color: '#94aac5',
-              }}
-            >
-              <div className="flex items-center gap-1.5 font-bold text-white font-display">
-                <ShieldCheck className="w-4 h-4 text-brand-400" /> RentHub Legal Mediation Process
+            <div className=p-4 rounded-2xl space-y-1.5 text-[11px] bg-blue-50 border border-blue-200 text-blue-900>
+              <div className=flex items-center gap-1.5 font-bold font-display text-blue-950>
+                <ShieldCheck className=w-4 h-4 text-blue-600 /> RentHub Legal Mediation Process
               </div>
-              <p>
+              <p className=leading-relaxed>
                 Filing records this claim in the immutable platform registry. A platform mediator reviews
                 the record and schedules a mutual resolution conference within 5 business days.
               </p>
             </div>
 
             {/* Submit */}
-            <div className="flex items-center gap-3 pt-3">
+            <div className=flex items-center gap-3 pt-3>
               <button
-                type="button"
+                type=button
                 onClick={onClose}
-                className="btn-ghost btn-md flex-1 font-display"
+                className=btn-secondary btn-md flex-1 font-display
               >
                 Cancel
               </button>
               <button
-                type="submit"
+                type=submit
                 disabled={isSubmitting}
-                className="btn-primary btn-md flex-1 shine-hover font-display"
+                className=btn-primary btn-md flex-1 font-display
               >
                 {isSubmitting ? 'Registering…' : 'File Formal Dispute'}
               </button>

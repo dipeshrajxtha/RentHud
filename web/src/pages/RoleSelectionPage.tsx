@@ -1,26 +1,22 @@
-/**
- * RoleSelectionPage — Ultra-Premium Dark Multi-Step Onboarding
+﻿/**
+ * RoleSelectionPage — Clean, Modern, User-Friendly Light Mode Onboarding
  * 
- * Inspired by: AnimMaster Lib, Skiper UI, Vengeance UI, Manus.im, Aceternity
  * Features:
- *   - Glassmorphism role cards with gradient icons & 3D tilt hover
- *   - Animated step indicator with shimmer progress bar
- *   - Slide transitions between questionnaire steps (forward/backward)
- *   - Staggered option entry animations (AnimMaster stagger)
- *   - Border beam and glow effects on selected states (Skiper / Aceternity)
- *   - Ambient floating orb background
- *   - Full integration with AuthContext and tenantService
+ *   - Clean Slate & White cards with accessible high-contrast typography
+ *   - Interactive Tenant & Landlord role selector with clear visual affordances
+ *   - Step-by-step preference questionnaire for tenants
+ *   - Real-time save to tenantService and AuthContext
  */
 
-import { useState, useCallback, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'motion/react';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { RentHubLogo } from '@/components/common/RentHubLogo';
 import { tenantService } from '@/features/tenant/tenant.service';
 import type { TenantPreferences } from '@/types/tenant';
 import {
   Home,
-  Building,
+  Building2,
   Check,
   ArrowRight,
   ArrowLeft,
@@ -36,6 +32,7 @@ import {
   Zap,
   Heart,
   Sun,
+  AlertCircle,
 } from 'lucide-react';
 
 type RoleOption = 'tenant' | 'landlord';
@@ -43,35 +40,29 @@ type RoleOption = 'tenant' | 'landlord';
 const ROLE_META = {
   tenant: {
     label: 'Tenant',
-    subtitle: 'Looking for a home to rent',
-    description: 'Discover verified rental listings, submit digital applications, sign legal leases, and manage rent & maintenance.',
+    subtitle: 'Looking for a verified home to rent',
+    description: 'Discover verified rental listings, submit digital applications, sign electronic leases, and pay rent online.',
     icon: Home,
-    gradient: 'linear-gradient(135deg, #1567f5 0%, #2e8bff 50%, #06b6d4 100%)',
-    glowColor: 'rgba(46, 139, 255, 0.28)',
-    accentColor: '#2e8bff',
-    accentBg: 'rgba(46, 139, 255, 0.12)',
-    accentBorder: 'rgba(46, 139, 255, 0.25)',
+    accentColor: '#2563eb',
+    badgeText: 'Renter Portal',
     perks: [
-      'Verified title-deed properties in Kathmandu Valley',
+      'Verified title-deed listings in Kathmandu Valley',
       'Electronic digital lease agreements',
-      'eSewa / Khalti / ConnectIPS rent payments',
-      'Maintenance ticketing & dispute protection',
+      'eSewa / Khalti / ConnectIPS rent receipts',
+      'Direct maintenance ticketing & dispute resolution',
     ],
   },
   landlord: {
     label: 'Landlord',
-    subtitle: 'Listing & managing properties',
-    description: 'List properties and individual units, screen tenant applications, issue digital leases, and collect rent.',
-    icon: Building,
-    gradient: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
-    glowColor: 'rgba(16, 185, 129, 0.28)',
-    accentColor: '#10b981',
-    accentBg: 'rgba(16, 185, 129, 0.12)',
-    accentBorder: 'rgba(16, 185, 129, 0.25)',
+    subtitle: 'Listing & managing rental properties',
+    description: 'Post buildings and individual units, screen tenant applications, issue digital leases, and collect rent.',
+    icon: Building2,
+    accentColor: '#059669',
+    badgeText: 'Property Manager',
     perks: [
       'Post building & multi-unit listings',
-      'Review verified tenant applications',
-      'Automated digital lease generation',
+      'Review verified tenant background applications',
+      'Automated digital lease contract generation',
       'Rent collection tracking & financial ledger',
     ],
   },
@@ -86,7 +77,7 @@ const MCQ_QUESTIONS = [
     options: [
       { id: 'apartment',         label: 'Apartment / Flat',   desc: 'Self-contained residential unit in an apartment building' },
       { id: 'independent_house', label: 'Independent Floor',  desc: 'Separate floor in a private residential house' },
-      { id: 'studio',            label: 'Studio / 1-BHK',     desc: 'Compact, cost-effective space for a solo professional' },
+      { id: 'studio',            label: 'Studio / 1-BHK',     desc: 'Compact, cost-effective space for an individual' },
       { id: 'shared',            label: 'Co-Living / Shared', desc: 'Private bedroom with shared living & kitchen areas' },
     ],
   },
@@ -99,7 +90,7 @@ const MCQ_QUESTIONS = [
       { id: 'economy',  label: 'Under NPR 15,000 / mo',    desc: 'Budget-conscious flats & studio spaces' },
       { id: 'standard', label: 'NPR 15,000 – 30,000 / mo', desc: 'Popular range for 1–2 BHK modern flats' },
       { id: 'mid',      label: 'NPR 30,000 – 50,000 / mo', desc: 'Spacious 2–3 BHK in prime residential areas' },
-      { id: 'premium',  label: 'NPR 50,000+ / mo',          desc: 'Diplomatic & executive residences with full amenities' },
+      { id: 'premium',  label: 'NPR 50,000+ / mo',          desc: 'Executive residences with full amenities' },
     ],
   },
   {
@@ -119,7 +110,7 @@ const MCQ_QUESTIONS = [
     subtitle: 'Landlords appreciate knowing household composition beforehand.',
     icon: Users,
     options: [
-      { id: 'solo',      label: 'Just me (Individual)',  desc: 'Working professional or university student' },
+      { id: 'solo',      label: 'Just me (Individual)',  desc: 'Working professional or student' },
       { id: 'couple',    label: 'Couple (2 Persons)',    desc: 'Partners or married couple' },
       { id: 'family',    label: 'Family with Children',  desc: 'Multi-member family household' },
       { id: 'roommates', label: 'Group of Roommates',    desc: 'Colleagues or friends co-renting' },
@@ -128,7 +119,7 @@ const MCQ_QUESTIONS = [
 ];
 
 const AMENITY_OPTIONS = [
-  { id: 'water',   label: '24/7 Treated Water', icon: Droplet, desc: 'Deep boring or tanker filtration' },
+  { id: 'water',   label: '24/7 Treated Water', icon: Droplet, desc: 'Deep boring or filtration' },
   { id: 'parking', label: 'Dedicated Parking',  icon: Car,     desc: 'Motorbike or covered car slot' },
   { id: 'wifi',    label: 'High-Speed Wi-Fi',   icon: Wifi,    desc: 'Fiber optic internet pre-installed' },
   { id: 'backup',  label: 'Backup Power',       icon: Zap,     desc: 'Solar inverter or generator support' },
@@ -136,301 +127,12 @@ const AMENITY_OPTIONS = [
   { id: 'balcony', label: 'Balcony / Rooftop',  icon: Sun,     desc: 'Open outdoor ventilation' },
 ];
 
-/* ── Floating Background Orbs ────────────────────────────────────────────── */
-function AnimatedBg() {
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-      <div
-        style={{
-          position: 'absolute',
-          top: '-20%',
-          left: '-10%',
-          width: '700px',
-          height: '700px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(46,139,255,0.08) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          animation: 'floatOrb1 22s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-15%',
-          right: '-10%',
-          width: '600px',
-          height: '600px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(124,58,237,0.07) 0%, transparent 70%)',
-          filter: 'blur(70px)',
-          animation: 'floatOrb2 18s ease-in-out infinite',
-        }}
-      />
-      <div className="absolute inset-0 bg-grid-lines opacity-30" />
-    </div>
-  );
-}
-
-/* ── Interactive 3D Role Card (Vengeance UI / Aceternity) ─────────────────── */
-function InteractiveRoleCard({
-  meta,
-  isSelected,
-  onClick,
-}: {
-  role: RoleOption;
-  meta: (typeof ROLE_META)[RoleOption];
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [5, -5]), { stiffness: 220, damping: 25 });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-5, 5]), { stiffness: 220, damping: 25 });
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    mouseX.set((e.clientX - rect.left) / rect.width - 0.5);
-    mouseY.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
-
-  const Icon = meta.icon;
-
-  return (
-    <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={onClick}
-      style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-      whileHover={{ scale: 1.015 }}
-      whileTap={{ scale: 0.98 }}
-      className="cursor-pointer rounded-2xl p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden transition-all duration-300"
-    >
-      {/* Background card styling */}
-      <div
-        className="absolute inset-0 rounded-2xl transition-all duration-300"
-        style={{
-          background: isSelected
-            ? 'linear-gradient(135deg, rgba(14,24,38,0.96) 0%, rgba(8,13,20,0.98) 100%)'
-            : 'linear-gradient(135deg, rgba(13,21,32,0.65) 0%, rgba(8,13,20,0.75) 100%)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: isSelected
-            ? `1.5px solid ${meta.accentColor}`
-            : '1px solid rgba(255,255,255,0.08)',
-          boxShadow: isSelected
-            ? `0 0 35px ${meta.glowColor}, 0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)`
-            : '0 4px 24px rgba(0,0,0,0.3)',
-        }}
-      />
-
-      {/* Border beam on top */}
-      {isSelected && (
-        <div
-          className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${meta.accentColor}, transparent)`,
-          }}
-        />
-      )}
-
-      {/* Card Content */}
-      <div className="relative z-10 space-y-4">
-        {/* Top Header */}
-        <div className="flex items-center justify-between">
-          <div
-            className="w-13 h-13 rounded-2xl flex items-center justify-center shadow-lg"
-            style={{
-              background: meta.gradient,
-              boxShadow: isSelected ? `0 0 24px ${meta.glowColor}` : 'none',
-            }}
-          >
-            <Icon className="w-6 h-6 text-white" />
-          </div>
-
-          {/* Radio indicator */}
-          <div
-            className="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200"
-            style={{
-              borderColor: isSelected ? meta.accentColor : 'rgba(255,255,255,0.25)',
-              background: isSelected ? meta.accentColor : 'rgba(255,255,255,0.04)',
-            }}
-          >
-            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-xs" />}
-          </div>
-        </div>
-
-        <div>
-          <h3
-            className="text-xl font-bold tracking-tight text-white font-display"
-          >
-            {meta.label}
-          </h3>
-          <p className="text-xs font-semibold mt-0.5" style={{ color: meta.accentColor }}>
-            {meta.subtitle}
-          </p>
-          <p className="text-xs leading-relaxed mt-2" style={{ color: '#94aac5' }}>
-            {meta.description}
-          </p>
-        </div>
-      </div>
-
-      {/* Perks List */}
-      <div
-        className="relative z-10 pt-5 mt-5 space-y-2.5"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        {meta.perks.map((perk, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2.5 text-xs transition-colors duration-200"
-            style={{ color: isSelected ? '#d8e5f8' : '#7187a5' }}
-          >
-            <span
-              className="w-1.5 h-1.5 rounded-full shrink-0"
-              style={{ background: isSelected ? meta.accentColor : '#5a7299' }}
-            />
-            <span className="font-medium">{perk}</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ── MCQ Option ───────────────────────────────────────────────────────────── */
-function MCQOption({
-  option,
-  isSelected,
-  onClick,
-}: {
-  option: { id: string; label: string; desc: string };
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <motion.div
-      onClick={onClick}
-      whileHover={{ y: -2, scale: 1.008 }}
-      whileTap={{ scale: 0.985 }}
-      className="cursor-pointer rounded-2xl p-4 sm:p-5 flex items-start gap-4 relative overflow-hidden transition-all duration-200"
-      style={{
-        background: isSelected
-          ? 'linear-gradient(135deg, rgba(46,139,255,0.12) 0%, rgba(13,21,32,0.9) 100%)'
-          : 'rgba(13, 21, 32, 0.75)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: isSelected
-          ? '1px solid rgba(46, 139, 255, 0.45)'
-          : '1px solid rgba(255, 255, 255, 0.07)',
-        boxShadow: isSelected
-          ? '0 0 20px rgba(46,139,255,0.18), 0 4px 16px rgba(0,0,0,0.3)'
-          : '0 2px 10px rgba(0,0,0,0.2)',
-      }}
-    >
-      <div
-        className="w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-all duration-200"
-        style={{
-          borderColor: isSelected ? '#2e8bff' : 'rgba(255,255,255,0.25)',
-          background: isSelected ? '#2e8bff' : 'transparent',
-        }}
-      >
-        {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
-      </div>
-      <div>
-        <p
-          className="text-sm font-semibold tracking-tight font-display"
-          style={{ color: isSelected ? '#f0f6ff' : '#94aac5' }}
-        >
-          {option.label}
-        </p>
-        <p className="text-xs mt-1 leading-relaxed" style={{ color: '#5a7299' }}>
-          {option.desc}
-        </p>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ── Amenity Option ───────────────────────────────────────────────────────── */
-function AmenityOption({
-  option,
-  isChecked,
-  onClick,
-}: {
-  option: typeof AMENITY_OPTIONS[0];
-  isChecked: boolean;
-  onClick: () => void;
-}) {
-  const Icon = option.icon;
-  return (
-    <motion.div
-      onClick={onClick}
-      whileHover={{ y: -2, scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      className="cursor-pointer rounded-2xl p-4 flex items-center gap-3.5 relative overflow-hidden transition-all duration-200"
-      style={{
-        background: isChecked
-          ? 'linear-gradient(135deg, rgba(46,139,255,0.12) 0%, rgba(13,21,32,0.9) 100%)'
-          : 'rgba(13, 21, 32, 0.75)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: isChecked
-          ? '1px solid rgba(46, 139, 255, 0.45)'
-          : '1px solid rgba(255, 255, 255, 0.07)',
-        boxShadow: isChecked
-          ? '0 0 20px rgba(46,139,255,0.18)'
-          : 'none',
-      }}
-    >
-      <div
-        className="p-2.5 rounded-xl shrink-0 transition-colors"
-        style={{
-          background: isChecked ? 'rgba(46,139,255,0.18)' : 'rgba(255,255,255,0.04)',
-          border: isChecked ? '1px solid rgba(46,139,255,0.3)' : '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <Icon className="w-4 h-4" style={{ color: isChecked ? '#59aaff' : '#7187a5' }} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm font-semibold tracking-tight font-display truncate"
-          style={{ color: isChecked ? '#f0f6ff' : '#94aac5' }}
-        >
-          {option.label}
-        </p>
-        <p className="text-xs truncate" style={{ color: '#5a7299' }}>
-          {option.desc}
-        </p>
-      </div>
-      <div
-        className="w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-all"
-        style={{
-          borderColor: isChecked ? '#2e8bff' : 'rgba(255,255,255,0.25)',
-          background: isChecked ? '#2e8bff' : 'transparent',
-        }}
-      >
-        {isChecked && <Check className="w-2.5 h-2.5 text-white stroke-[3]" />}
-      </div>
-    </motion.div>
-  );
-}
-
-/* ── Main Component ──────────────────────────────────────────────────────── */
 export function RoleSelectionPage() {
   const { user, completeOnboarding, error, clearError } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
   const [currentStep, setCurrentStep] = useState<'role' | 'mcq' | 'summary'>('role');
   const [mcqIndex, setMcqIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [slideDirection, setSlideDirection] = useState<'forward' | 'backward'>('forward');
 
   const [preferences, setPreferences] = useState<TenantPreferences>({
     housingType: 'apartment',
@@ -449,7 +151,6 @@ export function RoleSelectionPage() {
   const handleRoleContinue = () => {
     if (!selectedRole) return;
     if (selectedRole === 'tenant') {
-      setSlideDirection('forward');
       setCurrentStep('mcq');
     } else {
       void handleFinishOnboarding();
@@ -483,313 +184,317 @@ export function RoleSelectionPage() {
     }));
   };
 
-  const totalMCQSteps = MCQ_QUESTIONS.length + 1; // +1 for amenities step
+  const totalMCQSteps = MCQ_QUESTIONS.length + 1;
   const progressPercent = currentStep === 'mcq'
     ? ((mcqIndex + 1) / totalMCQSteps) * 100
     : currentStep === 'summary' ? 100 : 0;
 
-  const slideVariants = {
-    enterForward:  { opacity: 0, x: 40, filter: 'blur(4px)' },
-    enterBackward: { opacity: 0, x: -40, filter: 'blur(4px)' },
-    center:        { opacity: 1, x: 0, filter: 'blur(0px)', transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
-    exitForward:   { opacity: 0, x: -40, filter: 'blur(4px)', transition: { duration: 0.25 } },
-    exitBackward:  { opacity: 0, x: 40, filter: 'blur(4px)', transition: { duration: 0.25 } },
-  };
-
-  const getEnterVariant = () => (slideDirection === 'forward' ? 'enterForward' : 'enterBackward');
-  const getExitVariant  = () => (slideDirection === 'forward' ? 'exitForward'  : 'exitBackward');
-
   return (
-    <div
-      className="min-h-screen flex flex-col justify-between relative overflow-hidden"
-      style={{ background: 'var(--surface-0)' }}
-    >
-      <AnimatedBg />
-
+    <div className=min-h-screen bg-slate-50 flex flex-col justify-between>
       {/* Header */}
-      <header className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-8 pt-6 pb-4 flex items-center justify-between">
-        <RentHubLogo variant="white" className="h-8" />
-        <div className="flex items-center gap-3">
+      <header className=w-full max-w-5xl mx-auto px-4 sm:px-8 pt-6 pb-4 flex items-center justify-between>
+        <RentHubLogo variant=original size=md />
+        <div className=flex items-center gap-3 bg-white px-3.5 py-1.5 rounded-full border border-slate-200 shadow-xs>
           {user?.avatarUrl ? (
             <img
               src={user.avatarUrl}
               alt={user.name}
-              className="w-8 h-8 rounded-full"
-              style={{ border: '2px solid rgba(46,139,255,0.3)' }}
+              className=w-7 h-7 rounded-full border border-blue-200
             />
           ) : (
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #1567f5, #7c3aed)' }}
-            >
+            <div className=w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white>
               {user?.name?.[0] ?? 'U'}
             </div>
           )}
-          <span
-            className="text-sm font-medium hidden sm:inline font-display"
-            style={{ color: '#94aac5' }}
-          >
-            {user?.name}
+          <span className=text-xs font-semibold text-slate-800 font-display>
+            {user?.name ?? 'My Account'}
           </span>
         </div>
       </header>
 
-      {/* Progress Bar (MCQ only) */}
+      {/* Progress Bar (Questionnaire only) */}
       <AnimatePresence>
         {currentStep !== 'role' && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-8 mb-2"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span
-                className="text-xs font-semibold uppercase tracking-wider font-display"
-                style={{ color: '#5a7299' }}
-              >
-                Tenant Onboarding Questionnaire
+          <div className=w-full max-w-3xl mx-auto px-4 sm:px-8 mb-4>
+            <div className=flex items-center justify-between mb-2>
+              <span className=text-xs font-bold uppercase tracking-wider text-slate-500 font-display>
+                Renter Preference Setup
               </span>
-              <span
-                className="text-xs font-semibold font-display"
-                style={{ color: '#59aaff' }}
-              >
-                {currentStep === 'summary' ? 'Complete' : `Step ${mcqIndex + 1} of ${totalMCQSteps}`}
+              <span className=text-xs font-bold text-blue-600 font-display>
+                {currentStep === 'summary' ? 'Ready to launch' : Step  of }
               </span>
             </div>
-            <div className="progress-bar">
-              <motion.div
-                className="progress-fill"
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            <div className=w-full h-2 rounded-full bg-slate-200 overflow-hidden>
+              <div
+                className=h-full bg-blue-600 rounded-full transition-all duration-300 ease-out
+                style={{ width: ${progressPercent}% }}
               />
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Main Content Flow */}
-      <main className="relative z-10 flex-1 flex flex-col justify-center w-full max-w-3xl mx-auto px-4 sm:px-8 py-6">
-        <AnimatePresence mode="wait" custom={slideDirection}>
+      {/* Main Container */}
+      <main className=flex-1 flex flex-col justify-center w-full max-w-3xl mx-auto px-4 sm:px-8 py-6>
+        <AnimatePresence mode=wait>
           {/* STEP 1: ROLE SELECTION */}
           {currentStep === 'role' && (
             <motion.div
-              key="step-role"
-              initial={{ opacity: 0, y: 24 }}
+              key=step-role
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -24 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-8"
+              exit={{ opacity: 0, y: -16 }}
+              className=space-y-8
             >
-              {/* Hero text */}
-              <div className="text-center max-w-2xl mx-auto">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-4 font-display"
-                  style={{
-                    background: 'rgba(46,139,255,0.1)',
-                    border: '1px solid rgba(46,139,255,0.25)',
-                    color: '#59aaff',
-                  }}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Google Verified Account
-                </motion.div>
-                <h1
-                  className="text-3xl sm:text-4xl font-bold tracking-tight text-white font-display text-balance"
-                >
-                  Choose your RentHub role
+              <div className=text-center max-w-2xl mx-auto>
+                <div className=inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 mb-4 font-display>
+                  <ShieldCheck className=w-4 h-4 text-blue-600 />
+                  Account Verified via Google
+                </div>
+                <h1 className=text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-display>
+                  How will you use RentHub?
                 </h1>
-                <p className="mt-3 text-sm sm:text-base" style={{ color: '#94aac5' }}>
-                  RentHub enforces a single dedicated role per account. Choose whether you
-                  will use RentHub as a Tenant or Landlord.
+                <p className=mt-2 text-sm sm:text-base text-slate-600>
+                  Select your primary role. Each account is calibrated with tailored tools and workflows.
                 </p>
               </div>
 
-              {/* Role Cards */}
-              <div className="grid sm:grid-cols-2 gap-5">
-                {(['tenant', 'landlord'] as const).map(role => (
-                  <InteractiveRoleCard
-                    key={role}
-                    role={role}
-                    meta={ROLE_META[role]}
-                    isSelected={selectedRole === role}
-                    onClick={() => selectRole(role)}
-                  />
-                ))}
+              {/* Role Cards Grid */}
+              <div className=grid sm:grid-cols-2 gap-5>
+                {(['tenant', 'landlord'] as const).map(role => {
+                  const meta = ROLE_META[role];
+                  const isSelected = selectedRole === role;
+                  const Icon = meta.icon;
+
+                  return (
+                    <div
+                      key={role}
+                      onClick={() => selectRole(role)}
+                      className={cursor-pointer rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 border-2 }
+                    >
+                      <div className=space-y-4>
+                        <div className=flex items-center justify-between>
+                          <div
+                            className={w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm }
+                          >
+                            <Icon className=w-6 h-6 />
+                          </div>
+                          <div
+                            className={w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors }
+                          >
+                            {isSelected && <div className=w-2.5 h-2.5 rounded-full bg-white />}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className=text-xl font-bold text-slate-900 font-display>
+                            {meta.label}
+                          </h3>
+                          <p className={	ext-xs font-bold mt-0.5 }>
+                            {meta.subtitle}
+                          </p>
+                          <p className=text-xs text-slate-600 leading-relaxed mt-2>
+                            {meta.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className=pt-5 mt-5 border-t border-slate-100 space-y-2>
+                        {meta.perks.map((perk, i) => (
+                          <div key={i} className=flex items-center gap-2 text-xs text-slate-700 font-medium>
+                            <span
+                              className={w-1.5 h-1.5 rounded-full shrink-0 }
+                            />
+                            <span>{perk}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="auth-alert-error"
-                  >
-                    {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {error && (
+                <div className=p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2>
+                  <AlertCircle className=w-4 h-4 text-rose-600 shrink-0 />
+                  <span>{error}</span>
+                </div>
+              )}
 
-              {/* Continue CTA */}
+              {/* Submit Button */}
               <button
-                type="button"
+                type=button
                 onClick={handleRoleContinue}
                 disabled={!selectedRole || isSubmitting}
-                className="btn-primary btn-lg w-full shine-hover"
+                className=w-full py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed
               >
                 {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Finalizing account…
+                  <span className=flex items-center gap-2>
+                    <div className=w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin />
+                    Finalizing account...
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    Continue {selectedRole === 'tenant' ? 'to Personalization' : 'as Landlord'}
-                    <ArrowRight className="w-4 h-4" />
+                  <span className=flex items-center gap-2>
+                    Continue {selectedRole === 'tenant' ? 'to Renter Setup' : 'as Landlord'}
+                    <ArrowRight className=w-4 h-4 />
                   </span>
                 )}
               </button>
             </motion.div>
           )}
 
-          {/* STEP 2: TENANT MCQs */}
+          {/* STEP 2: TENANT MCQ QUESTIONS */}
           {currentStep === 'mcq' && mcqIndex < MCQ_QUESTIONS.length && (() => {
             const question = MCQ_QUESTIONS[mcqIndex];
             const currentVal = preferences[question.id as keyof TenantPreferences] as string;
             const Icon = question.icon;
+
             return (
               <motion.div
-                key={`mcq-${mcqIndex}`}
-                custom={slideDirection}
-                initial={getEnterVariant()}
-                animate="center"
-                exit={getExitVariant()}
-                variants={slideVariants}
-                className="space-y-6"
+                key={mcq-}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className=space-y-6
               >
-                <div className="flex items-start gap-3.5">
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-                    style={{
-                      background: 'rgba(46,139,255,0.12)',
-                      border: '1px solid rgba(46,139,255,0.25)',
-                    }}
-                  >
-                    <Icon className="w-6 h-6" style={{ color: '#59aaff' }} />
+                <div className=flex items-start gap-3.5>
+                  <div className=w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600 shadow-xs>
+                    <Icon className=w-6 h-6 />
                   </div>
                   <div>
-                    <h2
-                      className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display"
-                    >
+                    <h2 className=text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display>
                       {question.title}
                     </h2>
-                    <p className="mt-1 text-sm" style={{ color: '#94aac5' }}>
+                    <p className=text-xs sm:text-sm text-slate-500 mt-1>
                       {question.subtitle}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid gap-3.5 sm:grid-cols-2">
-                  {question.options.map(opt => (
-                    <MCQOption
-                      key={opt.id}
-                      option={opt}
-                      isSelected={currentVal === opt.id}
-                      onClick={() => setPreferences(prev => ({ ...prev, [question.id]: opt.id }))}
-                    />
-                  ))}
+                <div className=space-y-3>
+                  {question.options.map(opt => {
+                    const isSelected = currentVal === opt.id;
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() =>
+                          setPreferences(prev => ({
+                            ...prev,
+                            [question.id]: opt.id,
+                          }))
+                        }
+                        className={cursor-pointer rounded-2xl p-4 sm:p-5 flex items-start gap-4 transition-all border-2 }
+                      >
+                        <div
+                          className={w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors }
+                        >
+                          {isSelected && <Check className=w-3 h-3 stroke-[3] />}
+                        </div>
+                        <div>
+                          <p className={	ext-sm font-bold font-display }>
+                            {opt.label}
+                          </p>
+                          <p className=text-xs text-slate-500 mt-0.5 leading-relaxed>
+                            {opt.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
-                <div className="flex items-center justify-between pt-4">
+                <div className=flex items-center justify-between pt-4>
                   <button
-                    type="button"
+                    type=button
                     onClick={() => {
-                      setSlideDirection('backward');
                       if (mcqIndex === 0) setCurrentStep('role');
                       else setMcqIndex(i => i - 1);
                     }}
-                    className="btn-ghost btn-sm inline-flex items-center gap-2"
+                    className=px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/60 transition-colors flex items-center gap-1.5
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <ArrowLeft className=w-3.5 h-3.5 />
                     Back
                   </button>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setSlideDirection('forward');
-                      setMcqIndex(i => i + 1);
-                    }}
-                    className="btn-primary btn-sm inline-flex items-center gap-2"
+                    type=button
+                    onClick={() => setMcqIndex(i => i + 1)}
+                    className=px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-colors
                   >
-                    Next <ArrowRight className="w-3.5 h-3.5" />
+                    Continue <ArrowRight className=w-3.5 h-3.5 />
                   </button>
                 </div>
               </motion.div>
             );
           })()}
 
-          {/* STEP 2B: AMENITIES */}
+          {/* STEP 2B: AMENITIES SELECTION */}
           {currentStep === 'mcq' && mcqIndex === MCQ_QUESTIONS.length && (
             <motion.div
-              key="mcq-amenities"
-              custom={slideDirection}
-              initial={getEnterVariant()}
-              animate="center"
-              exit={getExitVariant()}
-              variants={slideVariants}
-              className="space-y-6"
+              key=mcq-amenities
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className=space-y-6
             >
-              <div>
-                <h2
-                  className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display"
-                >
-                  What amenities are essential?
-                </h2>
-                <p className="mt-1 text-sm" style={{ color: '#94aac5' }}>
-                  Select all that apply. In Kathmandu Valley, 24/7 treated water and parking are highly recommended.
-                </p>
+              <div className=flex items-start gap-3.5>
+                <div className=w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600 shadow-xs>
+                  <Sparkles className=w-6 h-6 />
+                </div>
+                <div>
+                  <h2 className=text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display>
+                    Which amenities are essential for you?
+                  </h2>
+                  <p className=text-xs sm:text-sm text-slate-500 mt-1>
+                    Select all that apply. We will flag listings that fulfill your priorities.
+                  </p>
+                </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                {AMENITY_OPTIONS.map(opt => (
-                  <AmenityOption
-                    key={opt.id}
-                    option={opt}
-                    isChecked={preferences.priorityAmenities.includes(opt.id)}
-                    onClick={() => toggleAmenity(opt.id)}
-                  />
-                ))}
+              <div className=grid sm:grid-cols-2 gap-3>
+                {AMENITY_OPTIONS.map(opt => {
+                  const isChecked = preferences.priorityAmenities.includes(opt.id);
+                  const Icon = opt.icon;
+                  return (
+                    <div
+                      key={opt.id}
+                      onClick={() => toggleAmenity(opt.id)}
+                      className={cursor-pointer rounded-2xl p-4 flex items-center gap-3.5 transition-all border-2 }
+                    >
+                      <div className={p-2.5 rounded-xl shrink-0 }>
+                        <Icon className=w-4 h-4 />
+                      </div>
+                      <div className=flex-1 min-w-0>
+                        <p className={	ext-sm font-bold truncate font-display }>
+                          {opt.label}
+                        </p>
+                        <p className=text-xs text-slate-500 truncate>{opt.desc}</p>
+                      </div>
+                      <div
+                        className={w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors }
+                      >
+                        {isChecked && <Check className=w-3.5 h-3.5 stroke-[3] />}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="flex items-center justify-between pt-4">
+              <div className=flex items-center justify-between pt-4>
                 <button
-                  type="button"
-                  onClick={() => {
-                    setSlideDirection('backward');
-                    setMcqIndex(i => i - 1);
-                  }}
-                  className="btn-ghost btn-sm inline-flex items-center gap-2"
+                  type=button
+                  onClick={() => setMcqIndex(i => i - 1)}
+                  className=px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/60 transition-colors flex items-center gap-1.5
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className=w-3.5 h-3.5 />
                   Back
                 </button>
                 <button
-                  type="button"
-                  onClick={() => {
-                    setSlideDirection('forward');
-                    setCurrentStep('summary');
-                  }}
-                  className="btn-primary btn-sm inline-flex items-center gap-2"
+                  type=button
+                  onClick={() => setCurrentStep('summary')}
+                  className=px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-colors
                 >
-                  Review Profile <ArrowRight className="w-3.5 h-3.5" />
+                  Review Profile <ArrowRight className=w-3.5 h-3.5 />
                 </button>
               </div>
             </motion.div>
@@ -798,95 +503,64 @@ export function RoleSelectionPage() {
           {/* STEP 3: SUMMARY */}
           {currentStep === 'summary' && (
             <motion.div
-              key="step-summary"
-              initial={{ opacity: 0, y: 24, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -24 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-6"
+              key=step-summary
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              className=space-y-6
             >
-              {/* Success header */}
-              <div className="text-center">
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', stiffness: 220, damping: 18, delay: 0.1 }}
-                  className="inline-flex p-3.5 rounded-2xl mb-4"
-                  style={{
-                    background: 'rgba(46,139,255,0.12)',
-                    border: '1px solid rgba(46,139,255,0.25)',
-                    boxShadow: '0 0 24px rgba(46,139,255,0.2)',
-                  }}
-                >
-                  <Sparkles className="w-7 h-7" style={{ color: '#59aaff' }} />
-                </motion.div>
-                <h2
-                  className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-display"
-                >
-                  Your Renter Profile is Calibrated!
+              <div className=text-center>
+                <div className=w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-sm>
+                  <Sparkles className=w-7 h-7 />
+                </div>
+                <h2 className=text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-display>
+                  Your Renter Profile is Ready!
                 </h2>
-                <p className="mt-2 text-sm" style={{ color: '#94aac5' }}>
-                  We've personalized your rental discovery feed based on your preferences.
+                <p className=mt-1 text-sm text-slate-500>
+                  We've tailored your Kathmandu property feed according to your selections.
                 </p>
               </div>
 
               {/* Summary Card */}
-              <div className="card-premium p-6 sm:p-7 space-y-5">
-                <div
-                  className="flex items-center justify-between pb-4"
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <span
-                    className="text-xs uppercase tracking-widest font-bold font-display"
-                    style={{ color: '#5a7299' }}
-                  >
-                    Preference Summary
+              <div className=bg-white rounded-3xl border border-slate-200/90 shadow-md p-6 sm:p-7 space-y-5>
+                <div className=flex items-center justify-between pb-4 border-b border-slate-100>
+                  <span className=text-xs uppercase tracking-wider font-bold text-slate-500 font-display>
+                    Preferences Overview
                   </span>
                   <button
-                    type="button"
+                    type=button
                     onClick={() => {
-                      setSlideDirection('backward');
                       setMcqIndex(0);
                       setCurrentStep('mcq');
                     }}
-                    className="text-xs font-semibold transition-colors font-display"
-                    style={{ color: '#59aaff' }}
+                    className=text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors
                   >
-                    Edit Answers
+                    Edit Selections
                   </button>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-3.5">
+                <div className=grid sm:grid-cols-2 gap-3.5>
                   {[
-                    { label: 'Home Layout', value: preferences.housingType.replace('_', ' ') },
+                    { label: 'Layout Preference', value: preferences.housingType.replace('_', ' ') },
                     {
                       label: 'Target Budget',
                       value:
                         preferences.budgetBracket === 'economy'
-                          ? 'Under NPR 15,000'
+                          ? 'Under NPR 15,000 / mo'
                           : preferences.budgetBracket === 'standard'
-                          ? 'NPR 15,000 – 30,000'
+                          ? 'NPR 15,000 – 30,000 / mo'
                           : preferences.budgetBracket === 'mid'
-                          ? 'NPR 30,000 – 50,000'
-                          : 'NPR 50,000+',
+                          ? 'NPR 30,000 – 50,000 / mo'
+                          : 'NPR 50,000+ / mo',
                     },
                     { label: 'Move-in Timeline', value: preferences.moveInTimeline.replace('_', ' ') },
-                    { label: 'Household Composition', value: preferences.householdSize },
+                    { label: 'Household Group', value: preferences.householdSize },
                   ].map(({ label, value }) => (
-                    <div
-                      key={label}
-                      className="p-3.5 rounded-xl"
-                      style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      <span className="block text-xs" style={{ color: '#5a7299' }}>
+                    <div key={label} className=p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80>
+                      <span className=block text-[11px] font-semibold text-slate-500 uppercase tracking-wide>
                         {label}
                       </span>
-                      <span
-                        className="font-bold capitalize text-sm text-white font-display mt-0.5 block"
-                      >
+                      <span className=font-bold capitalize text-sm text-slate-900 font-display mt-0.5 block>
                         {value}
                       </span>
                     </div>
@@ -894,15 +568,18 @@ export function RoleSelectionPage() {
                 </div>
 
                 {preferences.priorityAmenities.length > 0 && (
-                  <div className="pt-2">
-                    <span className="block text-xs mb-2.5" style={{ color: '#5a7299' }}>
+                  <div className=pt-2>
+                    <span className=block text-xs font-semibold text-slate-500 mb-2>
                       Priority Amenities
                     </span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className=flex flex-wrap gap-2>
                       {preferences.priorityAmenities.map(id => {
                         const item = AMENITY_OPTIONS.find(a => a.id === id);
                         return (
-                          <span key={id} className="badge-info">
+                          <span
+                            key={id}
+                            className=px-3 py-1 rounded-full text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700
+                          >
                             {item?.label ?? id}
                           </span>
                         );
@@ -913,37 +590,28 @@ export function RoleSelectionPage() {
               </div>
 
               {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="auth-alert-error"
-                  >
-                    {error}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {error && (
+                <div className=p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2>
+                  <AlertCircle className=w-4 h-4 text-rose-600 shrink-0 />
+                  <span>{error}</span>
+                </div>
+              )}
 
               <button
-                type="button"
+                type=button
                 onClick={handleFinishOnboarding}
                 disabled={isSubmitting}
-                className="btn-primary btn-lg w-full shine-hover"
+                className=w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50
               >
                 {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Saving and Launching Feed…
+                  <span className=flex items-center gap-2>
+                    <div className=w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin />
+                    Launching Feed...
                   </span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    Complete & Launch RentHub Feed
-                    <Compass className="w-4 h-4" />
+                  <span className=flex items-center gap-2>
+                    Launch RentHub Discovery
+                    <Compass className=w-4 h-4 />
                   </span>
                 )}
               </button>
@@ -953,11 +621,8 @@ export function RoleSelectionPage() {
       </main>
 
       {/* Footer */}
-      <footer
-        className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 text-center text-xs"
-        style={{ color: '#4a6285' }}
-      >
-        RentHub Nepal · Secure digital tenancy agreements compliant with the National Civil Code.
+      <footer className=w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 text-center text-xs text-slate-400>
+        RentHub Nepal &middot; Secure digital tenancy agreements compliant with the National Civil Code.
       </footer>
     </div>
   );
