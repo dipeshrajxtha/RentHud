@@ -1,4 +1,4 @@
-﻿/**
+/**
  * RoleSelectionPage — Clean, Modern, User-Friendly Light Mode Onboarding
  * 
  * Features:
@@ -21,11 +21,9 @@ import {
   ArrowRight,
   ArrowLeft,
   ShieldCheck,
-  Sparkles,
   DollarSign,
   Calendar,
   Users,
-  Compass,
   Droplet,
   Car,
   Wifi,
@@ -58,73 +56,73 @@ const ROLE_META = {
     description: 'Post buildings and individual units, screen tenant applications, issue digital leases, and collect rent.',
     icon: Building2,
     accentColor: '#059669',
-    badgeText: 'Property Manager',
+    badgeText: 'Owner Portal',
     perks: [
-      'Post building & multi-unit listings',
-      'Review verified tenant background applications',
-      'Automated digital lease contract generation',
-      'Rent collection tracking & financial ledger',
+      'Multi-unit building listing management',
+      'Screen verified prospective tenants',
+      'Automated statutory lease agreements (§ 379)',
+      'Real-time rent roll ledger & escrow custody',
     ],
   },
 } as const;
 
 const MCQ_QUESTIONS = [
   {
-    id: 'housingType',
+    id: 'housingType' as const,
     title: 'What type of home are you looking for?',
-    subtitle: 'We will calibrate your discovery feed to match your preferred layout.',
+    subtitle: 'We will calibrate your search feed to match your preferred layout.',
     icon: Home,
     options: [
-      { id: 'apartment',         label: 'Apartment / Flat',   desc: 'Self-contained residential unit in an apartment building' },
-      { id: 'independent_house', label: 'Independent Floor',  desc: 'Separate floor in a private residential house' },
-      { id: 'studio',            label: 'Studio / 1-BHK',     desc: 'Compact, cost-effective space for an individual' },
-      { id: 'shared',            label: 'Co-Living / Shared', desc: 'Private bedroom with shared living & kitchen areas' },
+      { id: 'apartment', label: 'Apartment / Flat', desc: 'Self-contained residential unit in an apartment building' },
+      { id: 'independent_house', label: 'Independent Floor', desc: 'Separate floor in a private residential house' },
+      { id: 'studio', label: 'Studio / 1-BHK', desc: 'Compact, cost-effective space for a solo professional' },
+      { id: 'shared', label: 'Co-Living / Shared', desc: 'Private bedroom with shared living & kitchen areas' },
     ],
   },
   {
-    id: 'budgetBracket',
+    id: 'budgetBracket' as const,
     title: 'What is your target monthly rent budget?',
     subtitle: 'All listings are priced in Nepali Rupees (NPR). Security deposit is typically 1–2 months.',
     icon: DollarSign,
     options: [
-      { id: 'economy',  label: 'Under NPR 15,000 / mo',    desc: 'Budget-conscious flats & studio spaces' },
+      { id: 'economy', label: 'Under NPR 15,000 / mo', desc: 'Budget-conscious flats & studio spaces' },
       { id: 'standard', label: 'NPR 15,000 – 30,000 / mo', desc: 'Popular range for 1–2 BHK modern flats' },
-      { id: 'mid',      label: 'NPR 30,000 – 50,000 / mo', desc: 'Spacious 2–3 BHK in prime residential areas' },
-      { id: 'premium',  label: 'NPR 50,000+ / mo',          desc: 'Executive residences with full amenities' },
+      { id: 'mid', label: 'NPR 30,000 – 50,000 / mo', desc: 'Spacious 2–3 BHK in prime residential areas' },
+      { id: 'premium', label: 'NPR 50,000+ / mo', desc: 'Diplomatic & executive residences with full amenities' },
     ],
   },
   {
-    id: 'moveInTimeline',
+    id: 'moveInTimeline' as const,
     title: 'When do you plan to move in?',
     subtitle: 'Helps us prioritize units with immediate or upcoming availability.',
     icon: Calendar,
     options: [
-      { id: 'immediate',  label: 'Immediately (within 14 days)', desc: 'Ready to inspect and sign agreement now' },
-      { id: 'next_month', label: 'Next Month (within 30 days)',  desc: 'Planning ahead for upcoming month turnover' },
-      { id: 'flexible',   label: 'Flexible / Just Exploring',    desc: 'Evaluating market options before committing' },
+      { id: 'immediate', label: 'Immediately (within 14 days)', desc: 'Ready to inspect and sign agreement now' },
+      { id: 'next_month', label: 'Next Month (within 30 days)', desc: 'Planning ahead for upcoming month turnover' },
+      { id: 'flexible', label: 'Flexible / Just Exploring', desc: 'Evaluating market options before committing' },
     ],
   },
   {
-    id: 'householdSize',
+    id: 'householdSize' as const,
     title: 'Who will be residing in the home?',
     subtitle: 'Landlords appreciate knowing household composition beforehand.',
     icon: Users,
     options: [
-      { id: 'solo',      label: 'Just me (Individual)',  desc: 'Working professional or student' },
-      { id: 'couple',    label: 'Couple (2 Persons)',    desc: 'Partners or married couple' },
-      { id: 'family',    label: 'Family with Children',  desc: 'Multi-member family household' },
-      { id: 'roommates', label: 'Group of Roommates',    desc: 'Colleagues or friends co-renting' },
+      { id: 'solo', label: 'Just me (Individual)', desc: 'Working professional or university student' },
+      { id: 'couple', label: 'Couple (2 Persons)', desc: 'Partners or married couple' },
+      { id: 'family', label: 'Family with Children', desc: 'Multi-member family household' },
+      { id: 'roommates', label: 'Group of Roommates', desc: 'Colleagues or friends co-renting' },
     ],
   },
 ];
 
 const AMENITY_OPTIONS = [
-  { id: 'water',   label: '24/7 Treated Water', icon: Droplet, desc: 'Deep boring or filtration' },
-  { id: 'parking', label: 'Dedicated Parking',  icon: Car,     desc: 'Motorbike or covered car slot' },
-  { id: 'wifi',    label: 'High-Speed Wi-Fi',   icon: Wifi,    desc: 'Fiber optic internet pre-installed' },
-  { id: 'backup',  label: 'Backup Power',       icon: Zap,     desc: 'Solar inverter or generator support' },
-  { id: 'pet',     label: 'Pet-Friendly',       icon: Heart,   desc: 'Pets officially allowed by landlord' },
-  { id: 'balcony', label: 'Balcony / Rooftop',  icon: Sun,     desc: 'Open outdoor ventilation' },
+  { id: 'water', label: '24/7 Treated Water', icon: Droplet, desc: 'Deep boring or tanker filtration' },
+  { id: 'parking', label: 'Dedicated Parking', icon: Car, desc: 'Motorbike or covered car slot' },
+  { id: 'wifi', label: 'High-Speed Wi-Fi', icon: Wifi, desc: 'Fiber optic internet pre-installed' },
+  { id: 'backup', label: 'Backup Power', icon: Zap, desc: 'Solar inverter or generator support' },
+  { id: 'pet', label: 'Pet-Friendly', icon: Heart, desc: 'Pets officially allowed by landlord' },
+  { id: 'balcony', label: 'Balcony / Rooftop', icon: Sun, desc: 'Open outdoor ventilation' },
 ];
 
 export function RoleSelectionPage() {
@@ -184,29 +182,30 @@ export function RoleSelectionPage() {
     }));
   };
 
-  const totalMCQSteps = MCQ_QUESTIONS.length + 1;
+  const totalMCQSteps = MCQ_QUESTIONS.length + 1; // +1 for amenities step
   const progressPercent = currentStep === 'mcq'
     ? ((mcqIndex + 1) / totalMCQSteps) * 100
     : currentStep === 'summary' ? 100 : 0;
 
   return (
-    <div className=min-h-screen bg-slate-50 flex flex-col justify-between>
-      {/* Header */}
-      <header className=w-full max-w-5xl mx-auto px-4 sm:px-8 pt-6 pb-4 flex items-center justify-between>
-        <RentHubLogo variant=original size=md />
-        <div className=flex items-center gap-3 bg-white px-3.5 py-1.5 rounded-full border border-slate-200 shadow-xs>
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+      {/* Top Header */}
+      <header className="w-full max-w-5xl mx-auto px-4 sm:px-8 pt-6 pb-4 flex items-center justify-between">
+        <RentHubLogo variant="original" size="md" />
+
+        <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-2xs">
           {user?.avatarUrl ? (
             <img
               src={user.avatarUrl}
               alt={user.name}
-              className=w-7 h-7 rounded-full border border-blue-200
+              className="w-7 h-7 rounded-full border border-blue-200"
             />
           ) : (
-            <div className=w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white>
+            <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
               {user?.name?.[0] ?? 'U'}
             </div>
           )}
-          <span className=text-xs font-semibold text-slate-800 font-display>
+          <span className="text-xs font-semibold text-slate-800 font-display">
             {user?.name ?? 'My Account'}
           </span>
         </div>
@@ -215,19 +214,19 @@ export function RoleSelectionPage() {
       {/* Progress Bar (Questionnaire only) */}
       <AnimatePresence>
         {currentStep !== 'role' && (
-          <div className=w-full max-w-3xl mx-auto px-4 sm:px-8 mb-4>
-            <div className=flex items-center justify-between mb-2>
-              <span className=text-xs font-bold uppercase tracking-wider text-slate-500 font-display>
+          <div className="w-full max-w-3xl mx-auto px-4 sm:px-8 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-display">
                 Renter Preference Setup
               </span>
-              <span className=text-xs font-bold text-blue-600 font-display>
-                {currentStep === 'summary' ? 'Ready to launch' : Step  of }
+              <span className="text-xs font-bold text-blue-600 font-display">
+                {currentStep === 'summary' ? 'Ready to launch' : `Step ${mcqIndex + 1} of ${totalMCQSteps}`}
               </span>
             </div>
-            <div className=w-full h-2 rounded-full bg-slate-200 overflow-hidden>
+            <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
               <div
-                className=h-full bg-blue-600 rounded-full transition-all duration-300 ease-out
-                style={{ width: ${progressPercent}% }}
+                className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
@@ -235,32 +234,32 @@ export function RoleSelectionPage() {
       </AnimatePresence>
 
       {/* Main Container */}
-      <main className=flex-1 flex flex-col justify-center w-full max-w-3xl mx-auto px-4 sm:px-8 py-6>
-        <AnimatePresence mode=wait>
+      <main className="flex-1 flex flex-col justify-center w-full max-w-3xl mx-auto px-4 sm:px-8 py-6">
+        <AnimatePresence mode="wait">
           {/* STEP 1: ROLE SELECTION */}
           {currentStep === 'role' && (
             <motion.div
-              key=step-role
+              key="step-role"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
-              className=space-y-8
+              className="space-y-8"
             >
-              <div className=text-center max-w-2xl mx-auto>
-                <div className=inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 mb-4 font-display>
-                  <ShieldCheck className=w-4 h-4 text-blue-600 />
+              <div className="text-center max-w-2xl mx-auto">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-blue-700 mb-4 font-display">
+                  <ShieldCheck className="w-4 h-4 text-blue-600" />
                   Account Verified via Google
                 </div>
-                <h1 className=text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-display>
+                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 font-display">
                   How will you use RentHub?
                 </h1>
-                <p className=mt-2 text-sm sm:text-base text-slate-600>
+                <p className="mt-2 text-sm sm:text-base text-slate-600">
                   Select your primary role. Each account is calibrated with tailored tools and workflows.
                 </p>
               </div>
 
               {/* Role Cards Grid */}
-              <div className=grid sm:grid-cols-2 gap-5>
+              <div className="grid sm:grid-cols-2 gap-5">
                 {(['tenant', 'landlord'] as const).map(role => {
                   const meta = ROLE_META[role];
                   const isSelected = selectedRole === role;
@@ -270,41 +269,50 @@ export function RoleSelectionPage() {
                     <div
                       key={role}
                       onClick={() => selectRole(role)}
-                      className={cursor-pointer rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 border-2 }
+                      className={`cursor-pointer rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-200 border-2 bg-white ${
+                        isSelected
+                          ? 'border-blue-600 shadow-lg shadow-blue-500/10 ring-4 ring-blue-50'
+                          : 'border-slate-200/90 hover:border-slate-300 shadow-xs'
+                      }`}
                     >
-                      <div className=space-y-4>
-                        <div className=flex items-center justify-between>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
                           <div
-                            className={w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-sm }
+                            className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-xs ${
+                              role === 'tenant' ? 'bg-blue-600' : 'bg-emerald-600'
+                            }`}
                           >
-                            <Icon className=w-6 h-6 />
+                            <Icon className="w-6 h-6" />
                           </div>
-                          <div
-                            className={w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors }
+
+                          <span
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-full font-display uppercase tracking-wider ${
+                              role === 'tenant'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}
                           >
-                            {isSelected && <div className=w-2.5 h-2.5 rounded-full bg-white />}
-                          </div>
+                            {meta.badgeText}
+                          </span>
                         </div>
 
                         <div>
-                          <h3 className=text-xl font-bold text-slate-900 font-display>
+                          <h3 className="text-xl font-bold text-slate-900 font-display">
                             {meta.label}
                           </h3>
-                          <p className={	ext-xs font-bold mt-0.5 }>
+                          <p className="text-xs font-semibold text-blue-600 mt-0.5">
                             {meta.subtitle}
                           </p>
-                          <p className=text-xs text-slate-600 leading-relaxed mt-2>
+                          <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                             {meta.description}
                           </p>
                         </div>
                       </div>
 
-                      <div className=pt-5 mt-5 border-t border-slate-100 space-y-2>
+                      <div className="pt-5 mt-5 border-t border-slate-100 space-y-2">
                         {meta.perks.map((perk, i) => (
-                          <div key={i} className=flex items-center gap-2 text-xs text-slate-700 font-medium>
-                            <span
-                              className={w-1.5 h-1.5 rounded-full shrink-0 }
-                            />
+                          <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
                             <span>{perk}</span>
                           </div>
                         ))}
@@ -314,315 +322,268 @@ export function RoleSelectionPage() {
                 })}
               </div>
 
-              {/* Error */}
               {error && (
-                <div className=p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2>
-                  <AlertCircle className=w-4 h-4 text-rose-600 shrink-0 />
+                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              {/* Submit Button */}
-              <button
-                type=button
-                onClick={handleRoleContinue}
-                disabled={!selectedRole || isSubmitting}
-                className=w-full py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed
-              >
-                {isSubmitting ? (
-                  <span className=flex items-center gap-2>
-                    <div className=w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin />
-                    Finalizing account...
+              {/* Action Button */}
+              <div className="flex justify-center pt-2">
+                <button
+                  type="button"
+                  disabled={!selectedRole || isSubmitting}
+                  onClick={handleRoleContinue}
+                  className="btn-primary btn-lg w-full sm:w-auto px-10 flex items-center justify-center gap-2 font-display text-sm"
+                >
+                  <span>
+                    {selectedRole === 'tenant'
+                      ? 'Continue to Personalize Feed'
+                      : isSubmitting
+                      ? 'Launching Portal…'
+                      : 'Launch Landlord Portal'}
                   </span>
-                ) : (
-                  <span className=flex items-center gap-2>
-                    Continue {selectedRole === 'tenant' ? 'to Renter Setup' : 'as Landlord'}
-                    <ArrowRight className=w-4 h-4 />
-                  </span>
-                )}
-              </button>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </motion.div>
           )}
 
-          {/* STEP 2: TENANT MCQ QUESTIONS */}
-          {currentStep === 'mcq' && mcqIndex < MCQ_QUESTIONS.length && (() => {
-            const question = MCQ_QUESTIONS[mcqIndex];
-            const currentVal = preferences[question.id as keyof TenantPreferences] as string;
-            const Icon = question.icon;
-
-            return (
-              <motion.div
-                key={mcq-}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className=space-y-6
-              >
-                <div className=flex items-start gap-3.5>
-                  <div className=w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600 shadow-xs>
-                    <Icon className=w-6 h-6 />
-                  </div>
-                  <div>
-                    <h2 className=text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display>
-                      {question.title}
-                    </h2>
-                    <p className=text-xs sm:text-sm text-slate-500 mt-1>
-                      {question.subtitle}
-                    </p>
-                  </div>
-                </div>
-
-                <div className=space-y-3>
-                  {question.options.map(opt => {
-                    const isSelected = currentVal === opt.id;
-                    return (
-                      <div
-                        key={opt.id}
-                        onClick={() =>
-                          setPreferences(prev => ({
-                            ...prev,
-                            [question.id]: opt.id,
-                          }))
-                        }
-                        className={cursor-pointer rounded-2xl p-4 sm:p-5 flex items-start gap-4 transition-all border-2 }
-                      >
-                        <div
-                          className={w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center transition-colors }
-                        >
-                          {isSelected && <Check className=w-3 h-3 stroke-[3] />}
-                        </div>
-                        <div>
-                          <p className={	ext-sm font-bold font-display }>
-                            {opt.label}
-                          </p>
-                          <p className=text-xs text-slate-500 mt-0.5 leading-relaxed>
-                            {opt.desc}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className=flex items-center justify-between pt-4>
-                  <button
-                    type=button
-                    onClick={() => {
-                      if (mcqIndex === 0) setCurrentStep('role');
-                      else setMcqIndex(i => i - 1);
-                    }}
-                    className=px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/60 transition-colors flex items-center gap-1.5
-                  >
-                    <ArrowLeft className=w-3.5 h-3.5 />
-                    Back
-                  </button>
-                  <button
-                    type=button
-                    onClick={() => setMcqIndex(i => i + 1)}
-                    className=px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-colors
-                  >
-                    Continue <ArrowRight className=w-3.5 h-3.5 />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })()}
-
-          {/* STEP 2B: AMENITIES SELECTION */}
-          {currentStep === 'mcq' && mcqIndex === MCQ_QUESTIONS.length && (
+          {/* STEP 2: MCQ PREFERENCE QUESTIONNAIRE */}
+          {currentStep === 'mcq' && (
             <motion.div
-              key=mcq-amenities
+              key={`step-mcq-${mcqIndex}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className=space-y-6
+              className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-6 sm:p-9 space-y-6"
             >
-              <div className=flex items-start gap-3.5>
-                <div className=w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 text-blue-600 shadow-xs>
-                  <Sparkles className=w-6 h-6 />
-                </div>
-                <div>
-                  <h2 className=text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight font-display>
-                    Which amenities are essential for you?
-                  </h2>
-                  <p className=text-xs sm:text-sm text-slate-500 mt-1>
-                    Select all that apply. We will flag listings that fulfill your priorities.
-                  </p>
-                </div>
-              </div>
+              {/* Question 0-3: General MCQs */}
+              {mcqIndex < MCQ_QUESTIONS.length ? (
+                <>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-display tracking-tight">
+                      {MCQ_QUESTIONS[mcqIndex].title}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      {MCQ_QUESTIONS[mcqIndex].subtitle}
+                    </p>
+                  </div>
 
-              <div className=grid sm:grid-cols-2 gap-3>
-                {AMENITY_OPTIONS.map(opt => {
-                  const isChecked = preferences.priorityAmenities.includes(opt.id);
-                  const Icon = opt.icon;
-                  return (
-                    <div
-                      key={opt.id}
-                      onClick={() => toggleAmenity(opt.id)}
-                      className={cursor-pointer rounded-2xl p-4 flex items-center gap-3.5 transition-all border-2 }
-                    >
-                      <div className={p-2.5 rounded-xl shrink-0 }>
-                        <Icon className=w-4 h-4 />
-                      </div>
-                      <div className=flex-1 min-w-0>
-                        <p className={	ext-sm font-bold truncate font-display }>
-                          {opt.label}
-                        </p>
-                        <p className=text-xs text-slate-500 truncate>{opt.desc}</p>
-                      </div>
-                      <div
-                        className={w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center transition-colors }
-                      >
-                        {isChecked && <Check className=w-3.5 h-3.5 stroke-[3] />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                  <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                    {MCQ_QUESTIONS[mcqIndex].options.map((opt) => {
+                      const questionId = MCQ_QUESTIONS[mcqIndex].id;
+                      const isChosen = preferences[questionId] === opt.id;
 
-              <div className=flex items-center justify-between pt-4>
+                      return (
+                        <div
+                          key={opt.id}
+                          onClick={() => {
+                            setPreferences((p) => ({ ...p, [questionId]: opt.id }));
+                          }}
+                          className={`p-4 rounded-2xl cursor-pointer transition-all border-2 ${
+                            isChosen
+                              ? 'border-blue-600 bg-blue-50/30'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-bold text-sm text-slate-900 font-display">
+                              {opt.label}
+                            </span>
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                isChosen ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                              }`}
+                            >
+                              {isChosen && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-500 leading-relaxed">
+                            {opt.desc}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                /* Question 4: Multi-select Amenities */
+                <>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-display tracking-tight">
+                      Which amenities are non-negotiable for you?
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Select all features that you require in your new home.
+                    </p>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                    {AMENITY_OPTIONS.map((amenity) => {
+                      const Icon = amenity.icon;
+                      const isChecked = preferences.priorityAmenities.includes(amenity.id);
+
+                      return (
+                        <div
+                          key={amenity.id}
+                          onClick={() => toggleAmenity(amenity.id)}
+                          className={`p-4 rounded-2xl cursor-pointer transition-all border-2 flex items-center gap-3.5 ${
+                            isChecked
+                              ? 'border-blue-600 bg-blue-50/30'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                              isChecked
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900 font-display truncate">
+                              {amenity.label}
+                            </p>
+                            <p className="text-[11px] text-slate-500 truncate">
+                              {amenity.desc}
+                            </p>
+                          </div>
+
+                          <div
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                              isChecked ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                            }`}
+                          >
+                            {isChecked && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Navigation Bar */}
+              <div className="flex items-center justify-between pt-6 border-t border-slate-100">
                 <button
-                  type=button
-                  onClick={() => setMcqIndex(i => i - 1)}
-                  className=px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/60 transition-colors flex items-center gap-1.5
+                  type="button"
+                  onClick={() => {
+                    if (mcqIndex === 0) {
+                      setCurrentStep('role');
+                    } else {
+                      setMcqIndex((i) => i - 1);
+                    }
+                  }}
+                  className="btn-secondary btn-md flex items-center gap-2 font-display"
                 >
-                  <ArrowLeft className=w-3.5 h-3.5 />
-                  Back
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
                 </button>
+
                 <button
-                  type=button
-                  onClick={() => setCurrentStep('summary')}
-                  className=px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs transition-colors
+                  type="button"
+                  onClick={() => {
+                    if (mcqIndex < totalMCQSteps - 1) {
+                      setMcqIndex((i) => i + 1);
+                    } else {
+                      setCurrentStep('summary');
+                    }
+                  }}
+                  className="btn-primary btn-md flex items-center gap-2 font-display"
                 >
-                  Review Profile <ArrowRight className=w-3.5 h-3.5 />
+                  <span>{mcqIndex < totalMCQSteps - 1 ? 'Next Step' : 'Review & Finish'}</span>
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 3: SUMMARY */}
+          {/* STEP 3: SUMMARY & CONFIRMATION */}
           {currentStep === 'summary' && (
             <motion.div
-              key=step-summary
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              className=space-y-6
+              key="step-summary"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-6 sm:p-9 space-y-6"
             >
-              <div className=text-center>
-                <div className=w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-sm>
-                  <Sparkles className=w-7 h-7 />
+              <div className="text-center space-y-2">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto">
+                  <Check className="w-6 h-6 stroke-[3]" />
                 </div>
-                <h2 className=text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-display>
-                  Your Renter Profile is Ready!
+                <h2 className="text-2xl font-extrabold text-slate-900 font-display">
+                  Preferences Calibrated
                 </h2>
-                <p className=mt-1 text-sm text-slate-500>
-                  We've tailored your Kathmandu property feed according to your selections.
+                <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                  Your tenant profile has been personalized. We will highlight properties in Kathmandu Valley that best match your parameters.
                 </p>
               </div>
 
-              {/* Summary Card */}
-              <div className=bg-white rounded-3xl border border-slate-200/90 shadow-md p-6 sm:p-7 space-y-5>
-                <div className=flex items-center justify-between pb-4 border-b border-slate-100>
-                  <span className=text-xs uppercase tracking-wider font-bold text-slate-500 font-display>
-                    Preferences Overview
+              {/* Summary Breakdown */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 divide-y divide-slate-200 text-xs">
+                <div className="py-2.5 flex justify-between">
+                  <span className="text-slate-500">Target Layout:</span>
+                  <span className="font-bold text-slate-900 capitalize font-display">
+                    {preferences.housingType.replace('_', ' ')}
                   </span>
-                  <button
-                    type=button
-                    onClick={() => {
-                      setMcqIndex(0);
-                      setCurrentStep('mcq');
-                    }}
-                    className=text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors
-                  >
-                    Edit Selections
-                  </button>
                 </div>
-
-                <div className=grid sm:grid-cols-2 gap-3.5>
-                  {[
-                    { label: 'Layout Preference', value: preferences.housingType.replace('_', ' ') },
-                    {
-                      label: 'Target Budget',
-                      value:
-                        preferences.budgetBracket === 'economy'
-                          ? 'Under NPR 15,000 / mo'
-                          : preferences.budgetBracket === 'standard'
-                          ? 'NPR 15,000 – 30,000 / mo'
-                          : preferences.budgetBracket === 'mid'
-                          ? 'NPR 30,000 – 50,000 / mo'
-                          : 'NPR 50,000+ / mo',
-                    },
-                    { label: 'Move-in Timeline', value: preferences.moveInTimeline.replace('_', ' ') },
-                    { label: 'Household Group', value: preferences.householdSize },
-                  ].map(({ label, value }) => (
-                    <div key={label} className=p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80>
-                      <span className=block text-[11px] font-semibold text-slate-500 uppercase tracking-wide>
-                        {label}
-                      </span>
-                      <span className=font-bold capitalize text-sm text-slate-900 font-display mt-0.5 block>
-                        {value}
-                      </span>
-                    </div>
-                  ))}
+                <div className="py-2.5 flex justify-between">
+                  <span className="text-slate-500">Rent Budget:</span>
+                  <span className="font-bold text-slate-900 capitalize font-display">
+                    {preferences.budgetBracket}
+                  </span>
                 </div>
-
-                {preferences.priorityAmenities.length > 0 && (
-                  <div className=pt-2>
-                    <span className=block text-xs font-semibold text-slate-500 mb-2>
-                      Priority Amenities
-                    </span>
-                    <div className=flex flex-wrap gap-2>
-                      {preferences.priorityAmenities.map(id => {
-                        const item = AMENITY_OPTIONS.find(a => a.id === id);
-                        return (
-                          <span
-                            key={id}
-                            className=px-3 py-1 rounded-full text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700
-                          >
-                            {item?.label ?? id}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <div className="py-2.5 flex justify-between">
+                  <span className="text-slate-500">Timeline:</span>
+                  <span className="font-bold text-slate-900 capitalize font-display">
+                    {preferences.moveInTimeline}
+                  </span>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <span className="text-slate-500">Household:</span>
+                  <span className="font-bold text-slate-900 capitalize font-display">
+                    {preferences.householdSize}
+                  </span>
+                </div>
+                <div className="py-2.5 flex justify-between">
+                  <span className="text-slate-500">Priority Amenities:</span>
+                  <span className="font-bold text-slate-900 font-display">
+                    {preferences.priorityAmenities.length} selected
+                  </span>
+                </div>
               </div>
 
-              {/* Error */}
-              {error && (
-                <div className=p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2>
-                  <AlertCircle className=w-4 h-4 text-rose-600 shrink-0 />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <button
-                type=button
-                onClick={handleFinishOnboarding}
-                disabled={isSubmitting}
-                className=w-full py-4 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50
-              >
-                {isSubmitting ? (
-                  <span className=flex items-center gap-2>
-                    <div className=w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin />
-                    Launching Feed...
-                  </span>
-                ) : (
-                  <span className=flex items-center gap-2>
-                    Launch RentHub Discovery
-                    <Compass className=w-4 h-4 />
-                  </span>
-                )}
-              </button>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep('mcq')}
+                  className="btn-secondary btn-md flex-1 font-display"
+                >
+                  Adjust Preferences
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleFinishOnboarding}
+                  className="btn-primary btn-md flex-1 flex items-center justify-center gap-2 font-display"
+                >
+                  <span>{isSubmitting ? 'Entering RentHub…' : 'Launch Dashboard'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
       {/* Footer */}
-      <footer className=w-full max-w-5xl mx-auto px-4 sm:px-8 py-6 text-center text-xs text-slate-400>
-        RentHub Nepal &middot; Secure digital tenancy agreements compliant with the National Civil Code.
+      <footer className="w-full max-w-5xl mx-auto px-4 sm:px-8 py-5 text-center text-xs text-slate-400">
+        RentHub &bull; Digital Rental Contracts under Muluki Civil Code 2074 &bull; Kathmandu, Nepal
       </footer>
     </div>
   );
