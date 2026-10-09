@@ -1,5 +1,12 @@
 /**
- * PayRentModal Component
+ * PayRentModal Component — Manus.im / Aceternity Dark Payment Gateway
+ *
+ * Integrated Nepali Payment Gateway Modal supporting:
+ * - eSewa Mobile Wallet
+ * - Khalti Digital Wallet
+ * - ConnectIPS Direct Bank Settlement
+ * - Card / Bank Transfer
+ * - Instant cryptographic transaction receipt generation
  */
 
 import { useState } from 'react';
@@ -17,12 +24,12 @@ interface PayRentModalProps {
 
 type PaymentMethodType = PaymentRecord['paymentMethod'];
 
-const PAYMENT_METHODS: { id: PaymentMethodType; name: string; tag: string; bg: string }[] = [
-  { id: 'eSewa', name: 'eSewa Mobile Wallet', tag: 'Fastest in Nepal', bg: 'bg-emerald-600' },
-  { id: 'Khalti', name: 'Khalti Digital Wallet', tag: 'Instant Cashback', bg: 'bg-purple-600' },
-  { id: 'ConnectIPS', name: 'ConnectIPS Bank Transfer', tag: 'Direct NCHL', bg: 'bg-blue-600' },
-  { id: 'Card', name: 'Debit / Credit Card', tag: 'Visa / Mastercard', bg: 'bg-slate-700' },
-  { id: 'Bank Transfer', name: 'Manual Bank Deposit', tag: 'Voucher Upload', bg: 'bg-teal-700' },
+const PAYMENT_METHODS: { id: PaymentMethodType; name: string; tag: string; gradient: string }[] = [
+  { id: 'eSewa', name: 'eSewa Mobile Wallet', tag: 'Fastest in Nepal', gradient: 'from-emerald-600 to-green-500' },
+  { id: 'Khalti', name: 'Khalti Digital Wallet', tag: 'Instant Cashback', gradient: 'from-purple-600 to-violet-500' },
+  { id: 'ConnectIPS', name: 'ConnectIPS Bank Transfer', tag: 'Direct NCHL', gradient: 'from-blue-600 to-cyan-500' },
+  { id: 'Card', name: 'Debit / Credit Card', tag: 'Visa / Mastercard', gradient: 'from-slate-700 to-slate-600' },
+  { id: 'Bank Transfer', name: 'Manual Bank Deposit', tag: 'Voucher Upload', gradient: 'from-teal-700 to-emerald-600' },
 ];
 
 export function PayRentModal({
@@ -53,22 +60,33 @@ export function PayRentModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 16 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-md card-premium overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
+            border: '1px solid rgba(46, 139, 255, 0.25)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 40px rgba(46,139,255,0.1)',
+          }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+          <div
+            className="flex items-center justify-between px-6 py-5"
+            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
+          >
             <div>
-              <h2 className="text-base font-display font-semibold text-slate-900">Pay Rent Online</h2>
-              <p className="text-xs text-slate-500 font-mono">{payment.invoiceNumber}</p>
+              <h2 className="text-base font-display font-bold text-white">Pay Rent Online</h2>
+              <p className="text-xs font-mono" style={{ color: '#5a7299' }}>{payment.invoiceNumber}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl transition-colors hover:text-white"
+              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -76,26 +94,43 @@ export function PayRentModal({
 
           {completedPayment ? (
             <div className="p-8 text-center space-y-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-display font-semibold text-slate-900">Payment Successful!</h3>
-              <p className="text-xs text-slate-500">
-                Your rent payment of <strong>NPR {completedPayment.amount.toLocaleString()}</strong> for {completedPayment.billingMonth} has been completed and verified.
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.2)',
+                }}
+              >
+                <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+              </motion.div>
+              <h3 className="text-xl font-display font-bold text-white">Payment Successful!</h3>
+              <p className="text-xs leading-relaxed" style={{ color: '#94aac5' }}>
+                Your rent payment of <strong className="text-white">NPR {completedPayment.amount.toLocaleString()}</strong> for{' '}
+                {completedPayment.billingMonth} has been completed and verified.
               </p>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left space-y-1.5 my-4">
+              <div
+                className="p-4 rounded-xl text-xs text-left space-y-2 my-4"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                }}
+              >
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Transaction ID:</span>
-                  <span className="font-mono font-semibold text-slate-800">{completedPayment.transactionId}</span>
+                  <span style={{ color: '#5a7299' }}>Transaction ID:</span>
+                  <span className="font-mono font-semibold text-brand-400">{completedPayment.transactionId}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Payment Method:</span>
-                  <span className="font-medium text-slate-800">{completedPayment.paymentMethod}</span>
+                  <span style={{ color: '#5a7299' }}>Payment Method:</span>
+                  <span className="font-medium text-white">{completedPayment.paymentMethod}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Date Cleared:</span>
-                  <span className="font-medium text-slate-800">{completedPayment.paidDate}</span>
+                  <span style={{ color: '#5a7299' }}>Date Cleared:</span>
+                  <span className="font-medium text-white">{completedPayment.paidDate}</span>
                 </div>
               </div>
 
@@ -103,27 +138,36 @@ export function PayRentModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                  className="btn-primary btn-md w-full shine-hover font-display"
                 >
                   View in Payments Ledger
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-6 space-y-5 text-xs text-slate-700">
+            <div className="p-6 space-y-5 text-xs">
               {/* Invoice Breakdown */}
-              <div className="p-4 rounded-2xl bg-brand-50/70 border border-brand-200/80 space-y-2">
+              <div
+                className="p-4 rounded-2xl space-y-2"
+                style={{
+                  background: 'rgba(46, 139, 255, 0.08)',
+                  border: '1px solid rgba(46, 139, 255, 0.2)',
+                }}
+              >
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-brand-900">Base Rent ({payment.billingMonth}):</span>
-                  <span className="font-medium text-slate-900">NPR {payment.amount.toLocaleString()}</span>
+                  <span style={{ color: '#94aac5' }}>Base Rent ({payment.billingMonth}):</span>
+                  <span className="font-bold text-white font-display">NPR {payment.amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-brand-900">Platform Processing Fee:</span>
-                  <span className="font-medium text-emerald-700">FREE (0.00)</span>
+                  <span style={{ color: '#94aac5' }}>Platform Processing Fee:</span>
+                  <span className="font-bold text-emerald-400">FREE (0.00)</span>
                 </div>
-                <div className="pt-2 border-t border-brand-200/80 flex justify-between items-baseline">
-                  <span className="font-semibold text-brand-950">Total Payable:</span>
-                  <span className="text-xl font-display font-bold text-brand-950">
+                <div
+                  className="pt-2.5 flex justify-between items-baseline"
+                  style={{ borderTop: '1px solid rgba(46, 139, 255, 0.2)' }}
+                >
+                  <span className="font-bold text-white font-display">Total Payable:</span>
+                  <span className="text-xl font-display font-black text-white">
                     NPR {payment.amount.toLocaleString()}
                   </span>
                 </div>
@@ -131,7 +175,10 @@ export function PayRentModal({
 
               {/* Gateway Choice */}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-2">
+                <label
+                  className="text-xs font-bold uppercase tracking-wider block mb-2.5 font-display"
+                  style={{ color: '#5a7299' }}
+                >
                   Select Nepali Payment Gateway
                 </label>
                 <div className="space-y-2">
@@ -142,30 +189,36 @@ export function PayRentModal({
                       <div
                         key={m.id}
                         onClick={() => setSelectedMethod(m.id)}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                            : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'
+                        className={`p-3 rounded-xl cursor-pointer transition-all duration-200 flex items-center justify-between ${
+                          isSelected ? 'shadow-brand-sm' : ''
                         }`}
+                        style={{
+                          background: isSelected ? 'rgba(46, 139, 255, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                          border: isSelected ? '1px solid rgba(46, 139, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.06)',
+                        }}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-7 h-7 rounded-lg ${m.bg} text-white flex items-center justify-center font-bold text-[11px]`}>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-lg bg-gradient-to-br ${m.gradient} text-white flex items-center justify-center font-bold text-xs shadow-xs font-display`}
+                          >
                             {m.id ? m.id[0] : 'P'}
                           </div>
                           <div>
-                            <span className="font-semibold text-xs block">{m.name}</span>
-                            <span className={`text-[10px] ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+                            <span className="font-bold text-xs block text-white font-display">{m.name}</span>
+                            <span className="text-[10px]" style={{ color: isSelected ? '#8ec7ff' : '#7187a5' }}>
                               {m.tag}
                             </span>
                           </div>
                         </div>
 
                         <div
-                          className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            isSelected ? 'border-brand-400 bg-brand-400 text-slate-900' : 'border-slate-300'
-                          }`}
+                          className="w-4 h-4 rounded-full border flex items-center justify-center transition-all"
+                          style={{
+                            borderColor: isSelected ? '#2e8bff' : 'rgba(255, 255, 255, 0.2)',
+                            background: isSelected ? '#2e8bff' : 'transparent',
+                          }}
                         >
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />}
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                         </div>
                       </div>
                     );
@@ -174,8 +227,8 @@ export function PayRentModal({
               </div>
 
               {/* Security Badge */}
-              <div className="flex items-center gap-2 text-[11px] text-slate-500 pt-1">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="flex items-center gap-2 text-[11px] pt-1" style={{ color: '#7187a5' }}>
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>256-bit encrypted settlement · Instant receipt generated</span>
               </div>
 
@@ -184,7 +237,7 @@ export function PayRentModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-2.5 px-4 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl transition-colors"
+                  className="btn-ghost btn-md flex-1 font-display"
                 >
                   Cancel
                 </button>
@@ -192,7 +245,7 @@ export function PayRentModal({
                   type="button"
                   disabled={isProcessing}
                   onClick={handlePay}
-                  className="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
+                  className="btn-primary btn-md flex-1 shine-hover flex items-center justify-center gap-2 font-display"
                 >
                   {isProcessing ? (
                     <>

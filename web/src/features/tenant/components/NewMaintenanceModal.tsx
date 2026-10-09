@@ -1,5 +1,11 @@
 /**
- * NewMaintenanceModal Component
+ * NewMaintenanceModal Component — Manus / Aceternity Dark Modal
+ *
+ * Maintenance Ticket Dispatch with:
+ * - Category selection grid (Plumbing, Electrical, HVAC, Structural)
+ * - Urgency selection with SLA definitions (Emergency, High, Medium, Low)
+ * - Access time preferences
+ * - Direct landlord notification
  */
 
 import React, { useState } from 'react';
@@ -24,11 +30,11 @@ const CATEGORIES: MaintenanceRequest['category'][] = [
   'Structural',
 ];
 
-const URGENCIES: { id: MaintenanceRequest['urgency']; label: string; desc: string }[] = [
-  { id: 'Emergency', label: 'Emergency (within 4 hours)', desc: 'Active water leak, exposed wire, gas smell' },
-  { id: 'High', label: 'High (within 24 hours)', desc: 'Inverter failure, main toilet clogged, water pump issue' },
-  { id: 'Medium', label: 'Medium (within 48 hours)', desc: 'Dripping tap, door latch loose, geyser temperature' },
-  { id: 'Low', label: 'Low / Routine', desc: 'Cosmetic touchup, window mesh, minor adjustment' },
+const URGENCIES: { id: MaintenanceRequest['urgency']; label: string; desc: string; color: string }[] = [
+  { id: 'Emergency', label: 'Emergency (within 4 hours)', desc: 'Active water leak, exposed wire, gas smell', color: '#f43f5e' },
+  { id: 'High', label: 'High (within 24 hours)', desc: 'Inverter failure, main toilet clogged, water pump issue', color: '#f59e0b' },
+  { id: 'Medium', label: 'Medium (within 48 hours)', desc: 'Dripping tap, door latch loose, geyser temperature', color: '#2e8bff' },
+  { id: 'Low', label: 'Low / Routine', desc: 'Cosmetic touchup, window mesh, minor adjustment', color: '#94aac5' },
 ];
 
 export function NewMaintenanceModal({
@@ -52,18 +58,21 @@ export function NewMaintenanceModal({
     setIsSubmitting(true);
 
     try {
-      const ticket = await tenantService.createMaintenanceRequest({
-        tenancyId: lease.id,
-        propertyId: lease.propertyId,
-        unitId: lease.unitId,
-        unitIdentifier: lease.unitIdentifier,
-        propertyTitle: lease.propertyTitle,
-        category,
-        urgency,
-        title,
-        description,
-        preferredTimeWindow: preferredTime,
-      }, accessToken);
+      const ticket = await tenantService.createMaintenanceRequest(
+        {
+          tenancyId: lease.id,
+          propertyId: lease.propertyId,
+          unitId: lease.unitId,
+          unitIdentifier: lease.unitIdentifier,
+          propertyTitle: lease.propertyTitle,
+          category,
+          urgency,
+          title,
+          description,
+          preferredTimeWindow: preferredTime,
+        },
+        accessToken
+      );
 
       onCreated(ticket);
       onClose();
@@ -74,59 +83,87 @@ export function NewMaintenanceModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 16 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-lg card-premium overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
+            border: '1px solid rgba(46, 139, 255, 0.25)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 35px rgba(46,139,255,0.1)',
+          }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
+          <div
+            className="flex items-center justify-between px-6 py-5"
+            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-amber-400"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                }}
+              >
                 <Wrench className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-display font-semibold text-slate-900">
+                <h2 className="text-base font-display font-bold text-white">
                   New Maintenance Request
                 </h2>
-                <p className="text-xs text-slate-500">{lease.unitIdentifier}, {lease.propertyTitle}</p>
+                <p className="text-xs" style={{ color: '#5a7299' }}>
+                  {lease.unitIdentifier}, {lease.propertyTitle}
+                </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl transition-colors hover:text-white"
+              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs text-slate-700">
+          <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs" style={{ color: '#c8d8f0' }}>
             {/* Category */}
             <div>
-              <label className="text-xs font-semibold text-slate-800 block mb-1.5">Issue Category</label>
+              <label className="text-xs font-semibold block mb-2 font-display" style={{ color: '#94aac5' }}>
+                Issue Category
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {CATEGORIES.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCategory(c)}
-                    className={`py-2 px-2.5 rounded-xl border text-center transition-all ${
-                      category === c
-                        ? 'bg-brand-50 border-brand-400 text-brand-900 font-semibold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+                {CATEGORIES.map((c) => {
+                  const isSelected = category === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCategory(c)}
+                      className={`py-2 px-2.5 rounded-xl text-center transition-all font-display text-xs ${
+                        isSelected ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                      style={{
+                        background: isSelected ? 'rgba(46, 139, 255, 0.25)' : 'rgba(255, 255, 255, 0.02)',
+                        border: isSelected ? '1px solid rgba(46, 139, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.06)',
+                      }}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Urgency */}
             <div>
-              <label className="text-xs font-semibold text-slate-800 block mb-1.5">Urgency Level</label>
+              <label className="text-xs font-semibold block mb-2 font-display" style={{ color: '#94aac5' }}>
+                Urgency Level
+              </label>
               <div className="space-y-1.5">
                 {URGENCIES.map((u) => {
                   const isChosen = urgency === u.id;
@@ -134,20 +171,22 @@ export function NewMaintenanceModal({
                     <div
                       key={u.id}
                       onClick={() => setUrgency(u.id)}
-                      className={`p-2.5 rounded-xl border cursor-pointer transition-colors flex items-center justify-between ${
-                        isChosen
-                          ? 'border-brand-400 bg-brand-50/60 text-brand-950 font-medium'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
+                      className="p-3 rounded-xl cursor-pointer transition-all flex items-center justify-between"
+                      style={{
+                        background: isChosen ? 'rgba(46, 139, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                        border: isChosen ? '1px solid rgba(46, 139, 255, 0.35)' : '1px solid rgba(255, 255, 255, 0.06)',
+                      }}
                     >
                       <div>
-                        <span className="font-semibold block">{u.label}</span>
-                        <span className="text-[10px] text-slate-400">{u.desc}</span>
+                        <span className="font-bold block text-white font-display">{u.label}</span>
+                        <span className="text-[10px]" style={{ color: '#7187a5' }}>{u.desc}</span>
                       </div>
                       <div
-                        className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                          isChosen ? 'border-brand-600 bg-brand-600 text-white' : 'border-slate-300'
-                        }`}
+                        className="w-4 h-4 rounded-full border flex items-center justify-center transition-all"
+                        style={{
+                          borderColor: isChosen ? '#2e8bff' : 'rgba(255, 255, 255, 0.2)',
+                          background: isChosen ? '#2e8bff' : 'transparent',
+                        }}
                       >
                         {isChosen && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
@@ -159,20 +198,22 @@ export function NewMaintenanceModal({
 
             {/* Title */}
             <div>
-              <label className="text-xs font-semibold text-slate-800 block mb-1.5">Issue Summary</label>
+              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
+                Issue Summary
+              </label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Master bathroom tap dripping, solar inverter tripped"
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="form-input text-xs"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
                 Detailed Description & Location in Unit
               </label>
               <textarea
@@ -181,19 +222,19 @@ export function NewMaintenanceModal({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe when the issue started, whether water/electricity is affected..."
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 resize-none"
+                className="form-input text-xs resize-none"
               />
             </div>
 
             {/* Preferred Time */}
             <div>
-              <label className="text-xs font-semibold text-slate-800 block mb-1.5">
+              <label className="text-xs font-semibold block mb-1.5 font-display" style={{ color: '#94aac5' }}>
                 Preferred Access Time Window
               </label>
               <select
                 value={preferredTime}
                 onChange={(e) => setPreferredTime(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="form-select text-xs"
               >
                 <option value="Morning (9:00 AM – 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
                 <option value="Afternoon (1:00 PM – 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
@@ -208,14 +249,14 @@ export function NewMaintenanceModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-2.5 px-4 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl transition-colors"
+                className="btn-ghost btn-md flex-1 font-display"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                className="btn-primary btn-md flex-1 shine-hover font-display"
               >
                 {isSubmitting ? 'Submitting…' : 'Submit Ticket'}
               </button>

@@ -1,5 +1,11 @@
 /**
- * RentalApplicationModal Component
+ * RentalApplicationModal Component — Manus.im / Aceternity Dark Modal
+ *
+ * Smooth application submission with:
+ * - Selected unit summary & financial breakdown
+ * - Move-in calendar selection & personalized message
+ * - Instant submission state with animated checkmark
+ * - Legal non-binding trust notice
  */
 
 import React, { useState } from 'react';
@@ -43,19 +49,22 @@ export function RentalApplicationModal({
     setIsSubmitting(true);
 
     try {
-      const app = await tenantService.submitApplication({
-        unitId: activeUnit.id,
-        propertyId: property.id,
-        proposedMoveIn,
-        message,
-        propertyTitle: property.title,
-        propertyAddress: property.address,
-        propertyCity: property.city,
-        unitIdentifier: activeUnit.unitIdentifier,
-        monthlyRent: activeUnit.monthlyRent,
-        securityDeposit: activeUnit.securityDeposit,
-        landlordName: property.landlord.name,
-      }, accessToken);
+      const app = await tenantService.submitApplication(
+        {
+          unitId: activeUnit.id,
+          propertyId: property.id,
+          proposedMoveIn,
+          message,
+          propertyTitle: property.title,
+          propertyAddress: property.address,
+          propertyCity: property.city,
+          unitIdentifier: activeUnit.unitIdentifier,
+          monthlyRent: activeUnit.monthlyRent,
+          securityDeposit: activeUnit.securityDeposit,
+          landlordName: property.landlord.name,
+        },
+        accessToken
+      );
 
       setSubmittedApp(app);
       onApplicationSubmitted(app);
@@ -68,22 +77,33 @@ export function RentalApplicationModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 16 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-lg card-premium overflow-hidden"
+          style={{
+            background: 'linear-gradient(145deg, rgba(13,21,32,0.98) 0%, rgba(8,13,20,0.99) 100%)',
+            border: '1px solid rgba(46, 139, 255, 0.25)',
+            boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 35px rgba(46,139,255,0.1)',
+          }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+          <div
+            className="flex items-center justify-between px-6 py-5"
+            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
+          >
             <div>
-              <h2 className="text-lg font-display font-semibold text-slate-900">Rental Application</h2>
-              <p className="text-xs text-slate-500">Apply for a verified tenancy agreement</p>
+              <h2 className="text-lg font-display font-bold text-white">Rental Application</h2>
+              <p className="text-xs" style={{ color: '#5a7299' }}>Apply for a verified tenancy agreement</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl transition-colors hover:text-white"
+              style={{ color: '#7187a5', background: 'rgba(255,255,255,0.03)' }}
+              aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
@@ -92,26 +112,45 @@ export function RentalApplicationModal({
           {/* Form or Success State */}
           {submittedApp ? (
             <div className="p-8 text-center space-y-4">
-              <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-display font-semibold text-slate-900">Application Submitted!</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                Your application for <strong>{activeUnit.unitIdentifier}</strong> at {property.title} has been forwarded to {property.landlord.name}.
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 0 24px rgba(16, 185, 129, 0.2)',
+                }}
+              >
+                <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+              </motion.div>
+              <h3 className="text-xl font-display font-bold text-white">Application Submitted!</h3>
+              <p className="text-xs max-w-sm mx-auto leading-relaxed" style={{ color: '#94aac5' }}>
+                Your application for <strong className="text-white">{activeUnit.unitIdentifier}</strong> at{' '}
+                {property.title} has been forwarded to {property.landlord.name}.
               </p>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left space-y-1.5 my-4">
+              <div
+                className="p-4 rounded-xl text-xs text-left space-y-2 my-4"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                }}
+              >
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Application ID:</span>
-                  <span className="font-mono font-semibold text-slate-800">{submittedApp.id}</span>
+                  <span style={{ color: '#5a7299' }}>Application ID:</span>
+                  <span className="font-mono font-semibold text-brand-400">{submittedApp.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Target Move-in:</span>
-                  <span className="font-medium text-slate-800">{submittedApp.proposedMoveIn}</span>
+                  <span style={{ color: '#5a7299' }}>Target Move-in:</span>
+                  <span className="font-medium text-white">{submittedApp.proposedMoveIn}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Monthly Rent:</span>
-                  <span className="font-semibold text-brand-950">NPR {activeUnit.monthlyRent.toLocaleString()}</span>
+                  <span style={{ color: '#5a7299' }}>Monthly Rent:</span>
+                  <span className="font-bold text-white font-display">
+                    NPR {activeUnit.monthlyRent.toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -119,7 +158,7 @@ export function RentalApplicationModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                  className="btn-primary btn-md w-full shine-hover font-display"
                 >
                   Track in Applications Tab
                 </button>
@@ -128,20 +167,29 @@ export function RentalApplicationModal({
           ) : (
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               {/* Property & Unit Card */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+              <div
+                className="p-4 rounded-2xl space-y-3"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                }}
+              >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-900 line-clamp-1">{property.title}</h4>
-                    <p className="text-xs text-slate-500">{property.address}, {property.city}</p>
+                    <h4 className="text-sm font-bold text-white line-clamp-1 font-display">{property.title}</h4>
+                    <p className="text-xs" style={{ color: '#7187a5' }}>
+                      {property.address}, {property.city}
+                    </p>
                   </div>
-                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
-                    Available
-                  </span>
+                  <span className="badge-success">Available</span>
                 </div>
 
                 {/* Unit Switcher if multiple available */}
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
+                  <label
+                    className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5 font-display"
+                    style={{ color: '#5a7299' }}
+                  >
                     Select Unit
                   </label>
                   <select
@@ -150,62 +198,79 @@ export function RentalApplicationModal({
                       const u = property.units.find((unit) => unit.id === e.target.value);
                       if (u) setActiveUnit(u);
                     }}
-                    className="w-full px-3 py-2 text-xs font-medium bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                    className="form-select text-xs"
                   >
                     {property.units.map((u) => (
                       <option key={u.id} value={u.id} disabled={u.availabilityStatus !== 'AVAILABLE'}>
-                        {u.unitIdentifier} — Floor {u.floorNumber} ({u.bedrooms} BHK) — NPR {u.monthlyRent.toLocaleString()}/mo
+                        {u.unitIdentifier} — Floor {u.floorNumber} ({u.bedrooms} BHK) — NPR{' '}
+                        {u.monthlyRent.toLocaleString()}/mo
                       </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Financial Summary */}
-                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                <div
+                  className="pt-2.5 flex items-center justify-between text-xs"
+                  style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}
+                >
                   <div>
-                    <span className="text-slate-400 block">Agreed Rent:</span>
-                    <strong className="text-slate-900 font-display">NPR {activeUnit.monthlyRent.toLocaleString()}</strong> / mo
+                    <span className="block" style={{ color: '#5a7299' }}>Agreed Rent:</span>
+                    <strong className="text-white font-display text-sm">
+                      NPR {activeUnit.monthlyRent.toLocaleString()}
+                    </strong>{' '}
+                    <span style={{ color: '#5a7299' }}>/ mo</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-slate-400 block">Security Deposit:</span>
-                    <strong className="text-slate-900 font-display">NPR {activeUnit.securityDeposit.toLocaleString()}</strong>
+                    <span className="block" style={{ color: '#5a7299' }}>Security Deposit:</span>
+                    <strong className="text-white font-display text-sm">
+                      NPR {activeUnit.securityDeposit.toLocaleString()}
+                    </strong>
                   </div>
                 </div>
               </div>
 
               {/* Move-in Date Picker */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-brand-600" /> Proposed Move-in Date
+                <label className="text-xs font-semibold block mb-1.5 flex items-center gap-1.5 font-display" style={{ color: '#94aac5' }}>
+                  <Calendar className="w-3.5 h-3.5 text-brand-400" /> Proposed Move-in Date
                 </label>
                 <input
                   type="date"
                   required
                   value={proposedMoveIn}
                   onChange={(e) => setProposedMoveIn(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  className="form-input text-xs"
                 />
               </div>
 
               {/* Message to Landlord */}
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-brand-600" /> Introduction to Landlord
+                <label className="text-xs font-semibold block mb-1.5 flex items-center gap-1.5 font-display" style={{ color: '#94aac5' }}>
+                  <MessageSquare className="w-3.5 h-3.5 text-brand-400" /> Introduction to Landlord
                 </label>
                 <textarea
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Share details about yourself, employment, household size..."
-                  className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 resize-none"
+                  className="form-input text-xs resize-none"
                 />
               </div>
 
               {/* Notice */}
-              <div className="p-3 rounded-xl bg-brand-50/70 border border-brand-200 text-[11px] text-brand-900 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+              <div
+                className="p-3.5 rounded-xl text-[11px] flex items-start gap-2.5"
+                style={{
+                  background: 'rgba(46, 139, 255, 0.08)',
+                  border: '1px solid rgba(46, 139, 255, 0.2)',
+                  color: '#94aac5',
+                }}
+              >
+                <ShieldCheck className="w-4 h-4 text-brand-400 shrink-0 mt-0.5" />
                 <span>
-                  Submitting this application does not bind you to financial payment until the landlord approves and both parties sign the digital lease agreement.
+                  Submitting this application does not bind you to financial payment until the landlord
+                  approves and both parties sign the digital lease agreement.
                 </span>
               </div>
 
@@ -214,14 +279,14 @@ export function RentalApplicationModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-2.5 px-4 text-xs font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 rounded-xl transition-colors"
+                  className="btn-ghost btn-md flex-1 font-display"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors"
+                  className="btn-primary btn-md flex-1 shine-hover font-display"
                 >
                   {isSubmitting ? 'Submitting…' : 'Submit Application'}
                 </button>

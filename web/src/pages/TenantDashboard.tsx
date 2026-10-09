@@ -1,18 +1,17 @@
 /**
- * TenantDashboard — Ultra-Premium Dark 3D Design
+ * TenantDashboard — Modern Airbnb & Zillow Inspired Light Portal
  *
- * Design Language: Deep navy + electric blue + glassmorphism
- *   - Dark sidebar with glowing active indicator
- *   - Floating 3D stat cards with depth shadows
- *   - Animated gradient mesh background
- *   - Glassmorphism panels with blur layers
- *   - Micro-animations on every interaction
- *   - Floating notification badges
+ * Design Language: Clean White + Soft Slate + Vibrant RentHub Blue
+ *   - Intuitive top navigation tabs (Airbnb category-style navigation)
+ *   - Quick status bar showing resident or house-hunting state
+ *   - Live real-time stats overview
+ *   - Responsive mobile navigation with bottom thumb bar
+ *   - Zero dark mode: bright, airy, clean typography with high contrast
  *
- * All data: real-time from PostgreSQL via tenantService / API
+ * Real-time data: Live from PostgreSQL via tenantService / API
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { RentHubLogo } from '@/components/common/RentHubLogo';
@@ -63,15 +62,11 @@ import {
   X,
   Sparkles,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   Bell,
-  TrendingUp,
   Building2,
-  Star,
 } from 'lucide-react';
 
-type TenantTab =
+export type TenantTab =
   | 'discover'
   | 'saved'
   | 'applications'
@@ -81,127 +76,39 @@ type TenantTab =
   | 'disputes'
   | 'settings';
 
-// ── Floating orb background decoration ──────────────────────────────────────
-function GradientOrbs() {
-  return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-      <div
-        style={{
-          position: 'absolute',
-          top: '-10%',
-          left: '-5%',
-          width: '500px',
-          height: '500px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-          animation: 'floatOrb1 18s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          top: '40%',
-          right: '-8%',
-          width: '600px',
-          height: '600px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%)',
-          filter: 'blur(50px)',
-          animation: 'floatOrb2 22s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '-5%',
-          left: '30%',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%)',
-          filter: 'blur(40px)',
-          animation: 'floatOrb3 26s ease-in-out infinite',
-        }}
-      />
-      <style>{`
-        @keyframes floatOrb1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -20px) scale(1.05); }
-          66% { transform: translate(-20px, 30px) scale(0.97); }
-        }
-        @keyframes floatOrb2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          40% { transform: translate(-40px, 20px) scale(1.08); }
-          70% { transform: translate(25px, -35px) scale(0.95); }
-        }
-        @keyframes floatOrb3 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-30px, -25px) scale(1.06); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ── Quick Stat card (top area) ───────────────────────────────────────────────
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-  delay = 0,
-}: {
+interface StatCardProps {
   label: string;
   value: string | number;
+  sub: string;
   icon: React.ElementType;
-  color: string;
-  delay?: number;
-}) {
+  iconBg: string;
+  iconColor: string;
+  onClick?: () => void;
+}
+
+function StatCard({ label, value, sub, icon: Icon, iconBg, iconColor, onClick }: StatCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.10)',
-        borderRadius: '20px',
-        padding: '20px',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)',
-        cursor: 'default',
-        transition: 'transform 0.25s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.25s ease',
-      }}
-      whileHover={{
-        y: -4,
-        boxShadow: '0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.10)',
-      }}
+    <div
+      onClick={onClick}
+      className={`bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''
+      }`}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(148,163,184,0.9)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
           {label}
         </span>
-        <div
-          style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '10px',
-            background: color,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 4px 14px ${color}55`,
-          }}
-        >
-          <Icon style={{ width: '16px', height: '16px', color: 'white' }} />
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg} ${iconColor}`}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
-      <div style={{ fontSize: '28px', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em', lineHeight: 1 }}>
+      <div className="text-2xl font-extrabold text-slate-900 tracking-tight">
         {value}
       </div>
-    </motion.div>
+      <div className="text-xs text-slate-500 mt-1">
+        {sub}
+      </div>
+    </div>
   );
 }
 
@@ -209,12 +116,11 @@ export function TenantDashboard() {
   const { user, accessToken, signOut } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TenantTab>('discover');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // Data
+  // Real-time Data
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [applications, setApplications] = useState<RentalApplication[]>([]);
@@ -236,7 +142,7 @@ export function TenantDashboard() {
     sortBy: 'recommended',
     verifiedOnly: false,
     radiusKm: undefined,
-    centerCoords: { latitude: 27.7080, longitude: 85.3200 },
+    centerCoords: { latitude: 27.708, longitude: 85.32 },
   });
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
@@ -274,14 +180,19 @@ export function TenantDashboard() {
     }
   }, [filters, accessToken]);
 
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleToggleSave = (id: string) => {
     const isNowSaved = tenantService.toggleSaveProperty(id);
     setSavedIds((prev) => (isNowSaved ? [id, ...prev] : prev.filter((p) => p !== id)));
   };
 
-  const savedProperties = useMemo(() => properties.filter((p) => savedIds.includes(p.id)), [properties, savedIds]);
+  const savedProperties = useMemo(
+    () => properties.filter((p) => savedIds.includes(p.id)),
+    [properties, savedIds]
+  );
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -296,805 +207,644 @@ export function TenantDashboard() {
     return count;
   }, [filters]);
 
-  const handleResetFilters = () => setFilters({
-    searchQuery: '',
-    city: 'All',
-    minRent: 0,
-    maxRent: 0,
-    bedrooms: 'all',
-    bathrooms: 'all',
-    amenities: [],
-    sortBy: 'recommended',
-    verifiedOnly: false,
-    radiusKm: undefined,
-    centerCoords: { latitude: 27.7080, longitude: 85.3200 },
-  });
+  const handleResetFilters = () =>
+    setFilters({
+      searchQuery: '',
+      city: 'All',
+      minRent: 0,
+      maxRent: 0,
+      bedrooms: 'all',
+      bathrooms: 'all',
+      amenities: [],
+      sortBy: 'recommended',
+      verifiedOnly: false,
+      radiusKm: undefined,
+      centerCoords: { latitude: 27.708, longitude: 85.32 },
+    });
 
   async function handleSignOut() {
     setSigningOut(true);
-    try { await signOut(); } finally { navigate('/login', { replace: true }); }
+    try {
+      await signOut();
+    } finally {
+      navigate('/login', { replace: true });
+    }
   }
 
   const userPreferences = tenantService.getPreferences();
   const pendingPayments = payments.filter((p) => p.status === 'PENDING').length;
   const pendingApps = applications.filter((a) => a.status === 'pending').length;
   const openMaintenance = maintenanceTickets.filter((m) => m.status !== 'RESOLVED').length;
+  const totalAlerts = pendingPayments + pendingApps + openMaintenance;
 
-  const NAV_ITEMS: { id: TenantTab; label: string; icon: React.ElementType; badge?: number; color: string }[] = [
-    { id: 'discover', label: 'Explore Homes', icon: Compass, color: '#3b82f6' },
-    { id: 'saved', label: 'Saved Wishlist', icon: Heart, badge: savedIds.length, color: '#ec4899' },
-    { id: 'applications', label: 'Applications', icon: FileText, badge: pendingApps, color: '#f59e0b' },
-    { id: 'tenancy', label: 'Resident Hub', icon: Home, color: '#10b981' },
-    { id: 'payments', label: 'Rent Payments', icon: CreditCard, badge: pendingPayments, color: '#6366f1' },
-    { id: 'maintenance', label: 'Maintenance', icon: Wrench, badge: openMaintenance, color: '#f97316' },
-    { id: 'disputes', label: 'Legal Disputes', icon: Scale, color: '#ef4444' },
-    { id: 'settings', label: 'Settings', icon: Settings, color: '#94a3b8' },
+  const NAV_TABS: {
+    id: TenantTab;
+    label: string;
+    icon: React.ElementType;
+    badge?: number;
+    badgeVariant?: 'blue' | 'rose' | 'amber' | 'emerald';
+  }[] = [
+    { id: 'discover', label: 'Explore Rentals', icon: Compass },
+    { id: 'saved', label: 'Saved Homes', icon: Heart, badge: savedIds.length, badgeVariant: 'rose' },
+    { id: 'applications', label: 'Applications', icon: FileText, badge: pendingApps, badgeVariant: 'amber' },
+    { id: 'tenancy', label: 'Resident Hub', icon: Home },
+    { id: 'payments', label: 'Rent & Payments', icon: CreditCard, badge: pendingPayments, badgeVariant: 'blue' },
+    { id: 'maintenance', label: 'Maintenance', icon: Wrench, badge: openMaintenance, badgeVariant: 'amber' },
+    { id: 'disputes', label: 'Legal Disputes', icon: Scale },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const SIDEBAR_W = sidebarCollapsed ? '72px' : '240px';
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #020617 0%, #0f172a 40%, #0d1b2e 70%, #020917 100%)',
-        color: '#e2e8f0',
-        fontFamily: "'Inter', sans-serif",
-        display: 'flex',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      <GradientOrbs />
-
-      {/* ── SIDEBAR ─────────────────────────────────────────────────────── */}
-      <motion.aside
-        animate={{ width: SIDEBAR_W }}
-        transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: 50,
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'rgba(2,6,23,0.92)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderRight: '1px solid rgba(255,255,255,0.07)',
-          boxShadow: '4px 0 40px rgba(0,0,0,0.4)',
-          overflow: 'hidden',
-        }}
-        className="hidden lg:flex"
-      >
-        {/* Logo area */}
-        <div
-          style={{
-            padding: sidebarCollapsed ? '20px 16px' : '24px 20px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-            minHeight: '72px',
-          }}
-        >
-          {!sidebarCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-            >
-              <RentHubLogo variant="original" className="h-7" style={{ filter: 'brightness(0) invert(1)' }} />
-              <span
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  background: 'linear-gradient(135deg, #60a5fa, #818cf8)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  paddingTop: '2px',
-                }}
-              >
-                Tenant
-              </span>
-            </motion.div>
-          )}
-          {sidebarCollapsed && (
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 14px rgba(59,130,246,0.35)',
-              }}
-            >
-              <Building2 style={{ width: '16px', height: '16px', color: 'white' }} />
-            </div>
-          )}
-          <button
-            onClick={() => setSidebarCollapsed((v) => !v)}
-            style={{
-              width: '26px',
-              height: '26px',
-              borderRadius: '8px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              color: '#94a3b8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              flexShrink: 0,
-            }}
-          >
-            {sidebarCollapsed ? <ChevronRight style={{ width: '13px', height: '13px' }} /> : <ChevronLeft style={{ width: '13px', height: '13px' }} />}
-          </button>
-        </div>
-
-        {/* User card */}
-        {!sidebarCollapsed && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            style={{
-              margin: '16px 14px',
-              padding: '14px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.10))',
-              border: '1px solid rgba(59,130,246,0.20)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              cursor: 'pointer',
-            }}
-            onClick={() => setActiveTab('settings')}
-          >
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(59,130,246,0.4)' }} />
-              ) : (
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                    color: 'white',
-                    fontWeight: 800,
-                    fontSize: '15px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(59,130,246,0.4)',
-                  }}
-                >
-                  {user?.name?.[0] ?? 'T'}
-                </div>
-              )}
-              <span style={{ position: 'absolute', bottom: '0', right: '0', width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', border: '2px solid #020617' }} />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '13px', color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.name}
-              </div>
-              <div style={{ fontSize: '10px', color: 'rgba(148,163,184,0.7)', fontWeight: 500 }}>Kathmandu, NP</div>
-            </div>
-            <div style={{ flexShrink: 0 }}>
-              <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em', padding: '3px 7px', borderRadius: '20px', background: 'rgba(59,130,246,0.2)', border: '1px solid rgba(59,130,246,0.35)', color: '#93c5fd' }}>
-                TENANT
-              </span>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Navigation */}
-        <nav style={{ flex: 1, padding: sidebarCollapsed ? '8px 10px' : '8px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {NAV_ITEMS.map((item, i) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: sidebarCollapsed ? '11px' : '11px 14px',
-                  borderRadius: '14px',
-                  border: '1px solid transparent',
-                  cursor: 'pointer',
-                  background: isActive
-                    ? `linear-gradient(135deg, ${item.color}22, ${item.color}11)`
-                    : 'transparent',
-                  borderColor: isActive ? `${item.color}35` : 'transparent',
-                  boxShadow: isActive ? `0 4px 16px ${item.color}22, inset 0 1px 0 ${item.color}18` : 'none',
-                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                  position: 'relative',
-                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                  overflow: 'visible',
-                }}
-                whileHover={!isActive ? {
-                  background: 'rgba(255,255,255,0.05)',
-                  borderColor: 'rgba(255,255,255,0.08)',
-                } : {}}
-              >
-                {/* Active left accent line */}
-                {isActive && (
-                  <motion.div
-                    layoutId="sidebar-active"
-                    style={{
-                      position: 'absolute',
-                      left: '-12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '4px',
-                      height: '22px',
-                      borderRadius: '2px',
-                      background: item.color,
-                      boxShadow: `0 0 8px ${item.color}`,
-                    }}
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
-                  />
-                )}
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '10px',
-                    background: isActive ? item.color : 'rgba(255,255,255,0.06)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    boxShadow: isActive ? `0 4px 12px ${item.color}55` : 'none',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <Icon style={{ width: '15px', height: '15px', color: isActive ? 'white' : 'rgba(148,163,184,0.7)' }} />
-                </div>
-                {!sidebarCollapsed && (
-                  <span
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? '#f1f5f9' : 'rgba(148,163,184,0.8)',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                      textAlign: 'left',
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                )}
-                {!sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    style={{
-                      minWidth: '20px',
-                      height: '20px',
-                      borderRadius: '10px',
-                      background: item.color,
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 5px',
-                      boxShadow: `0 0 8px ${item.color}80`,
-                    }}
-                  >
-                    {item.badge}
-                  </motion.span>
-                )}
-                {sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '4px',
-                      right: '4px',
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      background: item.color,
-                      fontSize: '9px',
-                      fontWeight: 800,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: `0 0 6px ${item.color}`,
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </motion.button>
-            );
-          })}
-        </nav>
-
-        {/* Sign out */}
-        <div style={{ padding: sidebarCollapsed ? '12px 10px' : '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: sidebarCollapsed ? '10px' : '10px 14px',
-              borderRadius: '12px',
-              border: '1px solid rgba(239,68,68,0.20)',
-              background: 'rgba(239,68,68,0.08)',
-              color: 'rgba(252,165,165,0.85)',
-              cursor: 'pointer',
-              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-              transition: 'all 0.2s',
-              fontSize: '13px',
-              fontWeight: 600,
-            }}
-          >
-            <LogOut style={{ width: '15px', height: '15px', flexShrink: 0 }} />
-            {!sidebarCollapsed && <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>}
-          </button>
-        </div>
-      </motion.aside>
-
-      {/* ── MAIN CONTENT AREA ───────────────────────────────────────────── */}
-      <motion.div
-        animate={{ marginLeft: SIDEBAR_W }}
-        transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1 }}
-        className="hidden lg:flex"
-      >
-        {/* Top bar */}
-        <header
-          style={{
-            height: '72px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 32px',
-            background: 'rgba(2,6,23,0.70)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-          }}
-        >
-          {/* Page title */}
-          <div>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
-              {NAV_ITEMS.find((n) => n.id === activeTab)?.label ?? 'Dashboard'}
-            </h1>
-            <p style={{ fontSize: '11px', color: 'rgba(148,163,184,0.6)', marginTop: '2px' }}>
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
+      {/* ── TOP GLOBAL HEADER BAR (Airbnb-grade) ────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 h-16">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* Left: Brand logo & portal badge */}
+          <div className="flex items-center gap-3">
+            <RentHubLogo variant="original" className="h-7" />
+            <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80">
+              Tenant Portal
+            </span>
           </div>
 
-          {/* Right actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Loading pulse */}
-            {isLoading && (
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6', boxShadow: '0 0 8px #3b82f6', animation: 'pulse 1s infinite' }} />
+          {/* Center: Live status indicator pill */}
+          <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200/70 text-xs text-slate-700 font-medium">
+            {activeLease ? (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span>
+                  Resident at <strong className="text-slate-900">{activeLease.propertyTitle}</strong> ({activeLease.unitIdentifier})
+                </span>
+              </>
+            ) : (
+              <>
+                <Compass className="w-3.5 h-3.5 text-blue-600" />
+                <span>Exploring Rentals in Kathmandu Valley</span>
+              </>
             )}
+          </div>
 
-            {/* Bell with pending count */}
-            {(pendingPayments + pendingApps + openMaintenance) > 0 && (
+          {/* Right: Quick actions, notifications, user avatar, logout */}
+          <div className="flex items-center gap-3">
+            {/* Pending notifications badge button */}
+            {totalAlerts > 0 && (
               <button
-                style={{
-                  position: 'relative',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  color: '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
+                type="button"
+                onClick={() => {
+                  if (pendingPayments > 0) setActiveTab('payments');
+                  else if (openMaintenance > 0) setActiveTab('maintenance');
+                  else if (pendingApps > 0) setActiveTab('applications');
                 }}
+                className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                title={`${totalAlerts} pending actions`}
               >
-                <Bell style={{ width: '17px', height: '17px' }} />
-                <span style={{ position: 'absolute', top: '6px', right: '6px', width: '16px', height: '16px', borderRadius: '50%', background: '#ef4444', fontSize: '9px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 6px #ef4444' }}>
-                  {pendingPayments + pendingApps + openMaintenance}
+                <Bell className="w-5 h-5 text-slate-600" />
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-extrabold flex items-center justify-center shadow-xs">
+                  {totalAlerts}
                 </span>
               </button>
             )}
 
-            {/* Avatar */}
-            <button
+            {/* User profile pill */}
+            <div
               onClick={() => setActiveTab('settings')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '6px 12px 6px 6px',
-                borderRadius: '40px',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
+              className="flex items-center gap-2.5 pl-2 py-1 pr-3 rounded-full hover:bg-slate-100 cursor-pointer transition-colors"
             >
               {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }} />
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/20"
+                />
               ) : (
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: 'white', fontWeight: 800, fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-xs">
                   {user?.name?.[0] ?? 'T'}
                 </div>
               )}
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>{user?.name?.split(' ')[0]}</span>
+              <div className="hidden sm:block text-left">
+                <span className="text-xs font-bold text-slate-900 block leading-tight truncate max-w-[120px]">
+                  {user?.name}
+                </span>
+                <span className="text-[10px] text-slate-500 font-medium">Tenant</span>
+              </div>
+            </div>
+
+            {/* Sign Out Button */}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition-all cursor-pointer shadow-xs"
+              title="Sign out of RentHub"
+            >
+              <LogOut className="w-3.5 h-3.5 text-slate-500 hover:text-rose-600 transition-colors" />
+              <span className="hidden sm:inline">{signingOut ? 'Signing out…' : 'Sign Out'}</span>
+            </button>
+
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Loading bar */}
-        {isLoading && (
-          <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', overflow: 'hidden', flexShrink: 0 }}>
-            <motion.div
-              style={{ height: '100%', background: 'linear-gradient(90deg, transparent, #3b82f6, #6366f1, transparent)' }}
-              initial={{ x: '-100%' }}
-              animate={{ x: '100%' }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+      {/* ── AIRBNB-INSPIRED HORIZONTAL CATEGORY NAVIGATION BAR ────────── */}
+      <nav className="sticky top-16 z-20 bg-white border-b border-slate-200/80 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 py-2 overflow-x-auto scrollbar-none">
+            {NAV_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                  <span>{tab.label}</span>
+
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                        isActive
+                          ? 'bg-white text-blue-700'
+                          : tab.badgeVariant === 'rose'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : tab.badgeVariant === 'amber'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+
+      {/* ── MOBILE SLIDE-DOWN DRAWER ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white border-b border-slate-200 z-20 px-4 py-3 space-y-1"
+          >
+            {NAV_TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </div>
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-800">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── LOADING PROGRESS SHIMMER ────────────────────────────────────── */}
+      {isLoading && (
+        <div className="h-0.5 bg-slate-200 overflow-hidden">
+          <motion.div
+            className="h-full bg-blue-600"
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+          />
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT WORKSPACE ───────────────────────────────────────── */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        {/* STATS OVERVIEW CARDS (Visible on Explore & Resident Hub) */}
+        {(activeTab === 'discover' || activeTab === 'tenancy') && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Available Listings"
+              value={properties.length}
+              sub="Across Kathmandu Valley"
+              icon={Building2}
+              iconBg="bg-blue-50"
+              iconColor="text-blue-600"
+              onClick={() => setActiveTab('discover')}
+            />
+            <StatCard
+              label="Saved Wishlist"
+              value={savedIds.length}
+              sub="Saved for instant apply"
+              icon={Heart}
+              iconBg="bg-rose-50"
+              iconColor="text-rose-600"
+              onClick={() => setActiveTab('saved')}
+            />
+            <StatCard
+              label="My Applications"
+              value={applications.length}
+              sub={`${pendingApps} pending landlord review`}
+              icon={FileText}
+              iconBg="bg-amber-50"
+              iconColor="text-amber-600"
+              onClick={() => setActiveTab('applications')}
+            />
+            <StatCard
+              label="Resident Tenancy"
+              value={activeLease ? 'Active' : 'No Lease'}
+              sub={activeLease ? `${activeLease.propertyTitle} (#${activeLease.unitIdentifier})` : 'Explore available units'}
+              icon={Home}
+              iconBg="bg-emerald-50"
+              iconColor="text-emerald-600"
+              onClick={() => setActiveTab('tenancy')}
             />
           </div>
         )}
 
-        {/* Stats row — shown only on discover/tenancy */}
-        <AnimatePresence>
-          {(activeTab === 'discover' || activeTab === 'tenancy') && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '24px 32px 0' }}
-            >
-              <StatCard label="Properties" value={properties.length} icon={Building2} color="linear-gradient(135deg,#3b82f6,#6366f1)" delay={0} />
-              <StatCard label="Saved Homes" value={savedIds.length} icon={Heart} color="linear-gradient(135deg,#ec4899,#f43f5e)" delay={0.06} />
-              <StatCard label="Active Lease" value={activeLease ? '1' : '—'} icon={Home} color="linear-gradient(135deg,#10b981,#059669)" delay={0.12} />
-              <StatCard label="Pending Payments" value={pendingPayments} icon={CreditCard} color="linear-gradient(135deg,#f59e0b,#f97316)" delay={0.18} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main content scroll area */}
-        <main style={{ flex: 1, padding: '24px 32px 40px', overflowY: 'auto' }}>
-          {/* Preferences banner */}
-          {activeTab === 'discover' && userPreferences && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                marginBottom: '20px',
-                padding: '14px 18px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08))',
-                border: '1px solid rgba(59,130,246,0.20)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(59,130,246,0.35)', flexShrink: 0 }}>
-                  <Sparkles style={{ width: '16px', height: '16px', color: 'white' }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>
-                    Personalized for {userPreferences.householdSize} · {userPreferences.budgetBracket}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(148,163,184,0.7)', marginTop: '1px' }}>
-                    Prioritizing {userPreferences.priorityAmenities.length} selected amenities in Kathmandu Valley
-                  </div>
-                </div>
+        {/* PERSONALIZATION BANNER (If questionnaire completed) */}
+        {activeTab === 'discover' && userPreferences && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Sparkles className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setActiveTab('settings')}
-                style={{ fontSize: '12px', fontWeight: 700, color: '#60a5fa', whiteSpace: 'nowrap', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                Adjust →
-              </button>
-            </motion.div>
-          )}
-
-          {/* Results count for discover */}
-          {activeTab === 'discover' && (
-            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '12px', color: 'rgba(148,163,184,0.7)' }}>
-                Showing <strong style={{ color: '#e2e8f0', fontWeight: 700 }}>{properties.length}</strong> rental properties
-                {filters.city && filters.city !== 'All' ? ` in ${filters.city}` : ' in Kathmandu Valley'}
-                {filters.radiusKm && <span style={{ color: '#60a5fa', fontWeight: 600 }}> · within {filters.radiusKm} km</span>}
-              </span>
-              <span style={{ fontSize: '11px', color: 'rgba(148,163,184,0.5)' }}>All prices in NPR</span>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900">
+                  Customized feed for {userPreferences.householdSize} · {userPreferences.budgetBracket}
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  Prioritizing {userPreferences.priorityAmenities.length} chosen amenities in Kathmandu Valley
+                </p>
+              </div>
             </div>
-          )}
-
-          {/* ── TAB CONTENT ── */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 self-start sm:self-center"
             >
-              {/* DISCOVER */}
-              {activeTab === 'discover' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <PropertySearchBar
-                    filters={filters}
-                    onChange={(updated) => setFilters((prev) => ({ ...prev, ...updated }))}
-                    onOpenFilters={() => setIsFiltersOpen(true)}
-                    activeFilterCount={activeFilterCount}
-                    viewMode={viewMode}
-                    onViewModeChange={(mode) => setViewMode(mode)}
-                  />
-                  {viewMode === 'map' ? (
-                    <PropertyMapView
-                      properties={properties}
-                      selectedPropertyId={selectedPropertyDetails?.id}
-                      onSelectProperty={(p) => setSelectedPropertyDetails(p)}
-                      onApplyProperty={(p) => {
-                        const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                        if (avail) setApplyModalData({ property: p, unit: avail });
-                      }}
-                      radiusKm={filters.radiusKm ?? 10}
-                      onRadiusChange={(km) => setFilters((prev) => ({ ...prev, radiusKm: km, centerCoords: prev.centerCoords ?? { latitude: 27.7080, longitude: 85.3200 } }))}
-                      centerCoords={filters.centerCoords}
-                      onCenterChange={(coords) => setFilters((prev) => ({ ...prev, centerCoords: coords }))}
-                    />
-                  ) : viewMode === 'split' ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: '5fr 7fr', gap: '20px', alignItems: 'start' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '750px', overflowY: 'auto', paddingRight: '4px' }}>
-                        {properties.map((property) => (
-                          <PropertyCard key={property.id} property={property} isSaved={savedIds.includes(property.id)} onToggleSave={handleToggleSave} onSelect={(p) => setSelectedPropertyDetails(p)} onApply={(p) => { const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0]; if (avail) setApplyModalData({ property: p, unit: avail }); }} />
-                        ))}
-                      </div>
-                      <div style={{ position: 'sticky', top: '20px' }}>
-                        <PropertyMapView
-                          properties={properties}
-                          selectedPropertyId={selectedPropertyDetails?.id}
-                          onSelectProperty={(p) => setSelectedPropertyDetails(p)}
-                          onApplyProperty={(p) => { const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0]; if (avail) setApplyModalData({ property: p, unit: avail }); }}
-                          radiusKm={filters.radiusKm ?? 10}
-                          onRadiusChange={(km) => setFilters((prev) => ({ ...prev, radiusKm: km, centerCoords: prev.centerCoords ?? { latitude: 27.7080, longitude: 85.3200 } }))}
-                          centerCoords={filters.centerCoords}
-                          onCenterChange={(coords) => setFilters((prev) => ({ ...prev, centerCoords: coords }))}
-                        />
-                      </div>
-                    </div>
-                  ) : properties.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '80px 20px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '24px' }}>
-                      <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(59,130,246,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                        <Compass style={{ width: '24px', height: '24px', color: '#60a5fa' }} />
-                      </div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#e2e8f0', marginBottom: '8px' }}>No Listings Match Filters</h3>
-                      <p style={{ fontSize: '13px', color: 'rgba(148,163,184,0.7)', marginBottom: '20px' }}>Try broadening your budget range or resetting filters.</p>
-                      <button onClick={handleResetFilters} style={{ padding: '10px 24px', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '13px', cursor: 'pointer', boxShadow: '0 4px 16px rgba(59,130,246,0.35)' }}>
-                        Reset Filters
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-                      {properties.map((property) => (
-                        <PropertyCard key={property.id} property={property} isSaved={savedIds.includes(property.id)} onToggleSave={handleToggleSave} onSelect={(p) => setSelectedPropertyDetails(p)} onApply={(p) => { const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0]; if (avail) setApplyModalData({ property: p, unit: avail }); }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'saved' && (
-                <SavedPropertiesView savedProperties={savedProperties} onToggleSave={handleToggleSave} onSelectProperty={(p) => setSelectedPropertyDetails(p)} onApplyProperty={(p) => { const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0]; if (avail) setApplyModalData({ property: p, unit: avail }); }} onBrowseMore={() => setActiveTab('discover')} />
-              )}
-
-              {activeTab === 'applications' && (
-                <ApplicationTrackingView applications={applications} onRefresh={loadData} onOpenLeaseModal={() => setIsLeaseModalOpen(true)} onBrowseMore={() => setActiveTab('discover')} />
-              )}
-
-              {activeTab === 'tenancy' && (
-                <TenancyDashboardView lease={activeLease} payments={payments} maintenanceTickets={maintenanceTickets} onOpenLeaseModal={() => setIsLeaseModalOpen(true)} onOpenPayRentModal={() => { const pending = payments.find((p) => p.status === 'PENDING') || payments[0]; if (pending) setSelectedPaymentForPay(pending); }} onOpenMaintenanceModal={() => setIsNewMaintenanceModalOpen(true)} onOpenDisputeModal={() => setIsNewDisputeModalOpen(true)} onOpenEarlyTerminationModal={() => setIsEarlyTerminationModalOpen(true)} onBrowseListings={() => setActiveTab('discover')} />
-              )}
-
-              {activeTab === 'payments' && (
-                <PaymentsView payments={payments} onOpenPayModal={(pmt) => setSelectedPaymentForPay(pmt)} onViewReceipt={(pmt) => setSelectedPaymentForReceipt(pmt)} />
-              )}
-
-              {activeTab === 'maintenance' && (
-                <MaintenanceView tickets={maintenanceTickets} lease={activeLease} onOpenNewTicketModal={() => setIsNewMaintenanceModalOpen(true)} />
-              )}
-
-              {activeTab === 'disputes' && (
-                <DisputesView disputes={disputes} lease={activeLease} onOpenNewDisputeModal={() => setIsNewDisputeModalOpen(true)} />
-              )}
-
-              {activeTab === 'settings' && (
-                <ProfileSettingsView onRetakeOnboarding={() => { window.location.href = '/onboarding/role'; }} />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-      </motion.div>
-
-      {/* ── MOBILE LAYOUT ───────────────────────────────────────────────── */}
-      <div className="lg:hidden" style={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-        {/* Mobile header */}
-        <header
-          style={{
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 16px',
-            background: 'rgba(2,6,23,0.85)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-          }}
-        >
-          <RentHubLogo variant="original" className="h-6" style={{ filter: 'brightness(0) invert(1)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {isLoading && <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#3b82f6', boxShadow: '0 0 6px #3b82f6', animation: 'pulse 1s infinite' }} />}
-            <button onClick={() => setMobileMenuOpen((v) => !v)} style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.10)', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-              {mobileMenuOpen ? <X style={{ width: '17px', height: '17px' }} /> : <Menu style={{ width: '17px', height: '17px' }} />}
+              Adjust Preferences →
             </button>
           </div>
-        </header>
+        )}
 
-        {/* Mobile slide-down nav */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              style={{ background: 'rgba(2,6,23,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', zIndex: 25, position: 'sticky', top: '60px' }}
-            >
-              <div style={{ padding: '12px' }}>
-                {NAV_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
+        {/* ── TAB VIEWS SWITCHER ─────────────────────────────────────────── */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* 1. DISCOVER / EXPLORE TAB */}
+            {activeTab === 'discover' && (
+              <div className="space-y-6">
+                <PropertySearchBar
+                  filters={filters}
+                  onChange={(updated) => setFilters((prev) => ({ ...prev, ...updated }))}
+                  onOpenFilters={() => setIsFiltersOpen(true)}
+                  activeFilterCount={activeFilterCount}
+                  viewMode={viewMode}
+                  onViewModeChange={(mode) => setViewMode(mode)}
+                />
+
+                {/* Results count header */}
+                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <span>
+                    Showing <strong className="text-slate-900 font-bold">{properties.length}</strong> rental homes
+                    {filters.city && filters.city !== 'All' ? ` in ${filters.city}` : ' in Kathmandu Valley'}
+                  </span>
+                  <span>All prices listed in NPR</span>
+                </div>
+
+                {/* View Mode: Map / Split / Grid */}
+                {viewMode === 'map' ? (
+                  <PropertyMapView
+                    properties={properties}
+                    selectedPropertyId={selectedPropertyDetails?.id}
+                    onSelectProperty={(p) => setSelectedPropertyDetails(p)}
+                    onApplyProperty={(p) => {
+                      const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                      if (avail) setApplyModalData({ property: p, unit: avail });
+                    }}
+                    radiusKm={filters.radiusKm ?? 10}
+                    onRadiusChange={(km) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        radiusKm: km,
+                        centerCoords: prev.centerCoords ?? { latitude: 27.708, longitude: 85.32 },
+                      }))
+                    }
+                    centerCoords={filters.centerCoords}
+                    onCenterChange={(coords) => setFilters((prev) => ({ ...prev, centerCoords: coords }))}
+                  />
+                ) : viewMode === 'split' ? (
+                  <div className="grid lg:grid-cols-12 gap-6 items-start">
+                    <div className="lg:col-span-6 space-y-4 max-h-[800px] overflow-y-auto pr-1">
+                      {properties.map((property) => (
+                        <PropertyCard
+                          key={property.id}
+                          property={property}
+                          isSaved={savedIds.includes(property.id)}
+                          onToggleSave={handleToggleSave}
+                          onSelect={(p) => setSelectedPropertyDetails(p)}
+                          onApply={(p) => {
+                            const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                            if (avail) setApplyModalData({ property: p, unit: avail });
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="lg:col-span-6 sticky top-28">
+                      <PropertyMapView
+                        properties={properties}
+                        selectedPropertyId={selectedPropertyDetails?.id}
+                        onSelectProperty={(p) => setSelectedPropertyDetails(p)}
+                        onApplyProperty={(p) => {
+                          const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                          if (avail) setApplyModalData({ property: p, unit: avail });
+                        }}
+                        radiusKm={filters.radiusKm ?? 10}
+                        onRadiusChange={(km) =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            radiusKm: km,
+                            centerCoords: prev.centerCoords ?? { latitude: 27.708, longitude: 85.32 },
+                          }))
+                        }
+                        centerCoords={filters.centerCoords}
+                        onCenterChange={(coords) => setFilters((prev) => ({ ...prev, centerCoords: coords }))}
+                      />
+                    </div>
+                  </div>
+                ) : properties.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-16 text-center max-w-md mx-auto space-y-4">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto border border-blue-100">
+                      <Compass className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900">No Listings Match Filters</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Try broadening your budget range, changing the selected city, or resetting filters.
+                    </p>
                     <button
-                      key={item.id}
-                      onClick={() => { setActiveTab(item.id); setMobileMenuOpen(false); }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', borderRadius: '12px', marginBottom: '4px', background: isActive ? `${item.color}18` : 'transparent', border: `1px solid ${isActive ? item.color + '30' : 'transparent'}`, cursor: 'pointer', transition: 'all 0.2s' }}
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '30px', height: '30px', borderRadius: '9px', background: isActive ? item.color : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon style={{ width: '14px', height: '14px', color: isActive ? 'white' : 'rgba(148,163,184,0.7)' }} />
-                        </div>
-                        <span style={{ fontSize: '13px', fontWeight: isActive ? 700 : 500, color: isActive ? '#f1f5f9' : 'rgba(148,163,184,0.8)' }}>{item.label}</span>
-                      </div>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span style={{ minWidth: '20px', height: '20px', borderRadius: '10px', background: item.color, color: 'white', fontSize: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{item.badge}</span>
-                      )}
+                      Reset Filters
                     </button>
-                  );
-                })}
-                <button
-                  onClick={() => { setMobileMenuOpen(false); void handleSignOut(); }}
-                  disabled={signingOut}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 14px', borderRadius: '12px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)', color: 'rgba(252,165,165,0.85)', cursor: 'pointer', marginTop: '8px', fontSize: '13px', fontWeight: 600 }}
-                >
-                  <LogOut style={{ width: '14px', height: '14px' }} />
-                  <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Mobile main */}
-        <main style={{ flex: 1, padding: '16px 16px 80px' }}>
-          <AnimatePresence mode="wait">
-            <motion.div key={activeTab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-              {activeTab === 'discover' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <PropertySearchBar filters={filters} onChange={(u) => setFilters((prev) => ({ ...prev, ...u }))} onOpenFilters={() => setIsFiltersOpen(true)} activeFilterCount={activeFilterCount} viewMode={viewMode} onViewModeChange={setViewMode} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    {properties.map((p) => (
-                      <PropertyCard key={p.id} property={p} isSaved={savedIds.includes(p.id)} onToggleSave={handleToggleSave} onSelect={(prop) => setSelectedPropertyDetails(prop)} onApply={(prop) => { const avail = prop.units.find((u) => u.availabilityStatus === 'AVAILABLE') || prop.units[0]; if (avail) setApplyModalData({ property: prop, unit: avail }); }} />
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {properties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        isSaved={savedIds.includes(property.id)}
+                        onToggleSave={handleToggleSave}
+                        onSelect={(p) => setSelectedPropertyDetails(p)}
+                        onApply={(p) => {
+                          const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                          if (avail) setApplyModalData({ property: p, unit: avail });
+                        }}
+                      />
                     ))}
                   </div>
-                </div>
-              )}
-              {activeTab === 'saved' && <SavedPropertiesView savedProperties={savedProperties} onToggleSave={handleToggleSave} onSelectProperty={(p) => setSelectedPropertyDetails(p)} onApplyProperty={(p) => { const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0]; if (avail) setApplyModalData({ property: p, unit: avail }); }} onBrowseMore={() => setActiveTab('discover')} />}
-              {activeTab === 'applications' && <ApplicationTrackingView applications={applications} onRefresh={loadData} onOpenLeaseModal={() => setIsLeaseModalOpen(true)} onBrowseMore={() => setActiveTab('discover')} />}
-              {activeTab === 'tenancy' && <TenancyDashboardView lease={activeLease} payments={payments} maintenanceTickets={maintenanceTickets} onOpenLeaseModal={() => setIsLeaseModalOpen(true)} onOpenPayRentModal={() => { const pending = payments.find((p) => p.status === 'PENDING') || payments[0]; if (pending) setSelectedPaymentForPay(pending); }} onOpenMaintenanceModal={() => setIsNewMaintenanceModalOpen(true)} onOpenDisputeModal={() => setIsNewDisputeModalOpen(true)} onOpenEarlyTerminationModal={() => setIsEarlyTerminationModalOpen(true)} onBrowseListings={() => setActiveTab('discover')} />}
-              {activeTab === 'payments' && <PaymentsView payments={payments} onOpenPayModal={setSelectedPaymentForPay} onViewReceipt={setSelectedPaymentForReceipt} />}
-              {activeTab === 'maintenance' && <MaintenanceView tickets={maintenanceTickets} lease={activeLease} onOpenNewTicketModal={() => setIsNewMaintenanceModalOpen(true)} />}
-              {activeTab === 'disputes' && <DisputesView disputes={disputes} lease={activeLease} onOpenNewDisputeModal={() => setIsNewDisputeModalOpen(true)} />}
-              {activeTab === 'settings' && <ProfileSettingsView onRetakeOnboarding={() => { window.location.href = '/onboarding/role'; }} />}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-
-        {/* Mobile bottom nav */}
-        <nav
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 30,
-            background: 'rgba(2,6,23,0.95)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            padding: '8px 4px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-          }}
-        >
-          {[
-            { id: 'discover' as TenantTab, label: 'Explore', icon: Compass, color: '#3b82f6' },
-            { id: 'saved' as TenantTab, label: 'Saved', icon: Heart, color: '#ec4899', badge: savedIds.length },
-            { id: 'tenancy' as TenantTab, label: 'Tenancy', icon: Home, color: '#10b981' },
-            { id: 'payments' as TenantTab, label: 'Pay Rent', icon: CreditCard, color: '#6366f1', badge: pendingPayments },
-            { id: 'maintenance' as TenantTab, label: 'Repairs', icon: Wrench, color: '#f97316', badge: openMaintenance },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '12px', background: isActive ? `${item.color}20` : 'transparent', border: 'none', cursor: 'pointer', position: 'relative', transition: 'all 0.2s' }}
-              >
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span style={{ position: 'absolute', top: '2px', right: '8px', width: '14px', height: '14px', borderRadius: '50%', background: item.color, fontSize: '8px', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.badge}</span>
                 )}
-                <Icon style={{ width: '18px', height: '18px', color: isActive ? item.color : 'rgba(100,116,139,0.7)' }} />
-                <span style={{ fontSize: '9px', fontWeight: isActive ? 700 : 500, color: isActive ? item.color : 'rgba(100,116,139,0.7)' }}>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+              </div>
+            )}
+
+            {/* 2. SAVED HOMES / WISHLIST */}
+            {activeTab === 'saved' && (
+              <SavedPropertiesView
+                savedProperties={savedProperties}
+                onToggleSave={handleToggleSave}
+                onSelectProperty={(p) => setSelectedPropertyDetails(p)}
+                onApplyProperty={(p) => {
+                  const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
+                  if (avail) setApplyModalData({ property: p, unit: avail });
+                }}
+                onBrowseMore={() => setActiveTab('discover')}
+              />
+            )}
+
+            {/* 3. APPLICATIONS TRACKING */}
+            {activeTab === 'applications' && (
+              <ApplicationTrackingView
+                applications={applications}
+                onRefresh={loadData}
+                onOpenLeaseModal={() => setIsLeaseModalOpen(true)}
+                onBrowseMore={() => setActiveTab('discover')}
+              />
+            )}
+
+            {/* 4. RESIDENT HUB (ACTIVE LEASE) */}
+            {activeTab === 'tenancy' && (
+              <TenancyDashboardView
+                lease={activeLease}
+                payments={payments}
+                maintenanceTickets={maintenanceTickets}
+                onOpenLeaseModal={() => setIsLeaseModalOpen(true)}
+                onOpenPayRentModal={() => {
+                  const pending = payments.find((p) => p.status === 'PENDING') || payments[0];
+                  if (pending) setSelectedPaymentForPay(pending);
+                }}
+                onOpenMaintenanceModal={() => setIsNewMaintenanceModalOpen(true)}
+                onOpenDisputeModal={() => setIsNewDisputeModalOpen(true)}
+                onOpenEarlyTerminationModal={() => setIsEarlyTerminationModalOpen(true)}
+                onBrowseListings={() => setActiveTab('discover')}
+              />
+            )}
+
+            {/* 5. RENT & PAYMENTS */}
+            {activeTab === 'payments' && (
+              <PaymentsView
+                payments={payments}
+                onOpenPayModal={(pmt) => setSelectedPaymentForPay(pmt)}
+                onViewReceipt={(pmt) => setSelectedPaymentForReceipt(pmt)}
+              />
+            )}
+
+            {/* 6. MAINTENANCE REQUESTS */}
+            {activeTab === 'maintenance' && (
+              <MaintenanceView
+                tickets={maintenanceTickets}
+                lease={activeLease}
+                onOpenNewTicketModal={() => setIsNewMaintenanceModalOpen(true)}
+              />
+            )}
+
+            {/* 7. DISPUTES & RESOLUTION */}
+            {activeTab === 'disputes' && (
+              <DisputesView
+                disputes={disputes}
+                lease={activeLease}
+                onOpenNewDisputeModal={() => setIsNewDisputeModalOpen(true)}
+              />
+            )}
+
+            {/* 8. SETTINGS & PROFILE */}
+            {activeTab === 'settings' && (
+              <ProfileSettingsView
+                onRetakeOnboarding={() => {
+                  window.location.href = '/onboarding/role';
+                }}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* ── MOBILE BOTTOM THUMB NAVIGATION (Fixed at bottom on phones) ─── */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-3 flex items-center justify-around shadow-md">
+        {[
+          { id: 'discover' as TenantTab, label: 'Explore', icon: Compass },
+          { id: 'saved' as TenantTab, label: 'Saved', icon: Heart, badge: savedIds.length },
+          { id: 'tenancy' as TenantTab, label: 'Resident', icon: Home },
+          { id: 'payments' as TenantTab, label: 'Pay Rent', icon: CreditCard, badge: pendingPayments },
+          { id: 'maintenance' as TenantTab, label: 'Repairs', icon: Wrench, badge: openMaintenance },
+        ].map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveTab(item.id)}
+              className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl relative transition-colors ${
+                isActive ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {item.badge !== undefined && item.badge > 0 && (
+                <span className="absolute top-0 right-2 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] leading-tight">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* ── ALL MODALS ──────────────────────────────────────────────────── */}
-      <PropertyFiltersDrawer isOpen={isFiltersOpen} onClose={() => setIsFiltersOpen(false)} filters={filters} onChange={(updated) => setFilters((prev) => ({ ...prev, ...updated }))} onReset={handleResetFilters} />
-      <PropertyDetailsModal property={selectedPropertyDetails} onClose={() => setSelectedPropertyDetails(null)} isSaved={selectedPropertyDetails ? savedIds.includes(selectedPropertyDetails.id) : false} onToggleSave={handleToggleSave} onSelectUnitToApply={(property, unit) => { setSelectedPropertyDetails(null); setApplyModalData({ property, unit }); }} />
-      {applyModalData && <RentalApplicationModal property={applyModalData.property} selectedUnit={applyModalData.unit} accessToken={accessToken} onClose={() => setApplyModalData(null)} onApplicationSubmitted={(newApp) => { setApplications((prev) => [newApp, ...prev.filter((a) => a.id !== newApp.id)]); }} />}
-      {isLeaseModalOpen && <LeaseAgreementModal lease={activeLease} onClose={() => setIsLeaseModalOpen(false)} onSigned={(updated) => { setActiveLease(updated); }} />}
-      {isEarlyTerminationModalOpen && <EarlyTerminationModal lease={activeLease} onClose={() => setIsEarlyTerminationModalOpen(false)} onTerminated={(updated) => { setActiveLease(updated); }} />}
-      {selectedPaymentForPay && <PayRentModal payment={selectedPaymentForPay} onClose={() => setSelectedPaymentForPay(null)} onPaymentSuccess={(paid) => { setPayments((prev) => prev.map((p) => (p.id === paid.id ? paid : p))); }} />}
-      {selectedPaymentForReceipt && <ReceiptModal payment={selectedPaymentForReceipt} lease={activeLease} onClose={() => setSelectedPaymentForReceipt(null)} />}
-      {isNewMaintenanceModalOpen && <NewMaintenanceModal lease={activeLease} onClose={() => setIsNewMaintenanceModalOpen(false)} onCreated={(ticket) => { setMaintenanceTickets((prev) => [ticket, ...prev]); }} />}
-      {isNewDisputeModalOpen && <NewDisputeModal lease={activeLease} onClose={() => setIsNewDisputeModalOpen(false)} onCreated={(dispute) => { setDisputes((prev) => [dispute, ...prev]); }} />}
-
-      <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-      `}</style>
+      <PropertyFiltersDrawer
+        isOpen={isFiltersOpen}
+        onClose={() => setIsFiltersOpen(false)}
+        filters={filters}
+        onChange={(updated) => setFilters((prev) => ({ ...prev, ...updated }))}
+        onReset={handleResetFilters}
+      />
+      <PropertyDetailsModal
+        property={selectedPropertyDetails}
+        onClose={() => setSelectedPropertyDetails(null)}
+        isSaved={selectedPropertyDetails ? savedIds.includes(selectedPropertyDetails.id) : false}
+        onToggleSave={handleToggleSave}
+        onSelectUnitToApply={(property, unit) => {
+          setSelectedPropertyDetails(null);
+          setApplyModalData({ property, unit });
+        }}
+      />
+      {applyModalData && (
+        <RentalApplicationModal
+          property={applyModalData.property}
+          selectedUnit={applyModalData.unit}
+          accessToken={accessToken}
+          onClose={() => setApplyModalData(null)}
+          onApplicationSubmitted={(newApp) => {
+            setApplications((prev) => [newApp, ...prev.filter((a) => a.id !== newApp.id)]);
+          }}
+        />
+      )}
+      {isLeaseModalOpen && (
+        <LeaseAgreementModal
+          lease={activeLease}
+          onClose={() => setIsLeaseModalOpen(false)}
+          onSigned={(updated) => {
+            setActiveLease(updated);
+          }}
+        />
+      )}
+      {isEarlyTerminationModalOpen && (
+        <EarlyTerminationModal
+          lease={activeLease}
+          onClose={() => setIsEarlyTerminationModalOpen(false)}
+          onTerminated={(updated) => {
+            setActiveLease(updated);
+          }}
+        />
+      )}
+      {selectedPaymentForPay && (
+        <PayRentModal
+          payment={selectedPaymentForPay}
+          onClose={() => setSelectedPaymentForPay(null)}
+          onPaymentSuccess={(paid) => {
+            setPayments((prev) => prev.map((p) => (p.id === paid.id ? paid : p)));
+          }}
+        />
+      )}
+      {selectedPaymentForReceipt && (
+        <ReceiptModal
+          payment={selectedPaymentForReceipt}
+          lease={activeLease}
+          onClose={() => setSelectedPaymentForReceipt(null)}
+        />
+      )}
+      {isNewMaintenanceModalOpen && (
+        <NewMaintenanceModal
+          lease={activeLease}
+          onClose={() => setIsNewMaintenanceModalOpen(false)}
+          onCreated={(ticket) => {
+            setMaintenanceTickets((prev) => [ticket, ...prev]);
+          }}
+        />
+      )}
+      {isNewDisputeModalOpen && (
+        <NewDisputeModal
+          lease={activeLease}
+          onClose={() => setIsNewDisputeModalOpen(false)}
+          onCreated={(dispute) => {
+            setDisputes((prev) => [dispute, ...prev]);
+          }}
+        />
+      )}
     </div>
   );
 }

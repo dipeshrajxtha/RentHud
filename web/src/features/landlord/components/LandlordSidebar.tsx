@@ -65,14 +65,14 @@ export function LandlordSidebar({
       label: 'Applications',
       icon: FileText,
       badge: pendingAppsCount,
-      badgeColor: 'bg-brand-600 text-white',
+      badgeColor: 'badge-info',
     },
     {
       id: 'leases',
       label: 'Tenancies & Leases',
       icon: FileCheck2,
       badge: unsignedLeasesCount,
-      badgeColor: 'bg-amber-600 text-white',
+      badgeColor: 'badge-warning',
     },
     { id: 'financials', label: 'Financials & Rent', icon: DollarSign },
     {
@@ -80,7 +80,7 @@ export function LandlordSidebar({
       label: 'Maintenance',
       icon: Wrench,
       badge: openMaintenanceCount,
-      badgeColor: 'bg-rose-600 text-white',
+      badgeColor: 'badge-error',
     },
     { id: 'disputes', label: 'Legal Disputes', icon: Scale },
     { id: 'settings', label: 'Settings & KYC', icon: Settings },
@@ -88,17 +88,27 @@ export function LandlordSidebar({
 
   return (
     <aside
-      className={`relative hidden md:flex flex-col bg-slate-900 text-slate-200 border-r border-slate-800 transition-all duration-300 z-30 select-none ${
+      className={`relative hidden md:flex flex-col sidebar-premium transition-all duration-300 z-30 select-none ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80">
+      <div
+        className="h-18 flex items-center justify-between px-4.5"
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}
+      >
         <div className="flex items-center gap-3 overflow-hidden">
           <RentHubLogo variant="white" className="h-7 shrink-0" />
           {!collapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full inline-block w-fit">
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider font-display px-2 py-0.5 rounded-full inline-block w-fit"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  color: '#6ee7b7',
+                }}
+              >
                 Landlord Portal
               </span>
             </div>
@@ -107,7 +117,8 @@ export function LandlordSidebar({
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+          className="p-1.5 rounded-xl text-slate-400 hover:text-white transition-colors shrink-0"
+          style={{ background: 'rgba(255, 255, 255, 0.03)' }}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -115,7 +126,7 @@ export function LandlordSidebar({
       </div>
 
       {/* Navigation List */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-none">
+      <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto scrollbar-none">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -125,16 +136,19 @@ export function LandlordSidebar({
               key={item.id}
               type="button"
               onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative group ${
-                isActive
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/30 font-bold'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all relative font-display ${
+                isActive ? 'active' : ''
               }`}
+              style={{
+                color: isActive ? '#59aaff' : '#7187a5',
+                background: isActive ? 'rgba(46, 139, 255, 0.12)' : 'transparent',
+                border: isActive ? '1px solid rgba(46, 139, 255, 0.25)' : '1px solid transparent',
+              }}
               title={collapsed ? item.label : undefined}
             >
               <Icon
                 className={`w-4 h-4 shrink-0 transition-colors ${
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
+                  isActive ? 'text-brand-400' : 'text-slate-400'
                 }`}
               />
 
@@ -144,8 +158,8 @@ export function LandlordSidebar({
 
               {Boolean(item.badge && item.badge > 0) && (
                 <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${
-                    item.badgeColor || 'bg-slate-700 text-white'
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    item.badgeColor || 'badge-neutral'
                   }`}
                 >
                   {item.badge}
@@ -157,24 +171,34 @@ export function LandlordSidebar({
       </nav>
 
       {/* User Footer Profile */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-950/40 space-y-2.5">
+      <div
+        className="p-3.5 space-y-3"
+        style={{
+          background: 'rgba(8, 13, 20, 0.95)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+        }}
+      >
         <div className="flex items-center gap-3">
           {user?.avatarUrl ? (
             <img
               src={user.avatarUrl}
               alt={user.name}
-              className="w-8 h-8 rounded-full ring-2 ring-emerald-500/30 object-cover shrink-0"
+              className="w-8 h-8 rounded-full object-cover shrink-0"
+              style={{ border: '2px solid rgba(16, 185, 129, 0.4)' }}
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+            <div
+              className="w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center shrink-0 font-display"
+              style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+            >
               {user?.name?.[0] ?? 'L'}
             </div>
           )}
 
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-200 truncate">{user?.name}</p>
-              <p className="text-[10px] text-slate-400 truncate flex items-center gap-1">
+              <p className="text-xs font-bold text-white truncate font-display">{user?.name}</p>
+              <p className="text-[10px] truncate flex items-center gap-1" style={{ color: '#6ee7b7' }}>
                 <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
                 Verified Landlord
               </p>
@@ -187,7 +211,7 @@ export function LandlordSidebar({
             type="button"
             onClick={onSignOut}
             disabled={isSigningOut}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-rose-400 hover:bg-slate-800/80 border border-slate-800 transition-colors"
+            className="w-full btn-ghost btn-sm text-slate-300 hover:text-rose-400 font-display flex items-center justify-center gap-2"
             title="Sign out of RentHub"
             aria-label="Sign out"
           >
@@ -199,7 +223,8 @@ export function LandlordSidebar({
             type="button"
             onClick={onSignOut}
             disabled={isSigningOut}
-            className="w-full flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 transition-colors"
+            className="w-full p-2 rounded-xl text-slate-400 hover:text-rose-400 transition-colors flex items-center justify-center"
+            style={{ background: 'rgba(255, 255, 255, 0.03)' }}
             title="Sign out of RentHub"
             aria-label="Sign out"
           >

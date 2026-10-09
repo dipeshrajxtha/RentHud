@@ -1,5 +1,11 @@
 /**
- * PaymentsView Component
+ * PaymentsView Component — Clean Light Financial Ledger
+ *
+ * Resident Financial Hub with:
+ * - Upcoming billing cycle alert banner with direct payment CTA
+ * - Segmented invoice filters (All, Pending, Completed)
+ * - Crisp white card ledger table with status pills
+ * - Instant digital receipt viewer trigger
  */
 
 import { useState } from 'react';
@@ -26,99 +32,118 @@ export function PaymentsView({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-display font-semibold text-slate-900">Rent & Payments Ledger</h2>
-        <p className="text-xs text-slate-500">Track monthly billing cycles, digital payment receipts, and security deposit</p>
+        <h2 className="text-xl font-bold text-slate-900">Rent & Payments Ledger</h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Track monthly billing cycles, digital payment receipts, and security deposits
+        </p>
       </div>
 
       {/* Top Banner: Upcoming Due */}
       {pendingPayment ? (
-        <div className="rounded-3xl bg-gradient-to-br from-brand-900 to-brand-800 text-white p-6 sm:p-7 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="rounded-2xl p-6 bg-gradient-to-r from-blue-50 via-indigo-50/60 to-white border border-blue-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white shrink-0">
+            <div className="w-13 h-13 rounded-2xl flex items-center justify-center bg-blue-600 text-white shrink-0 shadow-xs">
               <CreditCard className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[11px] uppercase tracking-wider text-brand-200 font-semibold block">
+              <span className="text-[11px] uppercase tracking-wider font-bold text-blue-700 block">
                 Upcoming Rent Invoice · {pendingPayment.billingMonth}
               </span>
-              <div className="text-2xl font-display font-bold text-white">
+              <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5 tracking-tight">
                 NPR {pendingPayment.amount.toLocaleString()}
               </div>
-              <p className="text-xs text-brand-200/80 mt-0.5">Due date: {pendingPayment.dueDate}</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Due date: {pendingPayment.dueDate}
+              </p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => onOpenPayModal(pendingPayment)}
-            className="px-6 py-3 bg-white hover:bg-slate-100 text-brand-900 text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 self-start sm:self-center"
+            className="flex items-center justify-center gap-2 self-start sm:self-center px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
           >
-            <span>Pay Rent with eSewa / Khalti</span>
+            <span>Pay with eSewa / Khalti</span>
             <ArrowUpRight className="w-4 h-4" />
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-5 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="rounded-2xl p-5 flex items-center gap-3.5 bg-emerald-50 border border-emerald-200/90">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-100 text-emerald-700">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
           <div className="text-xs">
-            <span className="font-semibold text-emerald-900 block">All Rent Invoices Settled</span>
-            <span className="text-emerald-700">You have no pending dues for the current billing cycle.</span>
+            <span className="font-bold text-emerald-900 block text-sm">
+              All Rent Invoices Settled
+            </span>
+            <span className="text-emerald-700">
+              You have no pending dues for the current billing cycle.
+            </span>
           </div>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 text-xs font-medium">
-          {(['ALL', 'PENDING', 'PAID'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                filter === tab ? 'bg-white text-slate-900 font-semibold shadow-xs' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {tab === 'ALL' ? 'All Invoices' : tab === 'PENDING' ? 'Pending' : 'Completed'}
-            </button>
-          ))}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-1 p-1 rounded-xl text-xs font-medium bg-slate-100 border border-slate-200/80">
+          {(['ALL', 'PENDING', 'PAID'] as const).map((tab) => {
+            const isSelected = filter === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={`px-3.5 py-1.5 rounded-lg transition-all ${
+                  isSelected
+                    ? 'bg-white text-blue-700 font-semibold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tab === 'ALL' ? 'All Invoices' : tab === 'PENDING' ? 'Pending' : 'Completed'}
+              </button>
+            );
+          })}
         </div>
 
-        <span className="text-xs text-slate-400">{filtered.length} records</span>
+        <span className="text-xs text-slate-500 font-medium">
+          {filtered.length} records
+        </span>
       </div>
 
       {/* Ledger Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-50 border-b border-slate-200/80 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-50 border-b border-slate-200/80">
               <tr>
-                <th className="py-3 px-5">Invoice Reference</th>
-                <th className="py-3 px-4">Billing Month</th>
-                <th className="py-3 px-4">Due Date</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Method</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-5 text-right">Actions</th>
+                <th className="py-3.5 px-5">Invoice Reference</th>
+                <th className="py-3.5 px-4">Billing Month</th>
+                <th className="py-3.5 px-4">Due Date</th>
+                <th className="py-3.5 px-4">Amount</th>
+                <th className="py-3.5 px-4">Method</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filtered.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-5 font-mono font-medium text-slate-900">{item.invoiceNumber}</td>
-                  <td className="py-3.5 px-4 font-medium text-slate-800">{item.billingMonth}</td>
+                <tr key={item.id} className="hover:bg-slate-50/75 transition-colors">
+                  <td className="py-3.5 px-5 font-mono font-semibold text-blue-600">
+                    {item.invoiceNumber}
+                  </td>
+                  <td className="py-3.5 px-4 font-bold text-slate-900">{item.billingMonth}</td>
                   <td className="py-3.5 px-4 text-slate-500">{item.dueDate}</td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-900 font-display">
+                  <td className="py-3.5 px-4 font-bold text-slate-900">
                     NPR {item.amount.toLocaleString()}
                   </td>
                   <td className="py-3.5 px-4 text-slate-600">{item.paymentMethod ?? '—'}</td>
                   <td className="py-3.5 px-4">
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         item.status === 'PAID'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : item.status === 'PENDING'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}
                     >
                       {item.status}
@@ -129,7 +154,7 @@ export function PaymentsView({
                       <button
                         type="button"
                         onClick={() => onViewReceipt(item)}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Receipt</span>
@@ -138,7 +163,7 @@ export function PaymentsView({
                       <button
                         type="button"
                         onClick={() => onOpenPayModal(item)}
-                        className="px-3 py-1 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-xs font-semibold transition-colors"
+                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
                       >
                         Pay Now
                       </button>
@@ -146,6 +171,13 @@ export function PaymentsView({
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-xs text-slate-500">
+                    No payments found matching this filter
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

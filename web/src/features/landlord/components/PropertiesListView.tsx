@@ -91,10 +91,10 @@ export function PropertiesListView({
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-white tracking-tight">
             My Property Assets
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs" style={{ color: '#5a7299' }}>
             Manage your physical residential buildings, floor layouts, and individual rentable units.
           </p>
         </div>
@@ -102,7 +102,7 @@ export function PropertiesListView({
         <button
           type="button"
           onClick={onOpenAddProperty}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 shrink-0"
+          className="btn-primary btn-md flex items-center justify-center gap-2 shrink-0 shine-hover font-display"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Property</span>
@@ -110,47 +110,52 @@ export function PropertiesListView({
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="card-premium p-4 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by building name, address, or city…"
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+            className="form-input text-xs pl-9"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto scrollbar-none pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto scrollbar-none pb-1 md:pb-0 font-display">
           {[
             { id: 'ALL', label: 'All Properties' },
             { id: 'OCCUPIED', label: '100% Occupied' },
             { id: 'PARTIAL', label: 'Partially Vacant' },
             { id: 'VACANT', label: 'Fully Vacant' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setFilter(tab.id as OccupancyFilter)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
-                filter === tab.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map((tab) => {
+            const isSelected = filter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id as OccupancyFilter)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  isSelected ? 'text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                }`}
+                style={{
+                  background: isSelected ? 'rgba(46, 139, 255, 0.25)' : 'rgba(255, 255, 255, 0.02)',
+                  border: isSelected ? '1px solid rgba(46, 139, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Property Cards List */}
       {filteredProperties.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center shadow-xs">
-          <Building className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-800">No matching properties found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+        <div className="card-premium p-12 text-center">
+          <Building className="w-12 h-12 text-slate-400 mx-auto mb-3 opacity-40" />
+          <h3 className="text-base font-bold text-white font-display">No matching properties found</h3>
+          <p className="text-xs max-w-sm mx-auto mt-1" style={{ color: '#7187a5' }}>
             {searchQuery
               ? 'Try clearing your search query or switching filters to see your properties.'
               : 'You have not listed any properties yet. Add your first building to start managing rent.'}
@@ -158,7 +163,7 @@ export function PropertiesListView({
           <button
             type="button"
             onClick={onOpenAddProperty}
-            className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors inline-flex items-center gap-2"
+            className="mt-4 btn-primary btn-sm inline-flex items-center gap-2 font-display"
           >
             <Plus className="w-4 h-4" />
             <span>List Property</span>
@@ -182,7 +187,7 @@ export function PropertiesListView({
             return (
               <div
                 key={prop.id}
-                className="bg-white rounded-3xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all overflow-hidden"
+                className="card-premium overflow-hidden transition-all duration-200"
               >
                 {/* Main Property Card Summary Bar */}
                 <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
@@ -196,55 +201,61 @@ export function PropertiesListView({
                         <img
                           src={prop.coverPhotoUrl}
                           alt={prop.title}
-                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-1 ring-slate-200"
+                          className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover"
+                          style={{ border: '1px solid rgba(255, 255, 255, 0.1)' }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
                               'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=600&q=80';
                           }}
                         />
-                        <div className="absolute inset-0 bg-slate-900/40 rounded-2xl opacity-0 group-hover/cover:opacity-100 flex items-center justify-center text-white transition-opacity">
-                          <Camera className="w-5 h-5" />
+                        <div className="absolute inset-0 bg-slate-950/60 rounded-2xl opacity-0 group-hover/cover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                          <Camera className="w-5 h-5 text-brand-400" />
                         </div>
                       </div>
                     ) : (
                       <div
                         onClick={() => onOpenManagePhotos(prop)}
-                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col items-center justify-center text-emerald-600 shrink-0 cursor-pointer hover:bg-emerald-100 transition-colors"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex flex-col items-center justify-center shrink-0 cursor-pointer transition-colors"
+                        style={{
+                          background: 'rgba(46, 139, 255, 0.1)',
+                          border: '1px solid rgba(46, 139, 255, 0.25)',
+                          color: '#59aaff',
+                        }}
                         title="Click to upload photos for this property"
                       >
                         <Camera className="w-5 h-5 mb-0.5" />
-                        <span className="text-[9px] font-bold">Add Photo</span>
+                        <span className="text-[9px] font-bold font-display">Add Photo</span>
                       </div>
                     )}
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h2 className="text-base font-bold text-slate-900 truncate">{prop.title}</h2>
+                        <h2 className="text-base font-bold text-white font-display truncate">{prop.title}</h2>
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full font-display ${
                             rate === 100
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'badge-success'
                               : rate > 0
-                              ? 'bg-brand-100 text-brand-800'
-                              : 'bg-amber-100 text-amber-800'
+                              ? 'badge-info'
+                              : 'badge-warning'
                           }`}
                         >
                           {rate}% Occupied ({occU}/{totalU} Units)
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-500 flex items-center gap-1.5 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <p className="text-xs flex items-center gap-1.5 truncate" style={{ color: '#7187a5' }}>
+                        <MapPin className="w-3.5 h-3.5 text-brand-400 shrink-0" />
                         <span>{prop.address}, {prop.city}</span>
                       </p>
 
-                      <div className="flex items-center gap-3 text-xs text-slate-500 mt-2">
+                      <div className="flex items-center gap-3 text-xs mt-2" style={{ color: '#94aac5' }}>
                         <span className="flex items-center gap-1">
                           <Layers className="w-3.5 h-3.5 text-slate-400" />
                           {prop.totalFloors} Floors
                         </span>
                         {minRent !== null && (
-                          <span className="font-semibold text-slate-900">
+                          <span className="font-bold text-white font-display">
                             NPR {minRent.toLocaleString()}{minRent !== maxRent ? `–${maxRent?.toLocaleString()}` : ''} /mo
                           </span>
                         )}
@@ -257,7 +268,7 @@ export function PropertiesListView({
                     <button
                       type="button"
                       onClick={() => onOpenManagePhotos(prop)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      className="btn-ghost btn-sm flex items-center gap-1.5 font-display"
                       title="Manage property photos"
                     >
                       <Camera className="w-3.5 h-3.5" />
@@ -267,7 +278,7 @@ export function PropertiesListView({
                     <button
                       type="button"
                       onClick={() => onOpenAddUnit(prop)}
-                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      className="btn-secondary btn-sm flex items-center gap-1.5 font-display"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add Unit</span>
@@ -276,7 +287,8 @@ export function PropertiesListView({
                     <button
                       type="button"
                       onClick={() => onOpenEditProperty(prop)}
-                      className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+                      className="p-2 rounded-xl text-slate-400 hover:text-white transition-colors"
+                      style={{ background: 'rgba(255, 255, 255, 0.03)' }}
                       title="Edit property details"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -286,7 +298,8 @@ export function PropertiesListView({
                       type="button"
                       onClick={() => handleDelete(prop.id, prop.title)}
                       disabled={deletingId === prop.id}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-50"
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-400 transition-colors disabled:opacity-50"
+                      style={{ background: 'rgba(255, 255, 255, 0.03)' }}
                       title="Deactivate property"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -295,7 +308,7 @@ export function PropertiesListView({
                     <button
                       type="button"
                       onClick={() => toggleExpand(prop.id)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
+                      className="btn-ghost btn-sm flex items-center gap-1.5 font-display"
                     >
                       <span>Units ({units.length})</span>
                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -310,16 +323,20 @@ export function PropertiesListView({
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="border-t border-slate-100 bg-slate-50/60 p-5 sm:p-6 space-y-3"
+                      className="p-5 sm:p-6 space-y-3"
+                      style={{
+                        background: 'rgba(8, 13, 20, 0.6)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                      }}
                     >
                       <div className="flex items-center justify-between pb-2">
-                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        <span className="text-xs font-bold uppercase tracking-wider font-display text-white">
                           Rentable Units in this Property
                         </span>
                         <button
                           type="button"
                           onClick={() => onOpenAddUnit(prop)}
-                          className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 hover:underline"
+                          className="text-xs font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1 font-display"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Add another unit</span>
@@ -327,7 +344,7 @@ export function PropertiesListView({
                       </div>
 
                       {units.length === 0 ? (
-                        <p className="text-xs text-slate-400 py-3 text-center">
+                        <p className="text-xs py-3 text-center" style={{ color: '#5a7299' }}>
                           No units configured yet. Click "Add Unit" to set up apartments/rooms.
                         </p>
                       ) : (
@@ -340,36 +357,40 @@ export function PropertiesListView({
                             return (
                               <div
                                 key={unit.id}
-                                className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2.5 flex flex-col justify-between"
+                                className="p-4 rounded-2xl space-y-2.5 flex flex-col justify-between"
+                                style={{
+                                  background: 'rgba(13, 21, 32, 0.85)',
+                                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                                }}
                               >
                                 <div>
                                   <div className="flex items-start justify-between gap-2">
                                     <div>
-                                      <h4 className="text-xs font-bold text-slate-900">{unit.unitIdentifier}</h4>
-                                      <p className="text-[11px] text-slate-400">Floor {unit.floorNumber}</p>
+                                      <h4 className="text-xs font-bold text-white font-display">{unit.unitIdentifier}</h4>
+                                      <p className="text-[11px]" style={{ color: '#5a7299' }}>Floor {unit.floorNumber}</p>
                                     </div>
                                     <span
-                                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-display ${
                                         isAvailable
-                                          ? 'bg-emerald-100 text-emerald-800'
+                                          ? 'badge-success'
                                           : isOnRent
-                                          ? 'bg-blue-100 text-blue-800'
+                                          ? 'badge-info'
                                           : isPending
-                                          ? 'bg-amber-100 text-amber-800'
-                                          : 'bg-slate-200 text-slate-600'
+                                          ? 'badge-warning'
+                                          : 'badge-neutral'
                                       }`}
                                     >
                                       {unit.availabilityStatus}
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center gap-3 text-[11px] text-slate-600 mt-2">
+                                  <div className="flex items-center gap-3 text-[11px] mt-2" style={{ color: '#7187a5' }}>
                                     <span className="flex items-center gap-1">
-                                      <Bed className="w-3.5 h-3.5 text-slate-400" />
+                                      <Bed className="w-3.5 h-3.5 text-brand-400" />
                                       {unit.bedrooms} BHK
                                     </span>
                                     <span className="flex items-center gap-1">
-                                      <Bath className="w-3.5 h-3.5 text-slate-400" />
+                                      <Bath className="w-3.5 h-3.5 text-brand-400" />
                                       {unit.bathrooms} Bath
                                     </span>
                                     {unit.areaSqft && (
@@ -378,23 +399,26 @@ export function PropertiesListView({
                                   </div>
 
                                   <div className="mt-2 text-xs">
-                                    <span className="font-bold text-slate-900">
+                                    <span className="font-bold text-white font-display">
                                       NPR {unit.monthlyRent?.toLocaleString()}
                                     </span>
-                                    <span className="text-[11px] text-slate-400"> / month</span>
+                                    <span className="text-[11px]" style={{ color: '#5a7299' }}> / month</span>
                                     {unit.securityDeposit > 0 && (
-                                      <span className="text-[10px] text-slate-400 block">
+                                      <span className="text-[10px] block" style={{ color: '#5a7299' }}>
                                         Deposit: NPR {unit.securityDeposit?.toLocaleString()}
                                       </span>
                                     )}
                                   </div>
                                 </div>
 
-                                <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+                                <div
+                                  className="pt-2 flex items-center justify-end gap-1.5"
+                                  style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}
+                                >
                                   <button
                                     type="button"
                                     onClick={() => onOpenEditUnit(prop, unit)}
-                                    className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
+                                    className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                                   >
                                     <Edit2 className="w-3.5 h-3.5" />
                                     <span>Edit</span>
@@ -406,7 +430,7 @@ export function PropertiesListView({
                                         onDeleteUnit(prop.id, unit.id);
                                       }
                                     }}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-rose-400 rounded-lg transition-colors"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>

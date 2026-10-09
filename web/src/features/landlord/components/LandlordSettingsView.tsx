@@ -1,8 +1,8 @@
 /**
- * LandlordSettingsView — Phase 6
+ * LandlordSettingsView — Ultra-Premium Dark Portal
  *
  * Profile management, Lalpurja/KYC verification status, payout accounts.
- * Connects to PATCH /api/landlords/me and GET /api/landlords/me.
+ * Connects to live landlord profile endpoints.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +10,7 @@ import { motion } from 'motion/react';
 import {
   Settings, User, Shield, ShieldCheck, ShieldAlert, ShieldX,
   Phone, Mail, CreditCard, Building,
-  Clock, Upload, Info, Edit2, Save,
+  Clock, Upload, Info, Edit2, Save, Sparkles,
 } from 'lucide-react';
 import { landlordService } from '@/features/landlord/landlord.service';
 import type { LandlordProfile } from '@/types/landlord';
@@ -32,38 +32,40 @@ interface KYCDoc {
   requiredFor: string;
 }
 
-const KYC_STATUS_CONFIG: Record<KYCStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  not_submitted: { label: 'Not Submitted', color: 'text-slate-600', bg: 'bg-slate-100', icon: ShieldX },
-  pending_review: { label: 'Pending Review', color: 'text-amber-700', bg: 'bg-amber-50', icon: Clock },
-  verified: { label: 'Verified ✓', color: 'text-emerald-700', bg: 'bg-emerald-50', icon: ShieldCheck },
-  rejected: { label: 'Rejected', color: 'text-rose-700', bg: 'bg-rose-50', icon: ShieldAlert },
+const KYC_STATUS_CONFIG: Record<
+  KYCStatus,
+  { label: string; badgeClass: string; icon: React.ElementType }
+> = {
+  not_submitted: { label: 'Not Submitted', badgeClass: 'badge-neutral', icon: ShieldX },
+  pending_review: { label: 'Pending Review', badgeClass: 'badge-warning', icon: Clock },
+  verified: { label: 'Verified ✓', badgeClass: 'badge-success', icon: ShieldCheck },
+  rejected: { label: 'Rejected', badgeClass: 'badge-error', icon: ShieldAlert },
 };
 
-// Mock KYC state — in production this would come from /api/landlords/me/kyc
 const KYC_DOCUMENTS: KYCDoc[] = [
   {
     id: 'lalpurja',
-    name: 'Lalpurja (Ownership Certificate)',
-    description: 'Land ownership certificate (Lalpurja) issued by the Land Revenue Office for all listed properties.',
+    name: 'Lalpurja (Land Ownership Certificate)',
+    description: 'Official title deed issued by the Land Revenue Office (Malpot Karyalaya) for listed properties.',
     icon: Building,
     status: 'not_submitted',
-    requiredFor: 'Property ownership verification',
+    requiredFor: 'Property ownership deed validation',
   },
   {
     id: 'citizenship',
-    name: 'Citizenship Certificate',
-    description: 'Nepal citizenship certificate (Nagarikta Pramaan Patra) of the property owner.',
+    name: 'Citizenship Certificate (Nagarikta)',
+    description: 'Government of Nepal citizenship certificate of the property owner/authorized representative.',
     icon: User,
     status: 'not_submitted',
-    requiredFor: 'Identity verification',
+    requiredFor: 'Identity & signature ratification',
   },
   {
     id: 'pan',
-    name: 'PAN Card',
-    description: 'Permanent Account Number card issued by the Inland Revenue Department of Nepal.',
+    name: 'PAN Certificate',
+    description: 'Permanent Account Number issued by Inland Revenue Department for rental tax compliance.',
     icon: CreditCard,
     status: 'not_submitted',
-    requiredFor: 'Tax compliance',
+    requiredFor: 'Rental tax invoicing & compliance',
   },
 ];
 
@@ -73,7 +75,8 @@ const PAYOUT_BANKS = [
   { name: 'Global IME Bank', code: 'GLOBAL_IME' },
   { name: 'Himalayan Bank', code: 'HBL' },
   { name: 'Rastriya Banijya Bank', code: 'RBB' },
-  { name: 'Other', code: 'OTHER' },
+  { name: 'Sanima Bank', code: 'SANIMA' },
+  { name: 'Other Commercial Bank', code: 'OTHER' },
 ];
 
 export function LandlordSettingsView({ accessToken, showToast }: LandlordSettingsViewProps) {
@@ -96,7 +99,6 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
         setProfileForm({ name: p.name ?? '', phone: p.phone ?? '' });
       })
       .catch(() => {
-        // Fallback to auth context user
         if (user) {
           const fallback = { id: user.id, email: user.email, name: user.name ?? '', avatarUrl: user.avatarUrl, phone: null, roles: user.roles, createdAt: '', updatedAt: '' };
           setProfile(fallback as LandlordProfile);
@@ -112,7 +114,7 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
       const updated = await landlordService.updateProfile(profileForm, accessToken);
       setProfile(updated);
       setEditingProfile(false);
-      showToast('✓ Profile updated');
+      showToast('✓ Profile updated successfully');
     } catch {
       showToast('Failed to update profile', 'error');
     } finally {
@@ -124,15 +126,15 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
     setSavingPayout(true);
     setTimeout(() => {
       setSavingPayout(false);
-      showToast('✓ Payout account details saved');
-    }, 800);
+      showToast('✓ Payout credentials updated');
+    }, 700);
   }
 
   if (loadingProfile) {
     return (
-      <div className="p-8 space-y-4">
-        <div className="h-32 rounded-2xl bg-slate-200 animate-pulse" />
-        <div className="h-48 rounded-2xl bg-slate-200 animate-pulse" />
+      <div className="space-y-4">
+        <div className="h-32 rounded-2xl card-premium animate-pulse" />
+        <div className="h-48 rounded-2xl card-premium animate-pulse" />
       </div>
     );
   }
@@ -141,51 +143,63 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
   const overallKYCStatus = kycVerified === kycDocs.length ? 'verified' : kycVerified > 0 ? 'partial' : 'not_started';
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Settings className="w-6 h-6 text-slate-600" />
-          Settings & Verification
+      <div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-2"
+          style={{
+            background: 'rgba(46,139,255,0.12)',
+            border: '1px solid rgba(46,139,255,0.25)',
+            color: '#59aaff',
+            fontFamily: 'Space Grotesk, sans-serif',
+          }}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Account & Legal Security
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-blue" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          Settings & Asset Verification
         </h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your landlord profile, KYC documents, and payout accounts</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+          Manage your verified landlord profile, Lalpurja deeds, and automated payout routes.
+        </p>
       </div>
 
       {/* ── Profile Card ─────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <User className="w-4 h-4 text-slate-600" />
+      <div className="card-premium overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/5 bg-surface-1 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <User className="w-4 h-4 text-brand-400" />
             Landlord Profile
           </h2>
           {!editingProfile && (
             <button
               onClick={() => setEditingProfile(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+              className="btn-ghost btn-sm text-xs flex items-center gap-1.5"
             >
               <Edit2 className="w-3.5 h-3.5" />
-              Edit
+              Edit Profile
             </button>
           )}
         </div>
-        <div className="p-5">
-          <div className="flex items-center gap-4 mb-5">
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-6">
             {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-emerald-100" />
+              <img src={profile.avatarUrl} alt={profile.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-brand-500/30 shadow-brand-sm" />
             ) : (
-              <div className="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-2xl font-bold">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-600 to-accent-violet flex items-center justify-center text-white text-2xl font-bold font-display shadow-brand-sm">
                 {profile?.name?.[0]?.toUpperCase() ?? 'L'}
               </div>
             )}
             <div>
-              <p className="font-bold text-slate-900">{profile?.name}</p>
-              <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                <Mail className="w-3 h-3" />
+              <p className="font-bold text-lg text-slate-100 font-display">{profile?.name}</p>
+              <p className="text-xs flex items-center gap-1.5 mt-1" style={{ color: 'var(--text-muted)' }}>
+                <Mail className="w-3.5 h-3.5 text-brand-400" />
                 {profile?.email}
               </p>
               {profile?.phone && (
-                <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                  <Phone className="w-3 h-3" />
+                <p className="text-xs flex items-center gap-1.5 mt-1" style={{ color: 'var(--text-muted)' }}>
+                  <Phone className="w-3.5 h-3.5 text-brand-400" />
                   {profile.phone}
                 </p>
               )}
@@ -194,80 +208,83 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
 
           {editingProfile ? (
             <motion.div
-              initial={{ opacity: 0, y: -8 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
+              className="space-y-4 pt-4 border-t border-white/5"
             >
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Display Name</label>
-                <input
-                  type="text"
-                  value={profileForm.name}
-                  onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
-                />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="form-label text-xs">Full Legal Name</label>
+                  <input
+                    type="text"
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))}
+                    className="form-input text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="form-label text-xs">Contact Phone Number</label>
+                  <input
+                    type="tel"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
+                    placeholder="+977 98XXXXXXXX"
+                    className="form-input text-xs"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="+977 98XXXXXXXX"
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
-                />
-              </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setEditingProfile(false)}
-                  className="flex-1 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors"
+                  className="btn-ghost flex-1 py-2.5 text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveProfile}
                   disabled={savingProfile}
-                  className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2"
                 >
                   {savingProfile ? (
                     <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   ) : (
-                    <><Save className="w-3.5 h-3.5" /> Save Changes</>
+                    <><Save className="w-3.5 h-3.5" /> Save Profile</>
                   )}
                 </button>
               </div>
             </motion.div>
           ) : (
-            <div className="text-xs text-slate-500">
-              Member since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}
+            <div className="text-xs pt-4 border-t border-white/5 flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
+              <span>Registered on RentHub since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}</span>
+              <span className="badge-info text-[10px]">Verified Host</span>
             </div>
           )}
         </div>
       </div>
 
       {/* ── KYC Verification ─────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-slate-600" />
-              Ownership Verification (KYC)
+      <div className="card-premium overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/5 bg-surface-1 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <Shield className="w-4 h-4 text-emerald-400" />
+              Ownership & Deed Verification (KYC)
             </h2>
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-              overallKYCStatus === 'verified' ? 'bg-emerald-50 text-emerald-700' :
-              overallKYCStatus === 'partial' ? 'bg-amber-50 text-amber-700' :
-              'bg-slate-100 text-slate-600'
-            }`}>
-              {overallKYCStatus === 'verified' ? '✓ Fully Verified' :
-               overallKYCStatus === 'partial' ? `${kycVerified}/${kycDocs.length} Verified` :
-               'Not Verified'}
-            </span>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              Verify title deeds to grant your properties verified listing status across Nepal.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Verify property ownership and identity to unlock full platform trust features.
-          </p>
+          <span className={`text-[10px] font-bold ${
+            overallKYCStatus === 'verified' ? 'badge-success' :
+            overallKYCStatus === 'partial' ? 'badge-warning' :
+            'badge-neutral'
+          }`}>
+            {overallKYCStatus === 'verified' ? '✓ Fully Verified' :
+             overallKYCStatus === 'partial' ? `${kycVerified}/${kycDocs.length} Verified` :
+             'Action Required'}
+          </span>
         </div>
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-white/5">
           {kycDocs.map((doc) => {
             const cfg = KYC_STATUS_CONFIG[doc.status];
             const DocIcon = doc.icon;
@@ -275,138 +292,134 @@ export function LandlordSettingsView({ accessToken, showToast }: LandlordSetting
 
             return (
               <div key={doc.id} className="p-5 flex items-start gap-4">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                  <DocIcon className="w-4.5 h-4.5 text-slate-600" />
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <DocIcon className="w-5 h-5 text-brand-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-slate-900">{doc.name}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color} flex items-center gap-1`}>
-                      <StatusIcon className="w-2.5 h-2.5" />
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-sm font-bold text-slate-100" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>{doc.name}</p>
+                    <span className={cfg.badgeClass}>
+                      <StatusIcon className="w-3 h-3" />
                       {cfg.label}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">{doc.description}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5 italic">Required for: {doc.requiredFor}</p>
+                  <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{doc.description}</p>
+                  <p className="text-[11px] mt-1 text-brand-300 font-medium">Compliance: {doc.requiredFor}</p>
                 </div>
                 {doc.status === 'not_submitted' && (
-                  <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-600 border border-brand-200 bg-brand-50 hover:bg-brand-100 rounded-xl transition-colors shrink-0">
-                    <Upload className="w-3 h-3" />
-                    Upload
+                  <button className="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                    <Upload className="w-3.5 h-3.5" />
+                    Upload Scan
                   </button>
                 )}
               </div>
             );
           })}
         </div>
-        <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-100">
-          <div className="flex items-start gap-2 text-xs text-slate-500">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            <span>All submitted documents are reviewed by the RentHub compliance team within 2–5 working days. Documents are stored securely and are not shared with tenants.</span>
+        <div className="px-6 py-3.5 bg-surface-1 border-t border-white/5">
+          <div className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-brand-400" />
+            <span>Title deed documents are securely reviewed by RentHub compliance personnel and are never exposed publicly or shared with tenants.</span>
           </div>
         </div>
       </div>
 
       {/* ── Payout Accounts ──────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <CreditCard className="w-4 h-4 text-slate-600" />
-            Payout Accounts
+      <div className="card-premium overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/5 bg-surface-1">
+          <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <CreditCard className="w-4 h-4 text-brand-400" />
+            Rent Payout Accounts & Direct Settlement
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Configure the bank account or mobile wallet where collected rent will be deposited.
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Configure your commercial bank account or digital wallet for automated rent clearing.
           </p>
         </div>
-        <div className="p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-6 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Bank</label>
+              <label className="form-label text-xs">Primary Settlement Bank</label>
               <select
                 value={payoutForm.bankCode}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, bankCode: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
+                className="form-select text-xs"
               >
-                <option value="">Select bank…</option>
-                {PAYOUT_BANKS.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+                <option value="" className="bg-surface-2 text-white">Select bank…</option>
+                {PAYOUT_BANKS.map((b) => <option key={b.code} value={b.code} className="bg-surface-2 text-white">{b.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Account Number</label>
+              <label className="form-label text-xs">Bank Account Number</label>
               <input
                 type="text"
                 value={payoutForm.accountNumber}
                 onChange={(e) => setPayoutForm((f) => ({ ...f, accountNumber: e.target.value }))}
                 placeholder="0012345678901"
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
+                className="form-input text-xs"
               />
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Account Holder Name</label>
-            <input
-              type="text"
-              value={payoutForm.accountName}
-              onChange={(e) => setPayoutForm((f) => ({ ...f, accountName: e.target.value }))}
-              placeholder="As registered in the bank"
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
-            />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="form-label text-xs">Account Holder Name</label>
+              <input
+                type="text"
+                value={payoutForm.accountName}
+                onChange={(e) => setPayoutForm((f) => ({ ...f, accountName: e.target.value }))}
+                placeholder="As registered in the bank account"
+                className="form-input text-xs"
+              />
+            </div>
+            <div>
+              <label className="form-label text-xs">
+                Mobile Wallet (eSewa / Khalti) <span className="text-text-muted font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={payoutForm.mobileWallet}
+                onChange={(e) => setPayoutForm((f) => ({ ...f, mobileWallet: e.target.value }))}
+                placeholder="98XXXXXXXX"
+                className="form-input text-xs"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Mobile Wallet (eSewa / Khalti) <span className="text-slate-400 font-normal">— optional</span>
-            </label>
-            <input
-              type="text"
-              value={payoutForm.mobileWallet}
-              onChange={(e) => setPayoutForm((f) => ({ ...f, mobileWallet: e.target.value }))}
-              placeholder="98XXXXXXXX"
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400/20 bg-white"
-            />
+          <div className="pt-2">
+            <button
+              onClick={handleSavePayout}
+              disabled={savingPayout}
+              className="btn-primary btn-sm flex items-center gap-2"
+            >
+              {savingPayout ? (
+                <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <><Save className="w-3.5 h-3.5" /> Save Payout Configuration</>
+              )}
+            </button>
           </div>
-          <button
-            onClick={handleSavePayout}
-            disabled={savingPayout}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50"
-          >
-            {savingPayout ? (
-              <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-            ) : (
-              <><Save className="w-3.5 h-3.5" /> Save Payout Details</>
-            )}
-          </button>
         </div>
       </div>
 
       {/* ── Account Role & Authorization ── */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="card-premium overflow-hidden">
+        <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              Account Authorization
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              RentHub operates on a single verified role architecture
+            <div className="flex items-center gap-2 mb-1">
+              <Building className="w-4 h-4 text-brand-400" />
+              <strong className="text-slate-100 font-semibold font-display">Active Role: Landlord (Asset Owner)</strong>
+            </div>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Authorized for listing properties, managing residential units, executing digital leases, and rent ledger tracking.
             </p>
           </div>
-        </div>
-
-        <div className="p-5 space-y-4">
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Building className="w-4 h-4 text-emerald-600" />
-                <strong className="text-slate-900 font-semibold">Active Role: Landlord (Asset Owner)</strong>
-              </div>
-              <p className="text-slate-500">
-                Authorized for listing properties, managing residential units, executing digital leases, and rent ledger tracking.
-              </p>
-            </div>
-            <span className="px-3 py-1.5 bg-emerald-100 text-emerald-800 font-semibold rounded-lg shrink-0 text-xs inline-flex items-center gap-1.5 border border-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Verified Landlord
-            </span>
-          </div>
+          <span className="badge-success text-xs py-1.5 px-3 shrink-0 flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4" /> Verified Landlord
+          </span>
         </div>
       </div>
     </div>

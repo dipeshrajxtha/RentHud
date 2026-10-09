@@ -1,15 +1,27 @@
 /**
- * PropertySearchBar Component
+ * PropertySearchBar Component — Clean Light Airbnb Discovery Bar
  *
  * Search & Discovery Bar with:
- * - Fulltext search across Kathmandu neighborhoods
- * - City selector pills (Kathmandu, Lalitpur, Bhaktapur)
- * - View mode switcher (Grid, Split Map + List, Full Map)
- * - Quick radius filter pills & bedroom selectors
+ * - Real-time full-text search with location resolver for Kathmandu Valley
+ * - Clean city selector pills (Kathmandu, Lalitpur, Bhaktapur)
+ * - Segmented view switcher (Grid, Split Map + List, Full Map)
+ * - Quick bedroom pills, radius filter, and sorting
+ * - Clean white card design with subtle slate accents
  */
 
 import { useMemo } from 'react';
-import { Search, MapPin, SlidersHorizontal, ArrowUpDown, LayoutGrid, Map, Columns, Compass, CheckCircle2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  SlidersHorizontal,
+  ArrowUpDown,
+  LayoutGrid,
+  Map,
+  Columns,
+  CheckCircle2,
+  X,
+  ShieldCheck,
+} from 'lucide-react';
 import type { SearchFilters } from '@/types/tenant';
 import { resolveLocationFromQuery, CITY_COORDINATES } from '../utils/locationResolver';
 
@@ -61,7 +73,7 @@ export function PropertySearchBar({
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 space-y-3.5">
+    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 space-y-4">
       {/* Top row: search input + city selector + filter button + view mode */}
       <div className="flex flex-col lg:flex-row gap-3">
         {/* Search Query Input */}
@@ -71,25 +83,22 @@ export function PropertySearchBar({
             type="text"
             value={filters.searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Search neighborhood, street, or property name (e.g. Patan, Sanepa, Jhamsikhel, Lazimpat)..."
-            className="w-full pl-10 pr-28 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+            placeholder="Search neighborhood, street, or building (e.g. Sanepa, Jhamsikhel, Lazimpat, Baneshwor)..."
+            className="w-full pl-10 pr-24 py-2.5 text-sm rounded-xl text-slate-900 bg-slate-50 border border-slate-200 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all duration-200"
           />
           {filters.searchQuery && (
             <button
               type="button"
               onClick={() => handleSearchChange('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 rounded-lg transition-colors"
               title="Clear search"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
           {matchedLocation && !filters.searchQuery.includes(matchedLocation.name) && (
-            <div className="absolute right-9 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 bg-brand-50 border border-brand-200 rounded-xl text-[11px] font-semibold text-brand-700 shadow-2xs">
-              <CheckCircle2 className="w-3 h-3 text-brand-600" />
+            <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+              <CheckCircle2 className="w-3 h-3 text-blue-600" />
               <span>Map: {matchedLocation.name}</span>
             </div>
           )}
@@ -97,37 +106,40 @@ export function PropertySearchBar({
 
         {/* City Selector */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-          {cities.map((city) => (
-            <button
-              key={city}
-              type="button"
-              onClick={() => handleCitySelect(city)}
-              className={`px-3.5 py-2 text-xs font-bold rounded-xl whitespace-nowrap transition-all ${
-                filters.city === city
-                  ? 'bg-brand-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
-              }`}
-            >
-              {city !== 'All' && <MapPin className="inline w-3 h-3 mr-1 -mt-0.5 opacity-70" />}
-              {city}
-            </button>
-          ))}
+          {cities.map((city) => {
+            const isSelected = filters.city === city;
+            return (
+              <button
+                key={city}
+                type="button"
+                onClick={() => handleCitySelect(city)}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all duration-150 ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                {city !== 'All' && <MapPin className="inline w-3 h-3 mr-1 -mt-0.5 opacity-80" />}
+                {city}
+              </button>
+            );
+          })}
         </div>
 
         {/* View Mode Switcher (Grid / Split / Map) */}
         {onViewModeChange && (
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/70 self-start lg:self-center">
+          <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/80 self-start lg:self-center">
             <button
               type="button"
               onClick={() => onViewModeChange('grid')}
               title="Grid View"
-              className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 viewMode === 'grid'
-                  ? 'bg-white text-brand-700 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
+              <LayoutGrid className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden sm:inline">Grid</span>
             </button>
 
@@ -135,13 +147,13 @@ export function PropertySearchBar({
               type="button"
               onClick={() => onViewModeChange('split')}
               title="Split Map & Grid"
-              className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 viewMode === 'split'
-                  ? 'bg-white text-brand-700 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Columns className="w-3.5 h-3.5" />
+              <Columns className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden sm:inline">Split</span>
             </button>
 
@@ -149,13 +161,13 @@ export function PropertySearchBar({
               type="button"
               onClick={() => onViewModeChange('map')}
               title="Full Map View"
-              className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 viewMode === 'map'
-                  ? 'bg-white text-brand-700 shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Map className="w-3.5 h-3.5" />
+              <Map className="w-3.5 h-3.5 text-blue-600" />
               <span className="hidden sm:inline">Map</span>
             </button>
           </div>
@@ -165,81 +177,105 @@ export function PropertySearchBar({
         <button
           type="button"
           onClick={onOpenFilters}
-          className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-2xl border transition-all ${
+          className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl border transition-all ${
             activeFilterCount > 0
-              ? 'bg-brand-50 border-brand-300 text-brand-700 shadow-xs'
-              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              ? 'bg-blue-50 text-blue-700 border-blue-200 shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
           }`}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-3.5 h-3.5 text-blue-600" />
           <span>Filters</span>
           {activeFilterCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-brand-600 text-white text-[10px] flex items-center justify-center font-bold">
+            <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">
               {activeFilterCount}
             </span>
           )}
         </button>
       </div>
 
-      {/* Quick filter pills row (Bedrooms + Radius + Sort) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-slate-100 text-xs text-slate-500">
+      {/* Quick filter pills row (Bedrooms + Radius + Sort + Verified) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
           {/* BHK Pill Selector */}
-          <span className="text-slate-400 font-semibold mr-0.5">Bedrooms:</span>
-          {(['all', 1, 2, 3, 4] as const).map((b) => (
-            <button
-              key={String(b)}
-              type="button"
-              onClick={() => onChange({ bedrooms: b })}
-              className={`px-3 py-1 rounded-xl border text-xs font-semibold transition-colors ${
-                filters.bedrooms === b
-                  ? 'border-brand-500 bg-brand-50 text-brand-700 font-bold'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {b === 'all' ? 'Any' : `${b} BHK`}
-            </button>
-          ))}
-
-          {/* Radius Quick Pills */}
-          <div className="hidden sm:flex items-center gap-1.5 ml-2 pl-3 border-l border-slate-200">
-            <Compass className="w-3.5 h-3.5 text-brand-600" />
-            <span className="text-slate-400 font-semibold">Radius:</span>
-            {radiusList.map((r) => (
+          <span className="font-semibold text-slate-500 mr-0.5">Bedrooms:</span>
+          {(['all', 1, 2, 3, 4] as const).map((b) => {
+            const isSelected = filters.bedrooms === b;
+            return (
               <button
-                key={r}
+                key={String(b)}
+                type="button"
+                onClick={() => onChange({ bedrooms: b })}
+                className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                {b === 'all' ? 'Any' : `${b} BHK`}
+              </button>
+            );
+          })}
+
+          {/* Radius selector */}
+          <span className="font-semibold text-slate-500 ml-2 mr-0.5">Radius:</span>
+          {radiusList.map((km) => {
+            const isSelected = filters.radiusKm === km;
+            return (
+              <button
+                key={km}
                 type="button"
                 onClick={() =>
                   onChange({
-                    radiusKm: filters.radiusKm === r ? undefined : r,
-                    centerCoords: filters.centerCoords ?? CITY_COORDINATES.All,
+                    radiusKm: isSelected ? undefined : km,
                   })
                 }
-                className={`px-2.5 py-0.5 rounded-lg border text-[11px] font-semibold transition-all ${
-                  filters.radiusKm === r
-                    ? 'border-brand-500 bg-brand-500 text-white'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
               >
-                {r} km
+                {km} km
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Sort selector */}
-        <div className="flex items-center gap-2 ml-auto">
-          <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-          <select
-            value={filters.sortBy}
-            onChange={(e) => onChange({ sortBy: e.target.value as any })}
-            className="bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer hover:bg-slate-100"
+        {/* Sort & Verified toggles */}
+        <div className="flex items-center gap-2">
+          {/* Verified Only Toggle */}
+          <button
+            type="button"
+            onClick={() => onChange({ verifiedOnly: !filters.verifiedOnly })}
+            className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg font-medium border transition-all ${
+              filters.verifiedOnly
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
+            }`}
           >
-            <option value="recommended">Sort: Recommended</option>
-            <option value="rent_asc">Rent: Low to High</option>
-            <option value="rent_desc">Rent: High to Low</option>
-            <option value="newest">Newest Listed</option>
-          </select>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Verified Title</span>
+          </button>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-1.5 bg-slate-100 rounded-lg px-2.5 py-1 border border-slate-200/80">
+            <ArrowUpDown className="w-3 h-3 text-slate-500" />
+            <select
+              value={filters.sortBy}
+              onChange={(e) =>
+                onChange({
+                  sortBy: e.target.value as SearchFilters['sortBy'],
+                })
+              }
+              className="bg-transparent text-slate-700 font-medium focus:outline-none cursor-pointer text-xs"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price_asc">Rent: Low to High</option>
+              <option value="price_desc">Rent: High to Low</option>
+              <option value="rating">Highest Rated</option>
+              <option value="verified">Verified First</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
