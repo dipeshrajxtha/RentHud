@@ -76,8 +76,11 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
  * Exchange a Google ID token credential for a RentHub session.
  * POST /api/auth/google
  */
-export async function googleLogin(idToken: string): Promise<GoogleLoginResponseData> {
-  return post<GoogleLoginResponseData>('/api/auth/google', { idToken });
+export type GoogleLoginTokenParam = { idToken?: string; accessToken?: string } | string;
+
+export async function googleLogin(token: GoogleLoginTokenParam): Promise<GoogleLoginResponseData> {
+  const payload = typeof token === 'string' ? { idToken: token } : token;
+  return post<GoogleLoginResponseData>('/api/auth/google', payload);
 }
 
 /**

@@ -54,6 +54,39 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleClaims
 }
 
 /**
+ * Resolves Google claims using a Google OAuth access token via the userinfo endpoint.
+ */
+export async function getClaimsFromGoogleAccessToken(accessToken: string): Promise<GoogleClaims> {
+  const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) {
+    throw new UnauthorizedError('Invalid or expired Google access token');
+  }
+
+  const payload = (await res.json()) as {
+    sub: string;
+    email: string;
+    name?: string;
+    picture?: string;
+    email_verified?: boolean;
+  };
+
+  if (!payload.email_verified) {
+    throw new UnauthorizedError('Google account email is not verified');
+  }
+
+  return {
+    googleId: payload.sub,
+    email: payload.email.toLowerCase(),
+    name: payload.name ?? '',
+    avatarUrl: payload.picture ?? null,
+    emailVerified: Boolean(payload.email_verified),
+  };
+}
+
+/**
  * Resolves the RentHub user record from verified Google claims.
  *
  * 3-stage resolution:

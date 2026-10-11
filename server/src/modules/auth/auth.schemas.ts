@@ -1,9 +1,14 @@
 import { z } from 'zod';
 
 /** POST /api/auth/google */
-export const googleAuthSchema = z.object({
-  idToken: z.string().min(1, 'idToken is required'),
-});
+export const googleAuthSchema = z
+  .object({
+    idToken: z.string().optional(),
+    accessToken: z.string().optional(),
+  })
+  .refine((data) => Boolean(data.idToken || data.accessToken), {
+    message: 'Either idToken or accessToken must be provided',
+  });
 
 /** POST /api/auth/refresh (mobile clients send body — web uses cookie) */
 export const refreshSchema = z

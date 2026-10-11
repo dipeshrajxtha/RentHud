@@ -28,11 +28,12 @@ import {
   logout as apiLogout,
   parseAuthError,
   setRoles,
+  type GoogleLoginTokenParam,
 } from './auth.service';
 
 /* ── Context interface ──────────────────────────────────────────────────── */
 interface AuthContextValue extends AuthState {
-  signInWithGoogle: (idToken: string) => Promise<void>;
+  signInWithGoogle: (token: GoogleLoginTokenParam) => Promise<void>;
   signInWithCredentials: (
     email: string,
     role?: 'tenant' | 'landlord' | 'admin',
@@ -154,10 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /* ── Google Sign-In ── */
-  const signInWithGoogle = useCallback(async (idToken: string) => {
+  const signInWithGoogle = useCallback(async (token: GoogleLoginTokenParam) => {
     setAuth(prev => ({ ...prev, error: null }));
     try {
-      const data = await googleLogin(idToken);
+      const data = await googleLogin(token);
       setSessionHint(true);
       if (isMounted.current) {
         setAuth({

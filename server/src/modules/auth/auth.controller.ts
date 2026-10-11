@@ -1,10 +1,16 @@
 import type { Request, Response, NextFunction } from 'express';
 import { db } from '../../../config/database.js';
-import { verifyGoogleIdToken, resolveUserFromGoogle, issueTokens } from './auth.service.js';
+import {
+  verifyGoogleIdToken,
+  getClaimsFromGoogleAccessToken,
+  resolveUserFromGoogle,
+  issueTokens,
+  type GoogleClaims,
+} from './auth.service.js';
 import { verifyRefreshToken } from '../../common/utils/jwt.js';
 import { setRefreshCookie, clearRefreshCookie, REFRESH_COOKIE_NAME } from '../../common/utils/cookies.js';
 import { sendSuccess } from '../../common/utils/response.js';
-import { UnauthorizedError, ForbiddenError } from '../../common/errors/index.js';
+import { UnauthorizedError, ForbiddenError, BadRequestError } from '../../common/errors/index.js';
 import { findActiveUserById } from '../users/index.js';
 import type { GoogleAuthBody, RefreshBody, DevLoginBody, AdminLoginBody } from './auth.schemas.js';
 import type { UserRole } from '../../../../shared/enums/roles.js';
@@ -16,7 +22,7 @@ const ADMIN_PASSWORD = 'admin123';
 
 /**
  * POST /api/auth/google
- * Verifies a Google ID token, resolves the RentHub user, and issues session tokens.
+ * Verifies a Google ID token or Access token, resolves the RentHub user, and issues session tokens.
  */
 export async function googleLogin(
   req: Request<{}, {}, GoogleAuthBody>,
@@ -24,7 +30,17 @@ export async function googleLogin(
   next: NextFunction
 ): Promise<void> {
   try {
-    const claims = await verifyGoogleIdToken(req.body.idToken);
+    const { idToken, accessToken } = req.body;
+    let claims: GoogleClaims;
+
+    if (idToken) {
+      claims = await verifyGoogleIdToken(idToken);
+    } else if (accessToken) {
+      claims = await getClaimsFromGoogleAccessToken(accessToken);
+    } else {
+      throw new BadRequestError('Either idToken or accessToken is required');
+    }
+
     const user = await resolveUserFromGoogle(db, claims);
     const tokens = issueTokens(user);
 
