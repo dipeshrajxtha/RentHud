@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Building, Hash, Bed, Bath, Maximize2, DollarSign, Shield } from 'lucide-react';
+import { FormInput, FormSelect, ShimmerButton } from '@/components/ui';
 import type {
   LandlordProperty,
   LandlordUnit,
@@ -92,109 +93,89 @@ export function AddOrEditUnitModal({
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Unit Number / Code *</label>
-              <input
-                type="text"
-                required
-                value={unitIdentifier}
-                onChange={(e) => setUnitIdentifier(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Floor Level</label>
-              <input
-                type="number"
-                min="0"
-                max="50"
-                value={floorNumber}
-                onChange={(e) => setFloorNumber(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
+            <FormInput
+              label="Unit Number / Code"
+              required
+              value={unitIdentifier}
+              onChange={(e) => setUnitIdentifier(e.target.value)}
+              placeholder="e.g. Unit 101"
+              leftIcon={<Building className="w-4 h-4 text-slate-400" />}
+            />
+            <FormInput
+              label="Floor Level"
+              type="number"
+              min="0"
+              max="50"
+              value={floorNumber}
+              onChange={(e) => setFloorNumber(parseInt(e.target.value) || 1)}
+              leftIcon={<Hash className="w-4 h-4 text-slate-400" />}
+            />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Bedrooms (BHK)</label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={bedrooms}
-                onChange={(e) => setBedrooms(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Bathrooms</label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={bathrooms}
-                onChange={(e) => setBathrooms(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Area (sqft)</label>
-              <input
-                type="number"
-                min="100"
-                value={areaSqft}
-                onChange={(e) => setAreaSqft(parseInt(e.target.value) || '')}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
+            <FormInput
+              label="Bedrooms (BHK)"
+              type="number"
+              min="1"
+              max="10"
+              value={bedrooms}
+              onChange={(e) => setBedrooms(parseInt(e.target.value) || 1)}
+              leftIcon={<Bed className="w-4 h-4 text-slate-400" />}
+            />
+            <FormInput
+              label="Bathrooms"
+              type="number"
+              min="1"
+              max="10"
+              value={bathrooms}
+              onChange={(e) => setBathrooms(parseInt(e.target.value) || 1)}
+              leftIcon={<Bath className="w-4 h-4 text-slate-400" />}
+            />
+            <FormInput
+              label="Area (sqft)"
+              type="number"
+              min="100"
+              value={areaSqft}
+              onChange={(e) => setAreaSqft(parseInt(e.target.value) || '')}
+              leftIcon={<Maximize2 className="w-4 h-4 text-slate-400" />}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Monthly Rent (NPR) *</label>
-              <input
-                type="number"
-                required
-                min="1000"
-                step="500"
-                value={monthlyRent}
-                onChange={(e) => setMonthlyRent(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Security Deposit (NPR)</label>
-              <input
-                type="number"
-                min="0"
-                step="500"
-                value={securityDeposit}
-                onChange={(e) => setSecurityDeposit(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
+            <FormInput
+              label="Monthly Rent (NPR)"
+              type="number"
+              required
+              min="1000"
+              step="500"
+              value={monthlyRent}
+              onChange={(e) => setMonthlyRent(parseInt(e.target.value) || 0)}
+              leftIcon={<DollarSign className="w-4 h-4 text-slate-400" />}
+            />
+            <FormInput
+              label="Security Deposit (NPR)"
+              type="number"
+              min="0"
+              step="500"
+              value={securityDeposit}
+              onChange={(e) => setSecurityDeposit(parseInt(e.target.value) || 0)}
+              leftIcon={<Shield className="w-4 h-4 text-slate-400" />}
+            />
           </div>
 
           {/* Availability Status Lifecycle */}
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1">Availability Status</label>
-            <select
-              value={availabilityStatus}
-              onChange={(e) => setAvailabilityStatus(e.target.value as UnitAvailabilityStatus)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            >
-              <option value="AVAILABLE">AVAILABLE (Listed for rent)</option>
-              <option value="RESERVED">RESERVED (Application approved)</option>
-              <option value="PENDING_SIGNATURE">PENDING_SIGNATURE (Awaiting lease signature)</option>
-              <option value="ON_RENT">ON_RENT (Active tenancy)</option>
-              <option value="UNAVAILABLE">UNAVAILABLE (Maintenance/Private)</option>
-            </select>
-          </div>
+          <FormSelect
+            label="Availability Status"
+            value={availabilityStatus}
+            onChange={(e) => setAvailabilityStatus(e.target.value as UnitAvailabilityStatus)}
+            options={[
+              { value: 'AVAILABLE', label: 'AVAILABLE (Listed for rent)' },
+              { value: 'RESERVED', label: 'RESERVED (Application approved)' },
+              { value: 'PENDING_SIGNATURE', label: 'PENDING_SIGNATURE (Awaiting lease signature)' },
+              { value: 'ON_RENT', label: 'ON_RENT (Active tenancy)' },
+              { value: 'UNAVAILABLE', label: 'UNAVAILABLE (Maintenance/Private)' },
+            ]}
+          />
 
           <div className="pt-2 flex items-center justify-end gap-2">
             <button
@@ -204,14 +185,15 @@ export function AddOrEditUnitModal({
             >
               Cancel
             </button>
-            <button
+            <ShimmerButton
               type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5"
+              size="md"
+              variant="primary"
+              isLoading={isSubmitting}
+              leftIcon={<Check className="w-4 h-4" />}
             >
-              <Check className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving…' : isEditing ? 'Save Unit' : 'Create Unit'}</span>
-            </button>
+              {isEditing ? 'Save Unit' : 'Create Unit'}
+            </ShimmerButton>
           </div>
         </form>
       </motion.div>
