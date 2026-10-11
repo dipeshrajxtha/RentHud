@@ -40,6 +40,9 @@ export function RoleProtectedRoute({ allowedRole }: RoleProtectedRouteProps) {
 
   if (!userRoles.includes(allowedRole)) {
     // Block unauthorized access and redirect to the user's authoritative dashboard
+    if (userRoles.includes('admin')) {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
     if (userRoles.includes('landlord')) {
       return <Navigate to="/landlord/dashboard" replace />;
     }

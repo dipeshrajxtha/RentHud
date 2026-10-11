@@ -14,8 +14,9 @@ export function PublicOnlyRoute() {
   const { status, user } = useAuth();
   const location = useLocation();
   const rawFrom = (location.state as { from?: Location })?.from?.pathname;
+  const isAdmin = user?.roles.includes('admin');
   const isLandlord = user?.roles.includes('landlord');
-  const roleDashboard = isLandlord ? '/landlord/dashboard' : '/tenant/dashboard';
+  const roleDashboard = isAdmin ? '/admin/dashboard' : isLandlord ? '/landlord/dashboard' : '/tenant/dashboard';
   const target = rawFrom && rawFrom !== '/login' && rawFrom !== '/dashboard' && rawFrom !== '/' ? rawFrom : roleDashboard;
 
   if (status === 'initializing') {

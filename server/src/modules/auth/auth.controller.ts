@@ -6,9 +6,13 @@ import { setRefreshCookie, clearRefreshCookie, REFRESH_COOKIE_NAME } from '../..
 import { sendSuccess } from '../../common/utils/response.js';
 import { UnauthorizedError, ForbiddenError } from '../../common/errors/index.js';
 import { findActiveUserById } from '../users/index.js';
-import type { GoogleAuthBody, RefreshBody, DevLoginBody } from './auth.schemas.js';
+import type { GoogleAuthBody, RefreshBody, DevLoginBody, AdminLoginBody } from './auth.schemas.js';
 import type { UserRole } from '../../../../shared/enums/roles.js';
 import { signAccessToken, signRefreshToken } from '../../common/utils/jwt.js';
+
+/** Hardcoded admin credentials — no registration allowed */
+const ADMIN_EMAIL = 'admin@gmail.com';
+const ADMIN_PASSWORD = 'admin123';
 
 /**
  * POST /api/auth/google
@@ -124,6 +128,10 @@ export async function devLogin(
   try {
     const { email, roles, name } = req.body;
 
+    if (email.toLowerCase() === ADMIN_EMAIL || (roles as string[]).includes('admin')) {
+      throw new ForbiddenError('Admin accounts cannot use dev-login. Use Admin Login.');
+    }
+
     // Find or create a test user
     let user = await db
       .selectFrom('users')
@@ -151,6 +159,71 @@ export async function devLogin(
     }
 
     const userRoles = (user.roles as UserRole[]);
+    const accessToken = signAccessToken(user.id, userRoles);
+    const refreshToken = signRefreshToken(user.id);
+
+    setRefreshCookie(res, refreshToken);
+    sendSuccess(res, {
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatar_url,
+        roles: user.roles,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/auth/admin-login
+ *
+ * Validates hardcoded admin credentials (admin@gmail.com / admin123).
+ * No registration — only this exact credential pair is accepted.
+ * Find-or-creates the admin user in the database.
+ */
+export async function adminLogin(
+  req: Request<{}, {}, AdminLoginBody>,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email, password } = req.body;
+
+    if (email.toLowerCase() !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      throw new UnauthorizedError('Invalid admin credentials');
+    }
+
+    // Find or create the admin user
+    let user = await db
+      .selectFrom('users')
+      .selectAll()
+      .where('email', '=', ADMIN_EMAIL)
+      .executeTakeFirst();
+
+    if (!user) {
+      user = await db
+        .insertInto('users')
+        .values({
+          email: ADMIN_EMAIL,
+          name: 'Platform Administrator',
+          google_id: null,
+          avatar_url: null,
+          roles: ['admin'],
+          is_active: true,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    }
+
+    if (!user.is_active) {
+      throw new ForbiddenError('Account is deactivated');
+    }
+
+    const userRoles = user.roles as UserRole[];
     const accessToken = signAccessToken(user.id, userRoles);
     const refreshToken = signRefreshToken(user.id);
 

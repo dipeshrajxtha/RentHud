@@ -27,6 +27,9 @@ export function DashboardPage() {
   }
 
   const roles = user?.roles ?? [];
+  if (roles.includes('admin')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
   if (roles.includes('landlord')) {
     return <Navigate to="/landlord/dashboard" replace />;
   }

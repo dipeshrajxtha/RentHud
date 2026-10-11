@@ -22,6 +22,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { RoleSelectionPage } from '@/pages/RoleSelectionPage';
 import { TenantDashboard } from '@/pages/TenantDashboard';
 import { LandlordDashboard } from '@/pages/LandlordDashboard';
+import { AdminDashboard } from '@/pages/AdminDashboard';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined ?? '';
 
@@ -50,6 +51,11 @@ export function App() {
             {/* Landlord protected routes */}
             <Route element={<RoleProtectedRoute allowedRole="landlord" />}>
               <Route path="/landlord/*" element={<LandlordDashboard />} />
+            </Route>
+
+            {/* Admin protected routes */}
+            <Route element={<RoleProtectedRoute allowedRole="admin" />}>
+              <Route path="/admin/*" element={<AdminDashboard />} />
             </Route>
 
             {/* Root redirect */}

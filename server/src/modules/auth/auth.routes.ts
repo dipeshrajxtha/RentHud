@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { validate } from '../../common/middleware/validate.js';
-import { googleAuthSchema, refreshSchema, devLoginSchema } from './auth.schemas.js';
+import { googleAuthSchema, refreshSchema, devLoginSchema, adminLoginSchema } from './auth.schemas.js';
 import config from '../../../config/env.js';
 
 /**
@@ -18,6 +18,9 @@ export function createAuthRouter(): Router {
   router.post('/refresh', validate(refreshSchema), authController.refreshToken);
   router.post('/logout', authController.logout);
 
+  // Admin credentials login — always available (validates against hardcoded credentials)
+  router.post('/admin-login', validate(adminLoginSchema), authController.adminLogin);
+
   // Hard server-side disable in production — route is never registered
   if (!config.server.isProduction) {
     router.post('/dev-login', validate(devLoginSchema), authController.devLogin);
@@ -25,3 +28,4 @@ export function createAuthRouter(): Router {
 
   return router;
 }
+

@@ -81,6 +81,29 @@ export async function googleLogin(idToken: string): Promise<GoogleLoginResponseD
 }
 
 /**
+ * Sign in directly with email credentials / dev persona.
+ * POST /api/auth/dev-login
+ */
+export async function devLogin(
+  email: string,
+  roles: ('tenant' | 'landlord' | 'admin')[] = ['tenant'],
+  name: string = 'RentHub User'
+): Promise<GoogleLoginResponseData> {
+  return post<GoogleLoginResponseData>('/api/auth/dev-login', { email, roles, name });
+}
+
+/**
+ * Sign in as admin with email + password credentials.
+ * POST /api/auth/admin-login
+ */
+export async function adminLogin(
+  email: string,
+  password: string
+): Promise<GoogleLoginResponseData> {
+  return post<GoogleLoginResponseData>('/api/auth/admin-login', { email, password });
+}
+
+/**
  * Set initial role for a new user (onboarding).
  * POST /api/users/me/roles
  */

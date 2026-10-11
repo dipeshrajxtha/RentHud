@@ -22,6 +22,8 @@ import React, {
 import type { AuthState, AuthUser } from './auth.types';
 import {
   googleLogin,
+  devLogin,
+  adminLogin,
   refreshSession,
   logout as apiLogout,
   parseAuthError,
@@ -31,6 +33,13 @@ import {
 /* ── Context interface ──────────────────────────────────────────────────── */
 interface AuthContextValue extends AuthState {
   signInWithGoogle: (idToken: string) => Promise<void>;
+  signInWithCredentials: (
+    email: string,
+    role?: 'tenant' | 'landlord' | 'admin',
+    name?: string
+  ) => Promise<void>;
+  /** Admin-only: validates hardcoded credentials on the server */
+  signInWithAdminCredentials: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
   /** Called from role-selection screen after new-user onboarding (single role). */
@@ -167,6 +176,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /* ── Direct Credentials Sign-In ── */
+  const signInWithCredentials = useCallback(
+    async (
+      email: string,
+      role: 'tenant' | 'landlord' | 'admin' = 'tenant',
+      name?: string
+    ) => {
+      setAuth((prev) => ({ ...prev, error: null }));
+      try {
+        const data = await devLogin(
+          email,
+          [role],
+          name || `${role.charAt(0).toUpperCase() + role.slice(1)} User`
+        );
+        setSessionHint(true);
+        if (isMounted.current) {
+          setAuth({
+            status: resolveStatusFromUser(data.user),
+            user: data.user,
+            accessToken: data.accessToken,
+            error: null,
+          });
+        }
+      } catch (err) {
+        setSessionHint(false);
+        if (isMounted.current) {
+          setAuth((prev) => ({
+            ...prev,
+            status: 'unauthenticated',
+            error: parseAuthError(err),
+          }));
+        }
+        throw err;
+      }
+    },
+    []
+  );
+
+  /* ── Admin Credentials Sign-In ── */
+  const signInWithAdminCredentials = useCallback(
+    async (email: string, password: string) => {
+      setAuth((prev) => ({ ...prev, error: null }));
+      try {
+        const data = await adminLogin(email, password);
+        setSessionHint(true);
+        if (isMounted.current) {
+          setAuth({
+            status: resolveStatusFromUser(data.user),
+            user: data.user,
+            accessToken: data.accessToken,
+            error: null,
+          });
+        }
+      } catch (err) {
+        setSessionHint(false);
+        if (isMounted.current) {
+          setAuth((prev) => ({
+            ...prev,
+            status: 'unauthenticated',
+            error: parseAuthError(err),
+          }));
+        }
+        throw err;
+      }
+    },
+    []
+  );
+
   /* ── Complete Onboarding (new user selects single role) ── */
   const completeOnboarding = useCallback(async (role: 'tenant' | 'landlord') => {
     if (!auth.accessToken) return;
@@ -213,6 +290,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextValue = {
     ...auth,
     signInWithGoogle,
+    signInWithCredentials,
+    signInWithAdminCredentials,
     signOut,
     clearError,
     completeOnboarding,

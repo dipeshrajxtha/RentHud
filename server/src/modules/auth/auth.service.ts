@@ -71,6 +71,11 @@ export async function resolveUserFromGoogle(
   db: Kysely<Database>,
   claims: GoogleClaims
 ): Promise<User> {
+  // Prevent admin from registering or logging in via Google
+  if (claims.email.toLowerCase() === 'admin@gmail.com') {
+    throw new ForbiddenError('Admin accounts cannot sign in or register via Google. Please use the Admin Login.');
+  }
+
   // Stage 1: Lookup by google_id
   const byGoogleId = await db
     .selectFrom('users')

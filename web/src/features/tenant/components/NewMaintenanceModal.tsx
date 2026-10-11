@@ -1,19 +1,20 @@
 /**
- * NewMaintenanceModal Component — Clean Light Mode
+ * NewMaintenanceModal Component — Modernized with Watermelon UI & Aceternity Primitives
  *
  * Maintenance Ticket Dispatch with:
  * - Category selection grid (Plumbing, Electrical, HVAC, Structural)
  * - Urgency selection with SLA definitions (Emergency, High, Medium, Low)
- * - Access time preferences
- * - Direct landlord notification
+ * - FormInput & FormSelect components
+ * - Tactile ShimmerButton submit action
  */
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Wrench } from 'lucide-react';
+import { X, Wrench, Clock } from 'lucide-react';
 import type { LeaseAgreement, MaintenanceRequest } from '@/types/tenant';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
+import { FormInput, FormSelect, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface NewMaintenanceModalProps {
   lease: LeaseAgreement | null;
@@ -30,11 +31,19 @@ const CATEGORIES: MaintenanceRequest['category'][] = [
   'Structural',
 ];
 
-const URGENCIES: { id: MaintenanceRequest['urgency']; label: string; desc: string; color: string }[] = [
-  { id: 'Emergency', label: 'Emergency (within 4 hours)', desc: 'Active water leak, exposed wire, gas smell', color: '#e11d48' },
-  { id: 'High', label: 'High (within 24 hours)', desc: 'Inverter failure, main toilet clogged, water pump issue', color: '#d97706' },
-  { id: 'Medium', label: 'Medium (within 48 hours)', desc: 'Dripping tap, door latch loose, geyser temperature', color: '#2563eb' },
-  { id: 'Low', label: 'Low / Routine', desc: 'Cosmetic touchup, window mesh, minor adjustment', color: '#64748b' },
+const URGENCIES: { id: MaintenanceRequest['urgency']; label: string; desc: string; variant: 'danger' | 'warning' | 'info' | 'neutral' }[] = [
+  { id: 'Emergency', label: 'Emergency (within 4h)', desc: 'Active water leak, exposed wire, gas smell', variant: 'danger' },
+  { id: 'High', label: 'High (within 24h)', desc: 'Inverter failure, main toilet clogged, water pump', variant: 'warning' },
+  { id: 'Medium', label: 'Medium (within 48h)', desc: 'Dripping tap, door latch loose, geyser heat', variant: 'info' },
+  { id: 'Low', label: 'Low / Routine', desc: 'Cosmetic touchup, window mesh, minor adjustment', variant: 'neutral' },
+];
+
+const TIME_OPTIONS = [
+  { value: 'Morning (9:00 AM – 12:00 PM)', label: 'Morning (9:00 AM – 12:00 PM)' },
+  { value: 'Afternoon (1:00 PM – 4:00 PM)', label: 'Afternoon (1:00 PM – 4:00 PM)' },
+  { value: 'Evening (5:00 PM – 7:00 PM)', label: 'Evening (5:00 PM – 7:00 PM)' },
+  { value: 'Weekend (Saturday)', label: 'Weekend (Saturday)' },
+  { value: 'Flexible / Anytime with advance call', label: 'Flexible / Anytime with advance call' },
 ];
 
 export function NewMaintenanceModal({
@@ -81,23 +90,32 @@ export function NewMaintenanceModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-3 sm:p-6">
+      <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-6">
+        {/* Backdrop */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm"
+        />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 14 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 16 }}
-          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden"
+          exit={{ opacity: 0, scale: 0.95, y: 14 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-lg bg-white rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden z-10"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 bg-slate-50 border-b border-slate-200/80">
+          <div className="flex items-center justify-between px-6 py-5 bg-slate-50/70 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-sm">
                 <Wrench className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-display font-bold text-slate-900">
-                  New Maintenance Request
+                <h2 className="text-base font-display font-bold text-slate-900 tracking-tight">
+                  New Maintenance Ticket
                 </h2>
                 <p className="text-xs text-slate-500">
                   {lease.unitIdentifier}, {lease.propertyTitle}
@@ -106,20 +124,20 @@ export function NewMaintenanceModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs text-slate-700">
-            {/* Category */}
-            <div>
-              <label className="text-xs font-bold block mb-2 font-display text-slate-700">
-                Issue Category
+            {/* Category Segmented Buttons */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 tracking-tight">
+                Issue Category <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {CATEGORIES.map((c) => {
                   const isSelected = category === c;
                   return (
@@ -127,10 +145,10 @@ export function NewMaintenanceModal({
                       key={c}
                       type="button"
                       onClick={() => setCategory(c)}
-                      className={`py-2 px-2.5 rounded-xl text-center transition-all font-display text-xs font-semibold border ${
+                      className={`py-2 px-2 rounded-xl text-center transition-all text-xs font-semibold border ${
                         isSelected
                           ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200/70 text-slate-700 border-slate-200/80'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                       }`}
                     >
                       {c}
@@ -140,35 +158,37 @@ export function NewMaintenanceModal({
               </div>
             </div>
 
-            {/* Urgency */}
-            <div>
-              <label className="text-xs font-bold block mb-2 font-display text-slate-700">
-                Urgency Level
+            {/* Urgency SLA Selection */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 tracking-tight">
+                Urgency & Response SLA <span className="text-rose-500 font-bold">*</span>
               </label>
-              <div className="space-y-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 {URGENCIES.map((u) => {
                   const isChosen = urgency === u.id;
                   return (
                     <div
                       key={u.id}
                       onClick={() => setUrgency(u.id)}
-                      className={`p-3 rounded-2xl cursor-pointer transition-all flex items-center justify-between border-2 ${
+                      className={`p-3 rounded-2xl cursor-pointer transition-all border flex flex-col justify-between ${
                         isChosen
-                          ? 'border-blue-600 bg-blue-50/40'
+                          ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/10 shadow-xs'
                           : 'border-slate-200 bg-white hover:border-slate-300'
                       }`}
                     >
-                      <div>
-                        <span className="font-bold block text-slate-900 font-display">{u.label}</span>
-                        <span className="text-[10px] text-slate-500">{u.desc}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <StatusPill variant={u.variant} size="sm">
+                          {u.label}
+                        </StatusPill>
+                        <div
+                          className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                            isChosen ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
+                          }`}
+                        >
+                          {isChosen && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
                       </div>
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                          isChosen ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
-                        }`}
-                      >
-                        {isChosen && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
+                      <span className="text-[10px] text-slate-500 leading-tight">{u.desc}</span>
                     </div>
                   );
                 })}
@@ -176,69 +196,55 @@ export function NewMaintenanceModal({
             </div>
 
             {/* Title */}
-            <div>
-              <label className="text-xs font-bold block mb-1.5 font-display text-slate-700">
-                Issue Summary
-              </label>
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Master bathroom tap dripping, solar inverter tripped"
-                className="form-input text-xs"
-              />
-            </div>
+            <FormInput
+              label="Issue Summary"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Master bathroom tap dripping, solar inverter tripped"
+            />
 
             {/* Description */}
-            <div>
-              <label className="text-xs font-bold block mb-1.5 font-display text-slate-700">
-                Detailed Description & Location in Unit
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 tracking-tight">
+                Detailed Description & Location in Unit <span className="text-rose-500 font-bold">*</span>
               </label>
               <textarea
                 rows={3}
                 required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe when the issue started, whether water/electricity is affected..."
-                className="form-input text-xs resize-none"
+                placeholder="Describe when the issue started, whether water/power is affected..."
+                className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none shadow-sm"
               />
             </div>
 
-            {/* Preferred Time */}
-            <div>
-              <label className="text-xs font-bold block mb-1.5 font-display text-slate-700">
-                Preferred Access Time Window
-              </label>
-              <select
-                value={preferredTime}
-                onChange={(e) => setPreferredTime(e.target.value)}
-                className="form-select text-xs"
-              >
-                <option value="Morning (9:00 AM – 12:00 PM)">Morning (9:00 AM – 12:00 PM)</option>
-                <option value="Afternoon (1:00 PM – 4:00 PM)">Afternoon (1:00 PM – 4:00 PM)</option>
-                <option value="Evening (5:00 PM – 7:00 PM)">Evening (5:00 PM – 7:00 PM)</option>
-                <option value="Weekend (Saturday)">Weekend (Saturday)</option>
-                <option value="Flexible / Anytime with advance call">Flexible / Anytime with advance call</option>
-              </select>
-            </div>
+            {/* Preferred Time Window */}
+            <FormSelect
+              label="Preferred Access Time Window"
+              leftIcon={<Clock className="w-4 h-4 text-slate-400" />}
+              options={TIME_OPTIONS}
+              value={preferredTime}
+              onChange={(e) => setPreferredTime(e.target.value)}
+            />
 
-            {/* Submit */}
-            <div className="flex items-center gap-3 pt-3">
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-secondary btn-md flex-1 font-display"
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
               </button>
-              <button
+              <ShimmerButton
                 type="submit"
-                disabled={isSubmitting}
-                className="btn-primary btn-md flex-1 font-display"
+                variant="primary"
+                size="md"
+                isLoading={isSubmitting}
               >
-                {isSubmitting ? 'Submitting…' : 'Submit Ticket'}
-              </button>
+                Submit Ticket
+              </ShimmerButton>
             </div>
           </form>
         </motion.div>
