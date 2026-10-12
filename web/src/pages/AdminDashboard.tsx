@@ -34,6 +34,8 @@ import {
   LogOut,
   Server,
   AlertTriangle,
+  LayoutDashboard,
+  TrendingUp,
 } from 'lucide-react';
 
 /* ── Types for API responses ── */
@@ -102,6 +104,62 @@ async function adminFetch<T>(path: string, accessToken: string, options?: Reques
   return json.data as T;
 }
 
+/* ── Abstract background blobs (SVG) ── */
+function AbstractBackground() {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10" aria-hidden="true">
+      {/* Large soft gradient blob top-right */}
+      <svg
+        className="absolute -top-24 -right-32 w-[600px] h-[600px] opacity-[0.08]"
+        viewBox="0 0 600 600"
+        fill="none"
+      >
+        <circle cx="300" cy="300" r="300" fill="url(#blob1)" />
+        <defs>
+          <radialGradient id="blob1" cx="0.3" cy="0.3" r="0.7">
+            <stop offset="0%" stopColor="#818cf8" />
+            <stop offset="100%" stopColor="#c4b5fd" />
+          </radialGradient>
+        </defs>
+      </svg>
+
+      {/* Bottom-left decorative shape */}
+      <svg
+        className="absolute -bottom-20 -left-20 w-[500px] h-[500px] opacity-[0.06]"
+        viewBox="0 0 500 500"
+        fill="none"
+      >
+        <ellipse cx="250" cy="250" rx="250" ry="200" fill="url(#blob2)" />
+        <defs>
+          <radialGradient id="blob2" cx="0.5" cy="0.5" r="0.6">
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#a78bfa" />
+          </radialGradient>
+        </defs>
+      </svg>
+
+      {/* Floating ring accent */}
+      <svg
+        className="absolute top-1/2 left-1/3 w-64 h-64 opacity-[0.04]"
+        viewBox="0 0 256 256"
+        fill="none"
+      >
+        <circle cx="128" cy="128" r="110" stroke="#818cf8" strokeWidth="36" />
+      </svg>
+
+      {/* Subtle grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.025]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(99,102,241,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.3) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
+    </div>
+  );
+}
+
 export function AdminDashboard() {
   const { user, accessToken, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'kyc' | 'disputes' | 'escrow'>('overview');
@@ -155,7 +213,6 @@ export function AdminDashboard() {
     if (!accessToken) return;
     try {
       await adminFetch(`/api/admin/users/${userId}/toggle-status`, accessToken, { method: 'PATCH' });
-      // Re-fetch users
       const usersData = await adminFetch<AdminUserRecord[]>('/api/admin/users', accessToken);
       setUsers(usersData);
     } catch {}
@@ -168,10 +225,8 @@ export function AdminDashboard() {
         method: 'PATCH',
         body: JSON.stringify({ decision: arbitrationDecision, notes: arbitrationNotes }),
       });
-      // Re-fetch disputes
       const disputesData = await adminFetch<AdminDisputeCase[]>('/api/admin/disputes', accessToken);
       setDisputes(disputesData);
-      // Re-fetch stats
       const statsData = await adminFetch<PlatformStats>('/api/admin/stats', accessToken);
       setStats(statsData);
       setSelectedDispute(null);
@@ -213,29 +268,46 @@ export function AdminDashboard() {
   // Pending verifications
   const pendingVerifications = verifications.filter(v => v.status === 'PENDING');
 
+  /* ── Navigation items ── */
+  const navItems = [
+    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard, count: null },
+    { id: 'users' as const, label: 'Users', icon: Users, count: users.length },
+    { id: 'kyc' as const, label: 'Verification', icon: FileCheck2, count: pendingVerifications.length },
+    { id: 'disputes' as const, label: 'Disputes', icon: Scale, count: stats?.disputes.open ?? 0 },
+    { id: 'escrow' as const, label: 'Financials', icon: DollarSign, count: null },
+  ];
+
+  /* ── Loading state ── */
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <span className="w-8 h-8 rounded-full border-2 border-purple-400/30 border-t-purple-400 animate-spin" />
-          <span className="text-xs text-slate-400 font-medium">Loading Admin Dashboard…</span>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <AbstractBackground />
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <span className="absolute inset-0 rounded-full bg-indigo-100 animate-ping" />
+            <span className="relative block w-10 h-10 rounded-full border-[3px] border-indigo-200 border-t-indigo-500 animate-spin" />
+          </div>
+          <span className="text-sm text-slate-500 font-medium tracking-wide">Loading Dashboard…</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-purple-500/30">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 text-slate-800 flex flex-col font-sans selection:bg-indigo-200/60">
+      <AbstractBackground />
+
       {/* ── Top Header ── */}
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/70 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-8 py-3 flex items-center justify-between shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex items-center gap-4">
-          <RentHubLogo variant="white" size="md" />
-          <div className="h-5 w-px bg-slate-800 hidden sm:block" />
-          <div className="hidden sm:flex items-center gap-2">
-            <StatusPill variant="purple" size="sm" pulse>
-              Admin Dashboard
-            </StatusPill>
-            <span className="text-xs text-slate-400 font-mono">Live Data</span>
+          <RentHubLogo variant="original" size="md" />
+          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              Admin Console
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono tracking-tight">Real-time</span>
           </div>
         </div>
 
@@ -243,31 +315,31 @@ export function AdminDashboard() {
           <button
             type="button"
             onClick={fetchAllData}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-medium"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 transition-all text-xs font-medium shadow-sm"
             title="Refresh Data"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden md:inline">Refresh</span>
           </button>
 
-          <div className="h-5 w-px bg-slate-800" />
+          <div className="h-5 w-px bg-slate-200" />
 
           <div className="flex items-center gap-2.5 pl-1">
-            <div className="w-8 h-8 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-200 text-xs font-bold">
-              ADM
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-md shadow-indigo-200/50">
+              {(user?.name || 'A')[0].toUpperCase()}
             </div>
             <div className="hidden lg:block text-left">
-              <span className="block text-xs font-semibold text-slate-200 truncate max-w-[130px]">
+              <span className="block text-xs font-semibold text-slate-700 truncate max-w-[130px]">
                 {user?.name || 'Platform Admin'}
               </span>
-              <span className="text-[10px] text-purple-400 font-mono">{user?.email}</span>
+              <span className="text-[10px] text-indigo-500 font-mono">{user?.email}</span>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => signOut()}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-transparent hover:border-rose-900/40 transition-colors ml-1"
+            className="p-2 rounded-xl bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-500 border border-slate-200 hover:border-rose-200 transition-all ml-1 shadow-sm"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -278,19 +350,13 @@ export function AdminDashboard() {
       {/* ── Main Body ── */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Sidebar Navigation */}
-        <aside className="w-full lg:w-64 bg-slate-900/50 border-r border-slate-800/80 p-4 space-y-6">
-          <div className="space-y-1">
-            <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-              Modules
+        <aside className="w-full lg:w-60 bg-white/60 backdrop-blur-md border-r border-slate-200/60 p-4 space-y-6 lg:min-h-[calc(100vh-57px)]">
+          <nav className="space-y-1">
+            <span className="px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Navigation
             </span>
-            <nav className="space-y-1 pt-1.5">
-              {[
-                { id: 'overview' as const, label: 'Platform Overview', icon: Activity, count: null },
-                { id: 'users' as const, label: 'User Directory', icon: Users, count: users.length },
-                { id: 'kyc' as const, label: 'Verification Desk', icon: FileCheck2, count: pendingVerifications.length },
-                { id: 'disputes' as const, label: 'Dispute Arbitration', icon: Scale, count: stats?.disputes.open ?? 0 },
-                { id: 'escrow' as const, label: 'Financials', icon: DollarSign, count: null },
-              ].map((item) => {
+            <div className="space-y-0.5 pt-2">
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 return (
@@ -298,19 +364,19 @@ export function AdminDashboard() {
                     key={item.id}
                     type="button"
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all ${
                       isActive
-                        ? 'bg-purple-600/15 text-purple-300 border border-purple-500/30 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                        ? 'bg-indigo-50 text-indigo-700 border border-indigo-100 shadow-sm shadow-indigo-100/40'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-purple-400' : 'text-slate-400'}`} />
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-500' : 'text-slate-400'}`} />
                       <span>{item.label}</span>
                     </div>
                     {item.count !== null && item.count > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                        isActive ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'
+                      <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                        isActive ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {item.count}
                       </span>
@@ -318,46 +384,46 @@ export function AdminDashboard() {
                   </button>
                 );
               })}
-            </nav>
-          </div>
+            </div>
+          </nav>
 
-          {/* Node Health Box */}
-          <div className="p-3.5 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-2.5 text-xs">
-            <div className="flex items-center justify-between text-slate-400">
-              <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                <Server className="w-3.5 h-3.5 text-emerald-400" />
-                System Status
+          {/* System Status */}
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/40 border border-slate-200/80 space-y-2.5 text-xs shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-600 flex items-center gap-1.5">
+                <Server className="w-3.5 h-3.5 text-emerald-500" />
+                System
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono">
-                {loadError ? 'Error' : '100% OK'}
+              <span className={`text-[10px] font-mono font-semibold ${loadError ? 'text-rose-500' : 'text-emerald-500'}`}>
+                {loadError ? 'Error' : 'Healthy'}
               </span>
             </div>
-            <div className="space-y-1 text-[11px] text-slate-400 font-mono">
+            <div className="space-y-1 text-[11px] text-slate-500 font-mono">
               <div className="flex justify-between">
-                <span>Database:</span>
-                <span className="text-slate-300">{loadError ? 'Error' : 'Connected'}</span>
+                <span>Database</span>
+                <span className="text-slate-600 font-semibold">{loadError ? 'Error' : 'Connected'}</span>
               </div>
               <div className="flex justify-between">
-                <span>Users Loaded:</span>
-                <span className="text-slate-300">{users.length}</span>
+                <span>Records</span>
+                <span className="text-slate-600 font-semibold">{users.length} users</span>
               </div>
               <div className="flex justify-between">
-                <span>Data Source:</span>
-                <span className="text-emerald-400">Real-time API</span>
+                <span>Source</span>
+                <span className="text-emerald-600 font-semibold">Live API</span>
               </div>
             </div>
           </div>
         </aside>
 
         {/* ── Content Area ── */}
-        <main className="flex-1 p-5 sm:p-8 bg-slate-950/60 overflow-y-auto max-h-[calc(100vh-65px)]">
+        <main className="flex-1 p-5 sm:p-8 overflow-y-auto max-h-[calc(100vh-57px)]">
           {/* Error Banner */}
           {loadError && (
-            <div className="mb-6 p-4 rounded-2xl bg-rose-950/30 border border-rose-800/50 flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 shadow-sm">
+              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
               <div>
-                <span className="text-sm font-semibold text-rose-300 block">Data Load Error</span>
-                <span className="text-xs text-rose-400">{loadError}</span>
+                <span className="text-sm font-semibold text-rose-700 block">Data Load Error</span>
+                <span className="text-xs text-rose-500">{loadError}</span>
               </div>
               <ShimmerButton size="sm" variant="primary" onClick={fetchAllData} className="ml-auto">
                 Retry
@@ -369,11 +435,11 @@ export function AdminDashboard() {
           {activeTab === 'overview' && stats && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                   Platform Overview
                 </h1>
-                <p className="text-xs text-slate-400 font-sans mt-1">
-                  Real-time data from Kathmandu Valley rental platform.
+                <p className="text-sm text-slate-500 mt-1">
+                  Real-time metrics from Kathmandu Valley rental platform.
                 </p>
               </div>
 
@@ -382,39 +448,39 @@ export function AdminDashboard() {
                 <BentoCard
                   colSpan={2}
                   gradient
-                  icon={<Users className="w-5 h-5 text-blue-400" />}
+                  icon={<Users className="w-5 h-5 text-indigo-500" />}
                   badge={<StatusPill variant="success" size="sm" pulse>Live</StatusPill>}
                   title="Platform Users"
                   description="Registered tenants, landlords, and administrators."
-                  className="bg-slate-900/90 border-slate-800 text-slate-200"
+                  className="bg-white border-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="pt-2 flex items-baseline gap-4 flex-wrap">
-                    <span className="text-3xl sm:text-4xl font-extrabold font-display text-white tracking-tight">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
                       {stats.users.total}
                     </span>
-                    <div className="flex gap-3 text-xs">
-                      <span className="text-blue-400 font-semibold">{stats.users.tenants} Tenants</span>
-                      <span className="text-emerald-400 font-semibold">{stats.users.landlords} Landlords</span>
-                      <span className="text-purple-400 font-semibold">{stats.users.admins} Admins</span>
+                    <div className="flex gap-3 text-xs font-semibold">
+                      <span className="text-blue-600">{stats.users.tenants} Tenants</span>
+                      <span className="text-emerald-600">{stats.users.landlords} Landlords</span>
+                      <span className="text-violet-600">{stats.users.admins} Admins</span>
                     </div>
                   </div>
                   <p className="text-[11px] text-slate-400 pt-1">
-                    {stats.users.active} active users &bull; {stats.users.total - stats.users.active} suspended
+                    {stats.users.active} active &bull; {stats.users.total - stats.users.active} suspended
                   </p>
                 </BentoCard>
 
                 {/* Open Disputes */}
                 <BentoCard
                   gradient
-                  icon={<Scale className="w-5 h-5 text-rose-400" />}
+                  icon={<Scale className="w-5 h-5 text-rose-500" />}
                   badge={stats.disputes.open > 0 ? <StatusPill variant="danger" size="sm">Action Needed</StatusPill> : <StatusPill variant="success" size="sm">Clear</StatusPill>}
                   title="Dispute Court"
                   description="Tenancy disputes pending resolution."
-                  className="bg-slate-900/90 border-slate-800 text-slate-200"
+                  className="bg-white border-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-shadow"
                   onClick={() => setActiveTab('disputes')}
                 >
                   <div className="pt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold font-display text-rose-400">
+                    <span className="text-3xl font-extrabold text-rose-500">
                       {stats.disputes.open}
                     </span>
                     <span className="text-xs text-slate-400">of {stats.disputes.total} total</span>
@@ -423,30 +489,30 @@ export function AdminDashboard() {
 
                 {/* Active Tenancies */}
                 <BentoCard
-                  icon={<Building className="w-5 h-5 text-blue-400" />}
+                  icon={<Building className="w-5 h-5 text-blue-500" />}
                   title="Active Tenancies"
                   description="Currently active lease agreements."
-                  className="bg-slate-900/90 border-slate-800 text-slate-200"
+                  className="bg-white border-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="pt-2">
-                    <span className="text-3xl font-extrabold font-display text-white">
+                    <span className="text-3xl font-extrabold text-slate-800">
                       {stats.tenancies.active}
                     </span>
-                    <span className="text-xs text-blue-400 ml-2 font-medium">of {stats.tenancies.total} total</span>
+                    <span className="text-xs text-blue-500 ml-2 font-medium">of {stats.tenancies.total} total</span>
                   </div>
                 </BentoCard>
 
                 {/* Verifications */}
                 <BentoCard
-                  icon={<FileCheck2 className="w-5 h-5 text-amber-400" />}
+                  icon={<FileCheck2 className="w-5 h-5 text-amber-500" />}
                   badge={pendingVerifications.length > 0 ? <StatusPill variant="warning" size="sm">{pendingVerifications.length} Pending</StatusPill> : null}
                   title="Verification Queue"
                   description="KYC and property ownership verifications."
-                  className="bg-slate-900/90 border-slate-800 text-slate-200"
+                  className="bg-white border-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-shadow"
                   onClick={() => setActiveTab('kyc')}
                 >
                   <div className="pt-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold font-display text-amber-400">
+                    <span className="text-3xl font-extrabold text-amber-500">
                       {pendingVerifications.length}
                     </span>
                     <span className="text-xs text-slate-400">awaiting review</span>
@@ -455,18 +521,18 @@ export function AdminDashboard() {
 
                 {/* Properties + Maintenance */}
                 <BentoCard
-                  icon={<Activity className="w-5 h-5 text-purple-400" />}
+                  icon={<Activity className="w-5 h-5 text-violet-500" />}
                   title="Properties & Maintenance"
                   description="Platform asset and maintenance overview."
-                  className="bg-slate-900/90 border-slate-800 text-slate-200"
+                  className="bg-white border-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="pt-2 space-y-1">
+                  <div className="pt-2 space-y-1.5">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-bold text-white">{stats.properties.total}</span>
+                      <span className="text-xl font-bold text-slate-800">{stats.properties.total}</span>
                       <span className="text-xs text-slate-400">properties</span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-bold text-orange-400">{stats.maintenance.open}</span>
+                      <span className="text-xl font-bold text-orange-500">{stats.maintenance.open}</span>
                       <span className="text-xs text-slate-400">open maintenance tickets</span>
                     </div>
                   </div>
@@ -480,15 +546,15 @@ export function AdminDashboard() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                  <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                     User Directory
                   </h1>
-                  <p className="text-xs text-slate-400 font-sans mt-0.5">
+                  <p className="text-sm text-slate-500 mt-0.5">
                     {users.length} registered users — live data from database.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200 text-xs">
                   {(['all', 'tenant', 'landlord', 'admin'] as const).map((r) => (
                     <button
                       key={r}
@@ -496,8 +562,8 @@ export function AdminDashboard() {
                       onClick={() => setSelectedRoleFilter(r)}
                       className={`px-3 py-1.5 rounded-lg capitalize font-medium transition-all ${
                         selectedRoleFilter === r
-                          ? 'bg-purple-600 text-white font-semibold shadow-sm'
-                          : 'text-slate-400 hover:text-white'
+                          ? 'bg-indigo-500 text-white font-semibold shadow-sm shadow-indigo-200'
+                          : 'text-slate-500 hover:text-slate-700 hover:bg-white'
                       }`}
                     >
                       {r}
@@ -512,13 +578,12 @@ export function AdminDashboard() {
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                   leftIcon={<Search className="w-4 h-4 text-slate-400" />}
-                  containerClassName="text-slate-900"
                 />
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-sm">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <table className="w-full text-left text-xs">
-                  <thead className="border-b border-slate-800 bg-slate-800/50 text-slate-400 font-mono text-[11px] uppercase tracking-wider">
+                  <thead className="border-b border-slate-100 bg-slate-50/80 text-slate-500 font-mono text-[11px] uppercase tracking-wider">
                     <tr>
                       <th className="px-5 py-3.5">User Details</th>
                       <th className="px-5 py-3.5">Roles</th>
@@ -527,18 +592,18 @@ export function AdminDashboard() {
                       <th className="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                  <tbody className="divide-y divide-slate-100 text-slate-600">
                     {filteredUsers.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-5 py-8 text-center text-slate-500">
+                        <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
                           No users found matching your criteria.
                         </td>
                       </tr>
                     ) : (
                       filteredUsers.map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
+                        <tr key={u.id} className="hover:bg-indigo-50/30 transition-colors">
                           <td className="px-5 py-4">
-                            <div className="font-semibold text-white">{u.name}</div>
+                            <div className="font-semibold text-slate-800">{u.name}</div>
                             <div className="text-[11px] text-slate-400 font-mono">{u.email}</div>
                           </td>
                           <td className="px-5 py-4">
@@ -548,10 +613,10 @@ export function AdminDashboard() {
                                   key={r}
                                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
                                     r === 'admin'
-                                      ? 'bg-purple-950 text-purple-300 border border-purple-800/50'
+                                      ? 'bg-violet-100 text-violet-700 border border-violet-200'
                                       : r === 'landlord'
-                                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                                      : 'bg-blue-950 text-blue-300 border border-blue-800/50'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-blue-50 text-blue-700 border border-blue-200'
                                   }`}
                                 >
                                   {r}
@@ -561,11 +626,11 @@ export function AdminDashboard() {
                           </td>
                           <td className="px-5 py-4">
                             {u.verified ? (
-                              <span className="inline-flex items-center gap-1 text-emerald-400 font-medium">
+                              <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Verified
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-slate-500">
+                              <span className="inline-flex items-center gap-1 text-slate-400">
                                 <Clock className="w-3.5 h-3.5" /> Unverified
                               </span>
                             )}
@@ -582,10 +647,10 @@ export function AdminDashboard() {
                             <button
                               type="button"
                               onClick={() => handleToggleUserStatus(u.id)}
-                              className={`px-3 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all shadow-sm ${
                                 u.status === 'active'
-                                  ? 'bg-rose-950/40 text-rose-300 border-rose-800/50 hover:bg-rose-900/50'
-                                  : 'bg-emerald-950/40 text-emerald-300 border-emerald-800/50 hover:bg-emerald-900/50'
+                                  ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
+                                  : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100'
                               }`}
                             >
                               {u.status === 'active' ? 'Suspend' : 'Activate'}
@@ -604,17 +669,17 @@ export function AdminDashboard() {
           {activeTab === 'kyc' && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                   Verification Desk
                 </h1>
-                <p className="text-xs text-slate-400 font-sans mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   {verifications.length} total verifications — {pendingVerifications.length} pending review.
                 </p>
               </div>
 
               {verifications.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl border border-slate-800 bg-slate-900/90">
-                  <FileCheck2 className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <div className="p-8 text-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <FileCheck2 className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-sm text-slate-400">No verifications submitted yet.</p>
                 </div>
               ) : (
@@ -622,14 +687,14 @@ export function AdminDashboard() {
                   {verifications.map((item) => (
                     <div
                       key={item.id}
-                      className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-4 shadow-sm"
+                      className="p-5 rounded-2xl border border-slate-200 bg-white space-y-4 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <span className="text-[10px] font-mono text-purple-400 font-bold uppercase">
+                          <span className="text-[10px] font-mono text-indigo-500 font-bold uppercase tracking-wide">
                             {item.badge_name || item.badge_code || 'Verification'}
                           </span>
-                          <h3 className="text-base font-bold text-white">{item.user_name || 'Unknown User'}</h3>
+                          <h3 className="text-base font-bold text-slate-800">{item.user_name || 'Unknown User'}</h3>
                           <p className="text-xs text-slate-400">{item.user_email}</p>
                         </div>
                         <StatusPill
@@ -646,29 +711,29 @@ export function AdminDashboard() {
                         </StatusPill>
                       </div>
 
-                      <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1.5 text-xs font-mono">
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs font-mono">
                         <div className="flex justify-between">
                           <span className="text-slate-400">ID:</span>
-                          <span className="text-slate-200 font-bold truncate max-w-[200px]">{item.id}</span>
+                          <span className="text-slate-600 font-bold truncate max-w-[200px]">{item.id}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-400">Submitted:</span>
-                          <span className="text-slate-300">{new Date(item.created_at).toLocaleDateString()}</span>
+                          <span className="text-slate-600">{new Date(item.created_at).toLocaleDateString()}</span>
                         </div>
                         {item.document_url && (
                           <div className="flex justify-between">
                             <span className="text-slate-400">Document:</span>
-                            <a href={item.document_url} className="text-blue-400 hover:underline truncate max-w-[200px]" target="_blank" rel="noreferrer">View</a>
+                            <a href={item.document_url} className="text-indigo-500 hover:underline truncate max-w-[200px]" target="_blank" rel="noreferrer">View</a>
                           </div>
                         )}
                       </div>
 
                       {item.status === 'PENDING' && (
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                           <button
                             type="button"
                             onClick={() => handleRejectVerification(item.id)}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-950/40 text-rose-300 border border-rose-800/50 hover:bg-rose-900/50 transition-colors"
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors shadow-sm"
                           >
                             Reject
                           </button>
@@ -692,17 +757,17 @@ export function AdminDashboard() {
           {activeTab === 'disputes' && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                   Dispute Arbitration
                 </h1>
-                <p className="text-xs text-slate-400 font-sans mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   {disputes.length} total disputes — {disputes.filter(d => d.status !== 'RESOLVED_MUTUAL' && d.status !== 'RESOLVED_ARBITRATED').length} active.
                 </p>
               </div>
 
               {disputes.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl border border-slate-800 bg-slate-900/90">
-                  <Scale className="w-10 h-10 text-slate-600 mx-auto mb-3" />
+                <div className="p-8 text-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <Scale className="w-10 h-10 text-slate-300 mx-auto mb-3" />
                   <p className="text-sm text-slate-400">No disputes filed yet.</p>
                 </div>
               ) : (
@@ -710,19 +775,19 @@ export function AdminDashboard() {
                   {disputes.map((d) => (
                     <div
                       key={d.id}
-                      className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-3.5 shadow-sm"
+                      className="p-5 rounded-2xl border border-slate-200 bg-white space-y-3.5 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                          <span className="text-[10px] font-mono text-rose-400 font-bold uppercase">
+                          <span className="text-[10px] font-mono text-rose-500 font-bold uppercase tracking-wide">
                             {d.category} &bull; {d.property_title}
                           </span>
-                          <h3 className="text-sm font-bold text-white mt-0.5">
+                          <h3 className="text-sm font-bold text-slate-800 mt-0.5">
                             {d.tenant_name} (Tenant) <span className="text-slate-400 font-normal">vs</span> {d.landlord_name} (Landlord)
                           </h3>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-mono font-bold text-emerald-400">
+                          <span className="text-sm font-mono font-bold text-emerald-600">
                             NPR {Number(d.claim_amount).toLocaleString()}
                           </span>
                           <StatusPill
@@ -734,13 +799,13 @@ export function AdminDashboard() {
                         </div>
                       </div>
 
-                      <p className="text-xs text-slate-300 bg-slate-950/50 p-3 rounded-xl border border-slate-800 leading-relaxed font-sans">
-                        <span className="font-semibold text-slate-400 block mb-0.5">Grounds:</span>
+                      <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                        <span className="font-semibold text-slate-500 block mb-0.5">Grounds:</span>
                         {d.grounds}
                       </p>
 
                       {d.resolution_summary && (
-                        <p className="text-xs text-emerald-300 bg-emerald-950/30 p-3 rounded-xl border border-emerald-800/40 leading-relaxed font-sans">
+                        <p className="text-xs text-emerald-700 bg-emerald-50 p-3 rounded-xl border border-emerald-200 leading-relaxed">
                           <span className="font-semibold block mb-0.5">Resolution:</span>
                           {d.resolution_summary}
                         </p>
@@ -769,49 +834,61 @@ export function AdminDashboard() {
           {activeTab === 'escrow' && stats && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-2xl font-bold font-display text-white tracking-tight">
+                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                   Financial Overview
                 </h1>
-                <p className="text-xs text-slate-400 font-sans mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   Real-time payment data from the platform.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-2">
-                  <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
-                    <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                     Rent Collected
                   </span>
-                  <div className="text-2xl font-bold text-emerald-400 font-display">
+                  <div className="text-2xl font-bold text-emerald-600">
                     NPR {stats.payments.totalPaid.toLocaleString()}
                   </div>
                   <p className="text-[11px] text-slate-400">Successfully processed payments</p>
                 </div>
-                <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-2">
-                  <span className="text-xs text-slate-400 font-medium">Pending Payments</span>
-                  <div className="text-2xl font-bold text-amber-400 font-display">
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    Pending Payments
+                  </span>
+                  <div className="text-2xl font-bold text-amber-600">
                     NPR {stats.payments.totalPending.toLocaleString()}
                   </div>
                   <p className="text-[11px] text-slate-400">Awaiting tenant action</p>
                 </div>
-                <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-2">
-                  <span className="text-xs text-slate-400 font-medium">Overdue Amount</span>
-                  <div className="text-2xl font-bold text-rose-400 font-display">
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                    Overdue Amount
+                  </span>
+                  <div className="text-2xl font-bold text-rose-500">
                     NPR {stats.payments.totalOverdue.toLocaleString()}
                   </div>
-                  <p className="text-[11px] text-slate-400">Past due date — requires follow-up</p>
+                  <p className="text-[11px] text-slate-400">Past due — requires follow-up</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-2">
-                  <span className="text-xs text-slate-400 font-medium">Properties Registered</span>
-                  <div className="text-2xl font-bold text-blue-400 font-display">{stats.properties.total}</div>
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-indigo-500" />
+                    Properties Registered
+                  </span>
+                  <div className="text-2xl font-bold text-indigo-600">{stats.properties.total}</div>
                 </div>
-                <div className="p-5 rounded-2xl border border-slate-800 bg-slate-900/90 space-y-2">
-                  <span className="text-xs text-slate-400 font-medium">Maintenance Tickets</span>
-                  <div className="text-2xl font-bold text-orange-400 font-display">
+                <div className="p-5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-sm hover:shadow-md transition-shadow">
+                  <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-orange-500" />
+                    Maintenance Tickets
+                  </span>
+                  <div className="text-2xl font-bold text-orange-500">
                     {stats.maintenance.open} <span className="text-sm text-slate-400 font-normal">open</span> / {stats.maintenance.total} <span className="text-sm text-slate-400 font-normal">total</span>
                   </div>
                 </div>
@@ -832,7 +909,7 @@ export function AdminDashboard() {
             <button
               type="button"
               onClick={() => setSelectedDispute(null)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
             >
               Cancel
             </button>
@@ -843,7 +920,7 @@ export function AdminDashboard() {
         }
       >
         <div className="space-y-4 text-xs text-slate-800">
-          <div className="p-3 rounded-xl bg-slate-100 space-y-1">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
             <span className="font-semibold text-slate-700">Claim Summary:</span>
             <p className="text-slate-600">{selectedDispute?.grounds}</p>
             <div className="font-bold text-slate-900 pt-1">
@@ -852,7 +929,7 @@ export function AdminDashboard() {
           </div>
 
           <div className="space-y-2">
-            <label className="font-semibold text-slate-800 block">
+            <label className="font-semibold text-slate-700 block">
               Arbitration Verdict
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -867,7 +944,7 @@ export function AdminDashboard() {
                   onClick={() => setArbitrationDecision(opt.id)}
                   className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition-all ${
                     arbitrationDecision === opt.id
-                      ? 'bg-purple-50 text-purple-700 border-purple-300 ring-2 ring-purple-500/20'
+                      ? 'bg-indigo-50 text-indigo-700 border-indigo-300 ring-2 ring-indigo-500/20'
                       : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                   }`}
                 >
@@ -878,12 +955,12 @@ export function AdminDashboard() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-slate-800 block">
+            <label className="font-semibold text-slate-700 block">
               Notes & Rationale
             </label>
             <textarea
               rows={3}
-              className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
               placeholder="Cite evidence or inspection reports..."
               value={arbitrationNotes}
               onChange={(e) => setArbitrationNotes(e.target.value)}
