@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { LandlordProperty, LandlordPhoto } from '@/types/landlord';
 import { landlordService } from '../landlord.service';
+import { ShimmerButton, FormInput, StatusPill } from '@/components/ui';
 
 interface ManagePhotosModalProps {
   property: LandlordProperty;
@@ -187,13 +188,14 @@ export function ManagePhotosModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
+          <ShimmerButton
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="px-2"
           >
             <X className="w-5 h-5" />
-          </button>
+          </ShimmerButton>
         </div>
 
         {/* Status Alerts */}
@@ -258,18 +260,19 @@ export function ManagePhotosModal({
               <p className="text-[11px] text-slate-500 mt-1">
                 Supports JPG, PNG, WEBP, and GIF up to 10MB each. Select multiple files at once.
               </p>
-              <button
-                type="button"
+              <ShimmerButton
+                variant="primary"
+                size="sm"
                 disabled={isUploading}
-                className="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors inline-flex items-center gap-1.5"
+                leftIcon={<Plus className="w-3.5 h-3.5" />}
+                className="mt-3"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Browse Files</span>
-              </button>
+                Browse Files
+              </ShimmerButton>
             </div>
           </div>
 
@@ -279,28 +282,30 @@ export function ManagePhotosModal({
               <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
               <span>Or attach by Image URL</span>
             </div>
-            <form onSubmit={handleAddUrl} className="flex flex-col sm:flex-row gap-2">
-              <input
+            <form onSubmit={handleAddUrl} className="flex flex-col sm:flex-row sm:items-end gap-2">
+              <FormInput
                 type="url"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
                 placeholder="https://images.unsplash.com/photo-..."
-                className="flex-1 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                containerClassName="flex-1"
               />
-              <input
+              <FormInput
                 type="text"
                 value={captionInput}
                 onChange={(e) => setCaptionInput(e.target.value)}
                 placeholder="Caption (optional)"
-                className="sm:w-48 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                containerClassName="sm:w-48"
               />
-              <button
+              <ShimmerButton
                 type="submit"
+                variant="secondary"
+                size="md"
                 disabled={isUploading || !urlInput.trim()}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50 shrink-0"
+                className="shrink-0"
               >
                 Add URL
-              </button>
+              </ShimmerButton>
             </form>
           </div>
 
@@ -355,36 +360,42 @@ export function ManagePhotosModal({
 
                           {/* Cover Badge */}
                           {ph.isCover && (
-                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold shadow-xs flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-white" />
-                              <span>Cover Photo</span>
+                            <div className="absolute top-2 left-2">
+                              <StatusPill
+                                variant="success"
+                                size="sm"
+                                icon={<Star className="w-3 h-3 fill-current" />}
+                              >
+                                Cover Photo
+                              </StatusPill>
                             </div>
                           )}
 
                           {/* Overlay Controls */}
                           <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
                             {!ph.isCover && (
-                              <button
-                                type="button"
+                              <ShimmerButton
+                                variant="outline"
+                                size="sm"
                                 disabled={isLoading}
                                 onClick={() => handleSetCover(ph.id)}
-                                className="px-2.5 py-1.5 bg-white/95 hover:bg-white text-slate-800 rounded-xl text-[11px] font-bold shadow-md transition-all flex items-center gap-1"
                                 title="Set as primary cover"
+                                leftIcon={<Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
                               >
-                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                                <span>Make Cover</span>
-                              </button>
+                                Make Cover
+                              </ShimmerButton>
                             )}
 
-                            <button
-                              type="button"
+                            <ShimmerButton
+                              variant="danger"
+                              size="sm"
                               disabled={isLoading}
                               onClick={() => handleDeletePhoto(ph.id)}
-                              className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-md transition-colors"
                               title="Delete photo"
+                              className="px-2"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </ShimmerButton>
                           </div>
 
                           {/* Loading indicator for this photo */}
@@ -417,13 +428,13 @@ export function ManagePhotosModal({
           <span className="text-xs text-slate-500">
             {photos.length} total photos • {photos.filter((p) => p.isCover).length} cover selected
           </span>
-          <button
-            type="button"
+          <ShimmerButton
+            variant="secondary"
+            size="md"
             onClick={onClose}
-            className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
           >
             Done
-          </button>
+          </ShimmerButton>
         </div>
       </motion.div>
     </div>

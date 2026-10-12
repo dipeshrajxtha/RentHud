@@ -10,10 +10,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, FileText, CheckCircle2, ShieldCheck, Printer, PenTool, AlertTriangle } from 'lucide-react';
+import { X, FileText, ShieldCheck, Printer, PenTool, AlertTriangle } from 'lucide-react';
 import type { LeaseAgreement } from '@/types/tenant';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
+import { ShimmerButton, StatusPill } from '@/components/ui';
 
 interface LeaseAgreementModalProps {
   lease: LeaseAgreement | null;
@@ -221,14 +222,11 @@ export function LeaseAgreementModal({
 
                   <div className="mt-4 pt-3 border-t border-slate-200">
                     {isTenantSigned ? (
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 font-display">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Signed {new Date(lease.tenantSignedAt!).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1.5">
+                        <StatusPill variant="success" size="sm">Signed {new Date(lease.tenantSignedAt!).toLocaleDateString()}</StatusPill>
                       </div>
                     ) : (
-                      <span className="text-xs font-semibold text-amber-600">
-                        Signature pending
-                      </span>
+                      <StatusPill variant="warning" size="sm">Signature pending</StatusPill>
                     )}
                   </div>
                 </div>
@@ -244,14 +242,11 @@ export function LeaseAgreementModal({
 
                   <div className="mt-4 pt-3 border-t border-slate-200">
                     {lease.landlordSignedAt ? (
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 font-display">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Signed {new Date(lease.landlordSignedAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-1.5">
+                        <StatusPill variant="success" size="sm">Signed {new Date(lease.landlordSignedAt).toLocaleDateString()}</StatusPill>
                       </div>
                     ) : (
-                      <span className="text-xs font-semibold text-amber-600">
-                        Signature pending
-                      </span>
+                      <StatusPill variant="warning" size="sm">Signature pending</StatusPill>
                     )}
                   </div>
                 </div>
@@ -277,7 +272,7 @@ export function LeaseAgreementModal({
           </div>
 
           {/* Footer Signature CTA */}
-          <div className="p-4 sm:p-5 flex items-center justify-between bg-slate-50 border-t border-slate-200/80">
+          <div className="p-4 sm:p-5 flex items-center justify-between bg-slate-50/70 border-t border-slate-200/80">
             <span className="text-xs text-slate-500">
               {isTenantSigned
                 ? 'You have signed this agreement'
@@ -290,21 +285,21 @@ export function LeaseAgreementModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-secondary btn-sm font-display"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Close
               </button>
 
               {canTenantSign && (
-                <button
-                  type="button"
-                  disabled={isSigning}
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
+                  isLoading={isSigning}
                   onClick={handleSign}
-                  className="btn-primary btn-sm flex items-center gap-2 font-display"
+                  leftIcon={<PenTool className="w-4 h-4" />}
                 >
-                  <PenTool className="w-4 h-4" />
-                  <span>{isSigning ? 'Signing…' : 'Sign Electronically'}</span>
-                </button>
+                  Sign Electronically
+                </ShimmerButton>
               )}
             </div>
           </div>

@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Plus,
 } from 'lucide-react';
+import { ShimmerButton, StatusPill, FilterTabs } from '@/components/ui';
 import type { MaintenanceRequest, LeaseAgreement } from '@/types/tenant';
 
 interface MaintenanceViewProps {
@@ -48,37 +49,37 @@ export function MaintenanceView({
           </p>
         </div>
 
-        <button
-          type="button"
+        <ShimmerButton
+          variant="primary"
+          size="md"
           disabled={!lease}
           onClick={onOpenNewTicketModal}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs transition-colors self-start sm:self-center"
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="self-start sm:self-center"
         >
-          <Plus className="w-4 h-4" />
-          <span>New Maintenance Request</span>
-        </button>
+          New Maintenance Request
+        </ShimmerButton>
       </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 p-1 rounded-xl text-xs font-medium bg-slate-100 border border-slate-200/80">
-          {(['ALL', 'OPEN', 'RESOLVED'] as const).map((tab) => {
-            const isSelected = statusFilter === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-3.5 py-1.5 rounded-lg transition-all ${
-                  isSelected
-                    ? 'bg-white text-blue-700 font-semibold shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {tab === 'ALL' ? 'All Tickets' : tab === 'OPEN' ? 'In Progress / Open' : 'Resolved'}
-              </button>
-            );
-          })}
-        </div>
+        <FilterTabs
+          tabs={[
+            { id: 'ALL', label: 'All Tickets', count: tickets.length },
+            {
+              id: 'OPEN',
+              label: 'In Progress / Open',
+              count: tickets.filter((t) => t.status !== 'RESOLVED').length,
+            },
+            {
+              id: 'RESOLVED',
+              label: 'Resolved',
+              count: tickets.filter((t) => t.status === 'RESOLVED').length,
+            },
+          ]}
+          activeId={statusFilter}
+          onChange={(id) => setStatusFilter(id as 'ALL' | 'OPEN' | 'RESOLVED')}
+        />
 
         <span className="text-xs text-slate-500 font-medium">
           {filtered.length} tickets
@@ -114,20 +115,21 @@ export function MaintenanceView({
                   <div>
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className="font-mono text-xs text-blue-600 font-semibold">#{item.id}</span>
-                      <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200/60">
+                      <StatusPill variant="neutral" size="sm">
                         {item.category}
-                      </span>
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      </StatusPill>
+                      <StatusPill
+                        size="sm"
+                        variant={
                           item.urgency === 'Emergency'
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'danger'
                             : item.urgency === 'High'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-blue-50 text-blue-700 border border-blue-200'
-                        }`}
+                            ? 'warning'
+                            : 'info'
+                        }
                       >
                         {item.urgency} Urgency
-                      </span>
+                      </StatusPill>
                     </div>
 
                     <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
@@ -137,22 +139,20 @@ export function MaintenanceView({
                   </div>
 
                   <div className="shrink-0">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                        isResolved
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : item.status === 'IN_PROGRESS'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}
+                    <StatusPill
+                      variant={
+                        isResolved ? 'success' : item.status === 'IN_PROGRESS' ? 'info' : 'warning'
+                      }
+                      icon={
+                        isResolved ? (
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        ) : (
+                          <Clock className="w-3.5 h-3.5" />
+                        )
+                      }
                     >
-                      {isResolved ? (
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      ) : (
-                        <Clock className="w-3.5 h-3.5" />
-                      )}
-                      <span>{item.status.replace('_', ' ')}</span>
-                    </span>
+                      {item.status.replace('_', ' ')}
+                    </StatusPill>
                   </div>
                 </div>
 

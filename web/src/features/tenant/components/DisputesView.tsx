@@ -10,6 +10,7 @@
 import { motion } from 'motion/react';
 import { Plus, CheckCircle2, Clock, Scale } from 'lucide-react';
 import type { TenancyDispute, LeaseAgreement } from '@/types/tenant';
+import { ShimmerButton } from '@/components/ui';
 
 interface DisputesViewProps {
   disputes: TenancyDispute[];
@@ -33,15 +34,16 @@ export function DisputesView({
           </p>
         </div>
 
-        <button
-          type="button"
+        <ShimmerButton
+          variant="primary"
+          size="md"
           disabled={!lease}
           onClick={onOpenNewDisputeModal}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-xs transition-colors self-start sm:self-center"
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="self-start sm:self-center"
         >
-          <Plus className="w-4 h-4" />
-          <span>File Tenancy Dispute</span>
-        </button>
+          File Tenancy Dispute
+        </ShimmerButton>
       </div>
 
       {/* Disputes List */}

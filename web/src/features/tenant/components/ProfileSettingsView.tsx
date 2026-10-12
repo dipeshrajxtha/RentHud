@@ -15,9 +15,12 @@ import {
   Check,
   Save,
   LogOut,
+  User,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
+import { FormInput, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface ProfileSettingsViewProps {
   onRetakeOnboarding: () => void;
@@ -71,51 +74,41 @@ export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewP
           )}
           <div>
             <h3 className="text-base font-bold text-slate-900">{user?.name}</h3>
-            <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Google OAuth Verified
+            <span className="mt-1">
+              <StatusPill variant="success" size="sm">Google OAuth Verified</StatusPill>
             </span>
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4 text-xs">
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1.5">
-              Full Legal Name
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all text-xs"
-            />
-          </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FormInput
+            label="Full Legal Name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            leftIcon={<User className="w-4 h-4 text-slate-400" />}
+          />
 
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1.5">
-              Phone Number (Nepal Mobile)
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+977-98XXXXXXXX"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all text-xs"
-            />
-          </div>
+          <FormInput
+            label="Phone Number (Nepal Mobile)"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+977-98XXXXXXXX"
+            leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
+          />
 
           <div className="sm:col-span-2">
-            <label className="font-semibold text-slate-700 block mb-1.5">
-              Primary Email (Linked Account)
-            </label>
-            <div className="px-3.5 py-2.5 rounded-xl flex items-center gap-2 text-xs bg-slate-50 border border-slate-200 text-slate-600">
-              <Mail className="w-3.5 h-3.5 text-blue-600" />
-              <span>{user?.email ?? 'verified-user@gmail.com'}</span>
-            </div>
+            <FormInput
+              label="Primary Email (Linked Account)"
+              value={user?.email ?? 'verified-user@gmail.com'}
+              disabled
+              leftIcon={<Mail className="w-4 h-4 text-blue-600" />}
+            />
           </div>
         </div>
 
-        <div className="pt-2 flex items-center justify-between">
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
           {saveSuccess ? (
             <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
               <Check className="w-4 h-4 text-emerald-600" /> Changes saved successfully
@@ -124,14 +117,15 @@ export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewP
             <span />
           )}
 
-          <button
+          <ShimmerButton
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+            variant="primary"
+            size="md"
+            isLoading={isSaving}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
           >
-            <Save className="w-3.5 h-3.5" />
-            <span>{isSaving ? 'Saving…' : 'Save Profile'}</span>
-          </button>
+            Save Profile
+          </ShimmerButton>
         </div>
       </form>
 
@@ -193,22 +187,22 @@ export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewP
               Authorized for Kathmandu Valley property discovery, digital applications, and legal electronic leases.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 shrink-0">
-            <Check className="w-3.5 h-3.5" /> Verified Tenant Account
+          <span>
+            <StatusPill variant="info" size="sm">Verified Tenant Account</StatusPill>
           </span>
         </div>
       </div>
 
       {/* Sign Out */}
       <div className="pt-2 flex justify-end">
-        <button
-          type="button"
+        <ShimmerButton
+          variant="danger"
+          size="md"
           onClick={() => signOut()}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+          leftIcon={<LogOut className="w-4 h-4" />}
         >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out of RentHub</span>
-        </button>
+          Sign Out of RentHub
+        </ShimmerButton>
       </div>
     </div>
   );

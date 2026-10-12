@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Check, Camera } from 'lucide-react';
+import { X, Check, Camera, Building2, MapPin } from 'lucide-react';
 import type { LandlordProperty, UpdatePropertyDto } from '@/types/landlord';
+import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface EditPropertyModalProps {
   property: LandlordProperty;
@@ -54,17 +55,25 @@ export function EditPropertyModal({
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
       >
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Edit Property Details</h2>
-            <p className="text-xs text-slate-500">Update building specifications and address</p>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-sm">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">Edit Property</h2>
+                <StatusPill variant="info" size="sm">Editing</StatusPill>
+              </div>
+              <p className="text-xs text-slate-500">Update building specifications and address</p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -75,113 +84,98 @@ export function EditPropertyModal({
             </div>
           )}
 
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1">Building Name *</label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
-          </div>
+          <FormInput
+            label="Building Name"
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            leftIcon={<Building2 className="w-4 h-4 text-slate-400" />}
+          />
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">City *</label>
-              <select
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              >
-                <option value="Kathmandu">Kathmandu</option>
-                <option value="Lalitpur">Lalitpur</option>
-                <option value="Bhaktapur">Bhaktapur</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="font-semibold text-slate-700 block mb-1">Total Floors</label>
-              <input
-                type="number"
-                min="1"
-                value={totalFloors}
-                onChange={(e) => setTotalFloors(parseInt(e.target.value) || 1)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1">Address *</label>
-            <input
-              type="text"
+            <FormSelect
+              label="City"
               required
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              options={[
+                { value: 'Kathmandu', label: 'Kathmandu' },
+                { value: 'Lalitpur', label: 'Lalitpur' },
+                { value: 'Bhaktapur', label: 'Bhaktapur' },
+              ]}
+            />
+
+            <FormInput
+              label="Total Floors"
+              type="number"
+              min={1}
+              value={totalFloors}
+              onChange={(e) => setTotalFloors(parseInt(e.target.value) || 1)}
             />
           </div>
 
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1">Postal Code</label>
-            <input
-              type="text"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              placeholder="e.g. 44600"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
-          </div>
+          <FormInput
+            label="Address"
+            required
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            leftIcon={<MapPin className="w-4 h-4 text-slate-400" />}
+          />
 
-          <div>
-            <label className="font-semibold text-slate-700 block mb-1">Description</label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
-          </div>
+          <FormInput
+            label="Postal Code"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            placeholder="e.g. 44600"
+          />
+
+          <FormTextarea
+            label="Description"
+            rows={3}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxChars={500}
+          />
 
           {onOpenManagePhotos && (
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
               <div>
-                <span className="font-semibold text-slate-700 block">Property Photos</span>
+                <span className="font-semibold text-slate-700 block text-xs">Property Photos</span>
                 <span className="text-[11px] text-slate-400">
                   {property.photos?.length || 0} photo(s) currently attached
                 </span>
               </div>
-              <button
-                type="button"
+              <ShimmerButton
+                size="sm"
+                variant="secondary"
                 onClick={() => {
                   onClose();
                   onOpenManagePhotos(property);
                 }}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-xl font-semibold flex items-center gap-1.5 text-xs transition-colors"
+                leftIcon={<Camera className="w-3.5 h-3.5" />}
               >
-                <Camera className="w-3.5 h-3.5" />
-                <span>Manage Photos</span>
-              </button>
+                Manage Photos
+              </ShimmerButton>
             </div>
           )}
 
-          <div className="pt-2 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-semibold"
+              className="px-4 py-2 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-semibold transition-colors"
             >
               Cancel
             </button>
-            <button
+            <ShimmerButton
               type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-xs transition-colors flex items-center gap-1.5"
+              variant="primary"
+              size="md"
+              isLoading={isSubmitting}
+              leftIcon={<Check className="w-4 h-4" />}
             >
-              <Check className="w-4 h-4" />
-              <span>{isSubmitting ? 'Saving…' : 'Save Changes'}</span>
-            </button>
+              Save Changes
+            </ShimmerButton>
           </div>
         </form>
       </motion.div>

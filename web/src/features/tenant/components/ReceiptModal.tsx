@@ -6,6 +6,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CheckCircle2, Printer } from 'lucide-react';
+import { ShimmerButton, StatusPill } from '@/components/ui';
 import type { PaymentRecord, LeaseAgreement } from '@/types/tenant';
 import { RentHubLogo } from '@/components/common/RentHubLogo';
 
@@ -38,22 +39,24 @@ export function ReceiptModal({ payment, lease, onClose }: ReceiptModalProps) {
               Official Electronic Rent Receipt
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <ShimmerButton
+                variant="ghost"
+                size="sm"
                 onClick={handlePrint}
-                className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
                 title="Print Receipt"
+                className="px-2"
               >
                 <Printer className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
+              </ShimmerButton>
+              <ShimmerButton
+                variant="ghost"
+                size="sm"
                 onClick={onClose}
-                className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
                 aria-label="Close"
+                className="px-2"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </ShimmerButton>
             </div>
           </div>
 
@@ -78,7 +81,9 @@ export function ReceiptModal({ payment, lease, onClose }: ReceiptModalProps) {
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span className="font-bold text-xs font-display">Payment Verified & Settled</span>
               </div>
-              <span className="font-mono text-[10px] font-bold text-emerald-700">STATUS: PAID</span>
+              <StatusPill variant="success" size="sm">
+                STATUS: PAID
+              </StatusPill>
             </div>
 
             {/* Billing Details */}

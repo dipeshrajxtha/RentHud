@@ -14,7 +14,7 @@ import { X, Scale, ShieldCheck, DollarSign } from 'lucide-react';
 import type { LeaseAgreement, TenancyDispute } from '@/types/tenant';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
-import { FormInput, FormSelect, ShimmerButton, StatusPill } from '@/components/ui';
+import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface NewDisputeModalProps {
   lease: LeaseAgreement | null;
@@ -150,19 +150,14 @@ export function NewDisputeModal({
             />
 
             {/* Description */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700 tracking-tight">
-                Statement of Facts & Evidence Summary <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <textarea
-                rows={4}
-                required
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="State the facts clearly, citing lease clauses, dates, communication attempts, and requested remedy..."
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none shadow-sm"
-              />
-            </div>
+            <FormTextarea
+              label="Statement of Facts & Evidence Summary"
+              required
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="State the facts clearly, citing lease clauses, dates, communication attempts, and requested remedy..."
+            />
 
             {/* Platform Mediation Notice */}
             <div className="p-3.5 rounded-2xl space-y-1 text-[11px] bg-blue-50/70 border border-blue-200 text-blue-900">
@@ -177,13 +172,14 @@ export function NewDisputeModal({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
+              <ShimmerButton
                 type="button"
+                variant="outline"
+                size="md"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
-              </button>
+              </ShimmerButton>
               <ShimmerButton
                 type="submit"
                 variant="danger"

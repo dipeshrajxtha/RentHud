@@ -17,6 +17,7 @@ import {
   StatusPill,
   ShimmerButton,
   FormInput,
+  FormTextarea,
   ModernModal,
 } from '@/components/ui';
 import {
@@ -29,7 +30,6 @@ import {
   Search,
   CheckCircle2,
   Clock,
-  ArrowUpRight,
   RefreshCw,
   LogOut,
   Server,
@@ -906,13 +906,9 @@ export function AdminDashboard() {
         subtitle={`${selectedDispute?.tenant_name} vs ${selectedDispute?.landlord_name} — ${selectedDispute?.property_title}`}
         footer={
           <>
-            <button
-              type="button"
-              onClick={() => setSelectedDispute(null)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
-            >
+            <ShimmerButton size="md" variant="outline" onClick={() => setSelectedDispute(null)}>
               Cancel
-            </button>
+            </ShimmerButton>
             <ShimmerButton size="md" variant="primary" onClick={handleResolveDispute}>
               Execute Arbitration
             </ShimmerButton>
@@ -954,18 +950,13 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="font-semibold text-slate-700 block">
-              Notes & Rationale
-            </label>
-            <textarea
-              rows={3}
-              className="w-full rounded-xl border border-slate-200 p-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
-              placeholder="Cite evidence or inspection reports..."
-              value={arbitrationNotes}
-              onChange={(e) => setArbitrationNotes(e.target.value)}
-            />
-          </div>
+          <FormTextarea
+            label="Notes & Rationale"
+            rows={3}
+            placeholder="Cite evidence or inspection reports..."
+            value={arbitrationNotes}
+            onChange={(e) => setArbitrationNotes(e.target.value)}
+          />
         </div>
       </ModernModal>
     </div>

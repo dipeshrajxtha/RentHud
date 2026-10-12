@@ -14,9 +14,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock, CheckCircle2, XCircle, AlertTriangle,
   User, Calendar, DollarSign, Pen, ChevronDown, ChevronUp,
-  ShieldAlert, Building2,
+  ShieldAlert, Building2, X,
 } from 'lucide-react';
 import type { LandlordLease, TenancyStatus } from '@/types/landlord';
+import {
+  ShimmerButton,
+  StatusPill,
+  FilterTabs,
+  FormSelect,
+  FormTextarea,
+} from '@/components/ui';
+import type { StatusPillVariant } from '@/components/ui';
 
 type LeaseFilter = 'ALL' | 'pending_signature' | 'active' | 'completed' | 'terminated_early';
 
@@ -29,15 +37,15 @@ interface LandlordLeasesViewProps {
 
 const STATUS_CONFIG: Record<
   TenancyStatus,
-  { label: string; badgeClass: string; icon: React.ElementType }
+  { label: string; variant: StatusPillVariant; icon: React.ElementType }
 > = {
-  rental_requested: { label: 'Requested', badgeClass: 'badge-info', icon: Clock },
-  application_rejected: { label: 'Rejected', badgeClass: 'badge-neutral', icon: XCircle },
-  application_cancelled: { label: 'Cancelled', badgeClass: 'badge-neutral', icon: XCircle },
-  pending_signature: { label: 'Awaiting Signature', badgeClass: 'badge-warning', icon: Pen },
-  active: { label: 'Active Tenancy', badgeClass: 'badge-success', icon: CheckCircle2 },
-  completed: { label: 'Completed', badgeClass: 'badge-neutral', icon: CheckCircle2 },
-  terminated_early: { label: 'Terminated Early', badgeClass: 'badge-error', icon: XCircle },
+  rental_requested: { label: 'Requested', variant: 'info', icon: Clock },
+  application_rejected: { label: 'Rejected', variant: 'neutral', icon: XCircle },
+  application_cancelled: { label: 'Cancelled', variant: 'neutral', icon: XCircle },
+  pending_signature: { label: 'Awaiting Signature', variant: 'warning', icon: Pen },
+  active: { label: 'Active Tenancy', variant: 'success', icon: CheckCircle2 },
+  completed: { label: 'Completed', variant: 'neutral', icon: CheckCircle2 },
+  terminated_early: { label: 'Terminated Early', variant: 'danger', icon: XCircle },
 };
 
 const LEASE_AGREEMENT_TEXT = `
@@ -152,31 +160,17 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 flex-wrap pb-1">
-        {filterOptions.map((f) => {
-          const count = f.key === 'ALL' ? leases.length : leases.filter((l) => l.status === f.key).length;
-          const isActive = filter === f.key;
-          return (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer font-display border ${
-                isActive
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <span>{f.label}</span>
-              {count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                }`}>
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      <div className="pb-1">
+        <FilterTabs
+          tabs={filterOptions.map((f) => ({
+            id: f.key,
+            label: f.label,
+            count:
+              f.key === 'ALL' ? leases.length : leases.filter((l) => l.status === f.key).length,
+          }))}
+          activeId={filter}
+          onChange={(id) => setFilter(id as LeaseFilter)}
+        />
       </div>
 
       {/* Leases List */}
@@ -193,7 +187,7 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
           {filtered.map((lease) => {
             const cfg = STATUS_CONFIG[lease.status] || {
               label: lease.status,
-              badgeClass: 'badge-neutral',
+              variant: 'neutral' as StatusPillVariant,
               icon: Clock,
             };
             const Icon = cfg.icon;
@@ -215,13 +209,15 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                         Countersignature Required — Sign below to ratify this legal tenancy contract
                       </span>
                     </div>
-                    <button
+                    <ShimmerButton
+                      variant="primary"
+                      size="sm"
                       onClick={() => { setSigningLease(lease); setSignConfirmed(false); }}
-                      className="btn-primary btn-sm text-xs font-bold shrink-0 font-display"
+                      leftIcon={<Pen className="w-3.5 h-3.5" />}
+                      className="shrink-0"
                     >
-                      <Pen className="w-3.5 h-3.5" />
                       Sign Now
-                    </button>
+                    </ShimmerButton>
                   </div>
                 )}
                 {awaitingTenantSign && (
@@ -237,19 +233,18 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <span className={cfg.badgeClass}>
-                          <Icon className="w-3 h-3" />
+                        <StatusPill variant={cfg.variant} icon={<Icon className="w-3 h-3" />}>
                           {cfg.label}
-                        </span>
+                        </StatusPill>
                         {lease.tenantSignedAt && (
-                          <span className="badge-success text-[10px]">
+                          <StatusPill variant="success" size="sm">
                             Tenant Signed ✓
-                          </span>
+                          </StatusPill>
                         )}
                         {lease.landlordSignedAt && (
-                          <span className="badge-success text-[10px]">
+                          <StatusPill variant="success" size="sm">
                             Landlord Signed ✓
-                          </span>
+                          </StatusPill>
                         )}
                       </div>
                       <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2 font-display">
@@ -274,29 +269,33 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
 
                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
                       {needsLandlordSign && (
-                        <button
+                        <ShimmerButton
+                          variant="primary"
+                          size="sm"
                           onClick={() => { setSigningLease(lease); setSignConfirmed(false); }}
-                          className="btn-primary btn-sm flex items-center gap-1.5 text-xs font-bold font-display"
+                          leftIcon={<Pen className="w-3.5 h-3.5" />}
                         >
-                          <Pen className="w-3.5 h-3.5" />
                           Sign Lease
-                        </button>
+                        </ShimmerButton>
                       )}
                       {lease.status === 'active' && (
-                        <button
+                        <ShimmerButton
+                          variant="danger"
+                          size="sm"
                           onClick={() => setTerminatingLease(lease)}
-                          className="btn-danger btn-sm text-xs font-semibold font-display"
                         >
                           Notice (§ 390)
-                        </button>
+                        </ShimmerButton>
                       )}
-                      <button
+                      <ShimmerButton
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setExpandedId(isExpanded ? null : lease.id)}
-                        className="btn-ghost btn-sm p-2 text-slate-500 hover:text-slate-800"
                         title={isExpanded ? 'Collapse lease details' : 'Expand lease details'}
+                        className="px-2"
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
+                      </ShimmerButton>
                     </div>
                   </div>
 
@@ -346,12 +345,14 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                     {signingLease.propertyTitle} — {signingLease.unitIdentifier}
                   </p>
                 </div>
-                <button
+                <ShimmerButton
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSigningLease(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  className="px-2"
                 >
-                  ✕
-                </button>
+                  <X className="w-4 h-4" />
+                </ShimmerButton>
               </div>
 
               <div className="p-6 overflow-y-auto space-y-4 text-xs flex-1">
@@ -402,30 +403,26 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
 
               {/* Footer */}
               <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex gap-3">
-                <button
+                <ShimmerButton
+                  variant="outline"
+                  size="md"
                   onClick={() => setSigningLease(null)}
                   disabled={isProcessing}
-                  className="btn-secondary flex-1 py-2.5 text-xs font-semibold font-display"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
-                <button
+                </ShimmerButton>
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
                   onClick={handleConfirmSign}
                   disabled={!signConfirmed || isProcessing}
-                  className="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2 font-display"
+                  isLoading={isProcessing}
+                  leftIcon={<Pen className="w-3.5 h-3.5" />}
+                  className="flex-1"
                 >
-                  {isProcessing ? (
-                    <>
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                      Executing Contract…
-                    </>
-                  ) : (
-                    <>
-                      <Pen className="w-3.5 h-3.5" />
-                      Countersign & Activate Lease
-                    </>
-                  )}
-                </button>
+                  Countersign & Activate Lease
+                </ShimmerButton>
               </div>
             </motion.div>
           </div>
@@ -456,45 +453,41 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                   <strong className="text-slate-900">{terminatingLease.propertyTitle}</strong> — {terminatingLease.unitIdentifier}
                   {' '} · Tenant: <strong className="text-slate-900">{terminatingLease.tenantName}</strong>
                 </div>
-                <div>
-                  <label className="form-label text-xs text-slate-700">Statutory Reason</label>
-                  <select
-                    value={terminationReason}
-                    onChange={(e) => setTerminationReason(e.target.value)}
-                    className="form-select text-xs"
-                  >
-                    {TERMINATION_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="form-label text-xs text-slate-700">
-                    Narrative & Observations <span className="text-slate-400 font-normal">(optional)</span>
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={terminationNarrative}
-                    onChange={(e) => setTerminationNarrative(e.target.value)}
-                    placeholder="Document circumstances requiring lease termination for legal records…"
-                    className="form-input text-xs resize-none"
-                  />
-                </div>
+                <FormSelect
+                  label="Statutory Reason"
+                  value={terminationReason}
+                  onChange={(e) => setTerminationReason(e.target.value)}
+                  options={TERMINATION_REASONS.map((r) => ({ value: r, label: r }))}
+                />
+                <FormTextarea
+                  label="Narrative & Observations"
+                  hint="(optional)"
+                  rows={3}
+                  maxChars={500}
+                  value={terminationNarrative}
+                  onChange={(e) => setTerminationNarrative(e.target.value)}
+                  placeholder="Document circumstances requiring lease termination for legal records…"
+                />
                 <div className="flex gap-3 pt-2">
-                  <button
+                  <ShimmerButton
+                    variant="outline"
+                    size="md"
                     onClick={() => setTerminatingLease(null)}
                     disabled={isProcessing}
-                    className="btn-secondary flex-1 py-2.5 text-xs font-semibold font-display"
+                    className="flex-1"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </ShimmerButton>
+                  <ShimmerButton
+                    variant="danger"
+                    size="md"
                     onClick={handleConfirmTerminate}
                     disabled={isProcessing}
-                    className="btn-danger flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2 font-display"
+                    isLoading={isProcessing}
+                    className="flex-1"
                   >
-                    {isProcessing ? (
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                    ) : 'Issue 35-Day Notice'}
-                  </button>
+                    Issue 35-Day Notice
+                  </ShimmerButton>
                 </div>
               </div>
             </motion.div>

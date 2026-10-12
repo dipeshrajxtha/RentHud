@@ -11,6 +11,8 @@ import {
   DollarSign, TrendingUp, Shield, AlertCircle, Building,
   Clock, CreditCard, Banknote, Download, Sparkles, CheckCircle2,
 } from 'lucide-react';
+import { ShimmerButton, StatusPill, FilterTabs } from '@/components/ui';
+import type { StatusPillVariant } from '@/components/ui';
 import type { LandlordProperty, LandlordLease } from '@/types/landlord';
 
 interface FinancialsLedgerViewProps {
@@ -19,27 +21,33 @@ interface FinancialsLedgerViewProps {
   loading: boolean;
 }
 
-const GATEWAY_STATUS = [
+const GATEWAY_STATUS: {
+  name: string;
+  logo: string;
+  status: string;
+  description: string;
+  variant: StatusPillVariant;
+}[] = [
   {
     name: 'eSewa Merchant',
     logo: '💚',
     status: 'Ready for Integration',
     description: 'Accept instant rent settlement via eSewa digital wallet & QR.',
-    badgeClass: 'badge-success',
+    variant: 'success',
   },
   {
     name: 'Khalti Merchant',
     logo: '💜',
     status: 'Ready for Integration',
     description: 'Direct Khalti checkout for tenant rent and security deposit collection.',
-    badgeClass: 'badge-info',
+    variant: 'info',
   },
   {
     name: 'ConnectIPS (NCHL)',
     logo: '🏦',
     status: 'Bank Direct Clearing',
     description: 'National interbank direct account debits across all major Nepal commercial banks.',
-    badgeClass: 'badge-warning',
+    variant: 'warning',
   },
 ];
 
@@ -156,20 +164,12 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap border-b border-slate-200 pb-2">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              tab === t.key
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="pb-2 border-b border-slate-200">
+        <FilterTabs
+          tabs={TABS.map((t) => ({ id: t.key, label: t.label }))}
+          activeId={tab}
+          onChange={(id) => setTab(id as LedgerTab)}
+        />
       </div>
 
       {/* ── Rent Roll Tab ──────────────────────────────────────────────── */}
@@ -191,14 +191,14 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider font-display">
                   Active Rent Ledger
                 </span>
-                <button
-                  type="button"
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                <ShimmerButton
+                  variant="outline"
+                  size="sm"
                   onClick={() => window.print()}
+                  leftIcon={<Download className="w-3.5 h-3.5" />}
                 >
-                  <Download className="w-3.5 h-3.5" />
                   Export Statement
-                </button>
+                </ShimmerButton>
               </div>
               <div className="divide-y divide-slate-100">
                 {metrics.activeLeases.map((lease) => (
@@ -215,8 +215,10 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
                       <p className="text-sm font-bold text-emerald-600 font-display">
                         NPR {lease.agreedMonthlyRent.toLocaleString()}
                       </p>
-                      <span className="badge-success text-[10px] mt-1">
-                        Active Tenancy
+                      <span className="mt-1 inline-block">
+                        <StatusPill variant="success" size="sm">
+                          Active Tenancy
+                        </StatusPill>
                       </span>
                     </div>
                   </div>
@@ -312,7 +314,7 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-2xl">{gw.logo}</span>
-                    <span className={gw.badgeClass}>{gw.status}</span>
+                    <StatusPill variant={gw.variant} size="sm">{gw.status}</StatusPill>
                   </div>
                   <h3 className="text-sm font-bold text-slate-900 font-display">
                     {gw.name}
@@ -326,9 +328,9 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     Protocol Ready
                   </span>
-                  <button className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer transition-colors">
+                  <ShimmerButton variant="outline" size="sm">
                     Configure
-                  </button>
+                  </ShimmerButton>
                 </div>
               </div>
             ))}
@@ -344,10 +346,14 @@ export function FinancialsLedgerView({ properties, leases, loading }: Financials
                 For bank counter deposits, cheques, or direct cash payments (e.g. Nabil Bank, NIC Asia, Global IME), log receipts to update the ledger in real-time.
               </p>
             </div>
-            <button className="btn-primary btn-sm flex items-center gap-2 shrink-0">
-              <CreditCard className="w-3.5 h-3.5" />
+            <ShimmerButton
+              variant="primary"
+              size="sm"
+              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
+              className="shrink-0"
+            >
               Record Manual Payment
-            </button>
+            </ShimmerButton>
           </div>
         </motion.div>
       )}

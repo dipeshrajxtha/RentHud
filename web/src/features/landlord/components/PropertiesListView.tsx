@@ -15,6 +15,7 @@ import {
   Camera,
 } from 'lucide-react';
 import type { LandlordProperty, LandlordUnit } from '@/types/landlord';
+import { FormInput, StatusPill } from '@/components/ui';
 
 type OccupancyFilter = 'ALL' | 'OCCUPIED' | 'PARTIAL' | 'VACANT';
 
@@ -110,16 +111,14 @@ export function PropertiesListView({
 
       {/* Search and Filters Bar */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xs">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by building name, address, or city…"
-            className="form-input text-xs pl-9"
-          />
-        </div>
+        <FormInput
+          containerClassName="w-full md:w-80"
+          leftIcon={<Search className="w-4 h-4" />}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by building name, address, or city…"
+        />
 
         <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto scrollbar-none pb-1 md:pb-0 font-display">
           {[
@@ -222,17 +221,12 @@ export function PropertiesListView({
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h2 className="text-base font-bold text-slate-900 font-display truncate">{prop.title}</h2>
-                        <span
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full font-display ${
-                            rate === 100
-                              ? 'badge-success'
-                              : rate > 0
-                              ? 'badge-warning'
-                              : 'badge-neutral'
-                          }`}
+                        <StatusPill
+                          variant={rate === 100 ? 'success' : rate > 0 ? 'warning' : 'neutral'}
+                          size="sm"
                         >
                           {rate}% Occupied ({occU}/{totalU} Units)
-                        </span>
+                        </StatusPill>
                       </div>
 
                       <p className="text-xs flex items-center gap-1.5 truncate text-slate-500">
@@ -349,17 +343,12 @@ export function PropertiesListView({
                                       <h4 className="text-xs font-bold text-slate-900 font-display">{unit.unitIdentifier}</h4>
                                       <p className="text-[11px] text-slate-500">Floor {unit.floorNumber}</p>
                                     </div>
-                                    <span
-                                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider font-display ${
-                                        isAvailable
-                                          ? 'badge-success'
-                                          : isOnRent
-                                          ? 'badge-info'
-                                          : 'badge-warning'
-                                      }`}
+                                    <StatusPill
+                                      variant={isAvailable ? 'success' : isOnRent ? 'info' : 'warning'}
+                                      size="sm"
                                     >
                                       {unit.availabilityStatus}
-                                    </span>
+                                    </StatusPill>
                                   </div>
 
                                   <div className="flex items-center gap-3 text-[11px] mt-2 text-slate-500">

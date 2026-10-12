@@ -9,6 +9,7 @@ import {
   Plus,
   Home,
 } from 'lucide-react';
+import { BentoGrid, BentoCard, ShimmerButton, StatusPill } from '@/components/ui';
 import type {
   LandlordProperty,
   LandlordApplication,
@@ -113,14 +114,15 @@ export function LandlordOverviewView({
         </div>
 
         <div className="relative z-10 flex items-center gap-3 shrink-0">
-          <button
-            type="button"
+          <ShimmerButton
+            variant="outline"
+            size="lg"
             onClick={onOpenAddProperty}
-            className="px-5 py-2.5 rounded-2xl text-xs font-bold text-emerald-950 bg-white hover:bg-emerald-50 transition-all flex items-center gap-2 font-display shadow-md hover:shadow-lg"
+            leftIcon={<Plus className="w-4 h-4 text-emerald-700" />}
+            className="rounded-2xl font-bold"
           >
-            <Plus className="w-4 h-4 text-emerald-700" />
-            <span>List New Property</span>
-          </button>
+            List New Property
+          </ShimmerButton>
         </div>
 
         {/* Ambient Decorative Glow */}
@@ -128,7 +130,7 @@ export function LandlordOverviewView({
       </div>
 
       {/* Primary Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <BentoGrid className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {METRIC_CARDS.map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -137,27 +139,23 @@ export function LandlordOverviewView({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: i * 0.05 }}
-              onClick={stat.onClick}
-              className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 cursor-pointer relative overflow-hidden flex flex-col justify-between select-none hover:border-slate-300 hover:shadow-md transition-all"
+              className="h-full"
             >
-              <div className="flex items-center justify-between mb-3.5">
-                <span className="text-xs font-bold uppercase tracking-wider font-display text-slate-500">
-                  {stat.label}
-                </span>
-                <div className={`w-9 h-9 rounded-xl ${stat.iconColor} flex items-center justify-center`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-              </div>
-              <div>
+              <BentoCard
+                className="h-full"
+                icon={<Icon className="w-5 h-5" />}
+                title={stat.label}
+                description={stat.sub}
+                onClick={stat.onClick}
+              >
                 <p className="text-2xl font-black text-slate-900 font-display tracking-tight">
                   {stat.value}
                 </p>
-                <p className="text-[11px] mt-1 text-slate-500">{stat.sub}</p>
-              </div>
+              </BentoCard>
             </motion.div>
           );
         })}
-      </div>
+      </BentoGrid>
 
       {/* Urgent Actions Section */}
       {(pendingApps.length > 0 || unsignedLeases.length > 0 || emergencyMaintenance.length > 0) && (
@@ -177,9 +175,11 @@ export function LandlordOverviewView({
                 className="bg-white rounded-2xl border border-amber-200 shadow-xs p-4.5 flex flex-col justify-between"
               >
                 <div>
-                  <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 mb-2 font-display">
-                    Lease Needs Signature
-                  </span>
+                  <div className="mb-2">
+                    <StatusPill variant="warning" size="sm">
+                      Lease Needs Signature
+                    </StatusPill>
+                  </div>
                   <p className="text-xs font-bold text-slate-900 font-display">
                     {lease.propertyTitle || 'Property Unit'} ({lease.unitIdentifier || 'Unit'})
                   </p>
@@ -187,14 +187,15 @@ export function LandlordOverviewView({
                     Tenant: {lease.tenantName || 'Applicant'} · Rent: NPR {lease.agreedMonthlyRent?.toLocaleString()}/mo
                   </p>
                 </div>
-                <button
-                  type="button"
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
                   onClick={() => onOpenLeaseModal(lease)}
-                  className="mt-3 w-full py-2 px-3 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors flex items-center justify-center gap-1.5 font-display shadow-xs"
+                  leftIcon={<ShieldCheck className="w-3.5 h-3.5" />}
+                  className="mt-3 w-full"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Review & Sign Agreement</span>
-                </button>
+                  Review & Sign Agreement
+                </ShimmerButton>
               </div>
             ))}
 
@@ -205,9 +206,11 @@ export function LandlordOverviewView({
                 className="bg-white rounded-2xl border border-blue-200 shadow-xs p-4.5 flex flex-col justify-between"
               >
                 <div>
-                  <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 mb-2 font-display">
-                    New Rental Application
-                  </span>
+                  <div className="mb-2">
+                    <StatusPill variant="info" size="sm">
+                      New Rental Application
+                    </StatusPill>
+                  </div>
                   <p className="text-xs font-bold text-slate-900 font-display">
                     {app.tenant?.name || 'Applicant'} → {app.property?.title} ({app.unit?.unitIdentifier})
                   </p>
@@ -215,14 +218,15 @@ export function LandlordOverviewView({
                     Proposed Move-in: {app.proposedMoveIn || 'Immediate'}
                   </p>
                 </div>
-                <button
-                  type="button"
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
                   onClick={() => onReviewApplication(app)}
-                  className="mt-3 w-full py-2 px-3 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors flex items-center justify-center gap-1.5 font-display shadow-xs"
+                  rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                  className="mt-3 w-full"
                 >
-                  <span>Review Application</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                  Review Application
+                </ShimmerButton>
               </div>
             ))}
           </div>
@@ -238,14 +242,14 @@ export function LandlordOverviewView({
               <h2 className="text-base font-bold text-slate-900 font-display">Property Portfolio</h2>
               <p className="text-xs text-slate-500">Occupancy status across your Kathmandu valley assets</p>
             </div>
-            <button
-              type="button"
+            <ShimmerButton
+              variant="ghost"
+              size="sm"
               onClick={() => onNavigateTab('properties')}
-              className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 transition-colors font-display"
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
             >
-              <span>View All ({properties.length})</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+              View All ({properties.length})
+            </ShimmerButton>
           </div>
 
           {properties.length === 0 ? (
@@ -255,14 +259,15 @@ export function LandlordOverviewView({
               <p className="text-xs mt-0.5 max-w-sm mx-auto text-slate-500">
                 Add your first residential building or apartment complex in Kathmandu to start receiving tenant applications.
               </p>
-              <button
-                type="button"
+              <ShimmerButton
+                variant="primary"
+                size="md"
                 onClick={onOpenAddProperty}
-                className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors inline-flex items-center gap-1.5 font-display shadow-xs"
+                leftIcon={<Plus className="w-4 h-4" />}
+                className="mt-4"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Property</span>
-              </button>
+                Add Property
+              </ShimmerButton>
             </div>
           ) : (
             <div className="space-y-3">
@@ -303,17 +308,12 @@ export function LandlordOverviewView({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full font-display ${
-                          rate === 100
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : rate > 0
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
+                      <StatusPill
+                        size="sm"
+                        variant={rate === 100 ? 'success' : rate > 0 ? 'info' : 'warning'}
                       >
                         {rate}% Occupied
-                      </span>
+                      </StatusPill>
                     </div>
                   </div>
                 );

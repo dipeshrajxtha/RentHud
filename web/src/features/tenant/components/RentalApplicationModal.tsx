@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Calendar, MessageSquare, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import type { PropertyListing, UnitDetail, RentalApplication } from '@/types/tenant';
 import { tenantService } from '@/features/tenant/tenant.service';
-import { FormInput, ShimmerButton, StatusPill } from '@/components/ui';
+import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface RentalApplicationModalProps {
   property: PropertyListing | null;
@@ -173,26 +173,19 @@ export function RentalApplicationModal({
                 </div>
 
                 {/* Unit Switcher if multiple available */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold uppercase tracking-wider block text-slate-500 font-mono">
-                    Select Available Unit
-                  </label>
-                  <select
-                    value={activeUnit.id}
-                    onChange={(e) => {
-                      const u = property.units.find((unit: UnitDetail) => unit.id === e.target.value);
-                      if (u) setActiveUnit(u);
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 shadow-sm"
-                  >
-                    {property.units.map((u: UnitDetail) => (
-                      <option key={u.id} value={u.id} disabled={u.availabilityStatus !== 'AVAILABLE'}>
-                        {u.unitIdentifier} — Floor {u.floorNumber} ({u.bedrooms} BHK) — NPR{' '}
-                        {u.monthlyRent.toLocaleString()}/mo
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <FormSelect
+                  label="Select Available Unit"
+                  options={property.units.map((u: UnitDetail) => ({
+                    value: u.id,
+                    label: `${u.unitIdentifier} — Floor ${u.floorNumber} (${u.bedrooms} BHK) — NPR ${u.monthlyRent.toLocaleString()}/mo`,
+                    disabled: u.availabilityStatus !== 'AVAILABLE',
+                  }))}
+                  value={activeUnit.id}
+                  onChange={(e) => {
+                    const u = property.units.find((unit: UnitDetail) => unit.id === e.target.value);
+                    if (u) setActiveUnit(u);
+                  }}
+                />
 
                 {/* Financial Summary */}
                 <div className="pt-2.5 flex items-center justify-between text-xs border-t border-slate-200/80">
@@ -223,19 +216,14 @@ export function RentalApplicationModal({
               />
 
               {/* Message to Landlord */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold block text-slate-700 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Introduction to Landlord</span>
-                </label>
-                <textarea
-                  rows={3}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Share details about yourself, employment, household size..."
-                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-600 resize-none shadow-sm transition-all"
-                />
-              </div>
+              <FormTextarea
+                label="Introduction to Landlord"
+                rows={3}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Share details about yourself, employment, household size..."
+                leftIcon={<MessageSquare className="w-4 h-4 text-blue-600" />}
+              />
 
               {/* Notice */}
               <div className="p-3.5 rounded-2xl text-[11px] flex items-start gap-2.5 bg-blue-50/70 border border-blue-200 text-blue-900">
@@ -248,13 +236,15 @@ export function RentalApplicationModal({
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
-                <button
+                <ShimmerButton
                   type="button"
+                  variant="outline"
+                  size="md"
                   onClick={onClose}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
+                </ShimmerButton>
                 <ShimmerButton
                   type="submit"
                   variant="primary"

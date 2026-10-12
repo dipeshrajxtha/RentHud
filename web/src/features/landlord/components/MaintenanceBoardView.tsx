@@ -15,6 +15,8 @@ import {
   Zap, Droplets, Wind, Lock,
   X, ArrowRight, Sparkles, Check,
 } from 'lucide-react';
+import { ShimmerButton, StatusPill, FormInput, FormTextarea } from '@/components/ui';
+import type { StatusPillVariant } from '@/components/ui';
 import type { LandlordMaintenanceTicket } from '@/types/landlord';
 
 interface MaintenanceBoardViewProps {
@@ -31,18 +33,24 @@ interface MaintenanceBoardViewProps {
   ) => Promise<void>;
 }
 
-const URGENCY_CONFIG = {
-  Emergency: { badgeClass: 'badge-error', icon: AlertTriangle, dot: 'bg-rose-500' },
-  High: { badgeClass: 'badge-warning', icon: Zap, dot: 'bg-amber-500' },
-  Normal: { badgeClass: 'badge-info', icon: Clock, dot: 'bg-blue-500' },
-  Low: { badgeClass: 'badge-neutral', icon: Clock, dot: 'bg-slate-400' },
+const URGENCY_CONFIG: Record<
+  LandlordMaintenanceTicket['urgency'],
+  { variant: StatusPillVariant; icon: React.ElementType; dot: string }
+> = {
+  Emergency: { variant: 'danger', icon: AlertTriangle, dot: 'bg-rose-500' },
+  High: { variant: 'warning', icon: Zap, dot: 'bg-amber-500' },
+  Normal: { variant: 'info', icon: Clock, dot: 'bg-blue-500' },
+  Low: { variant: 'neutral', icon: Clock, dot: 'bg-slate-400' },
 };
 
-const STATUS_CONFIG = {
-  Reported: { badgeClass: 'badge-warning', label: 'Reported' },
-  Scheduled: { badgeClass: 'badge-info', label: 'Scheduled' },
-  'In Progress': { badgeClass: 'badge-info', label: 'In Progress' },
-  Resolved: { badgeClass: 'badge-success', label: 'Resolved' },
+const STATUS_CONFIG: Record<
+  LandlordMaintenanceTicket['status'],
+  { variant: StatusPillVariant; label: string }
+> = {
+  Reported: { variant: 'warning', label: 'Reported' },
+  Scheduled: { variant: 'info', label: 'Scheduled' },
+  'In Progress': { variant: 'info', label: 'In Progress' },
+  Resolved: { variant: 'success', label: 'Resolved' },
 };
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -223,15 +231,15 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span className={urgCfg.badgeClass}>
+                      <StatusPill variant={urgCfg.variant} size="sm">
                         {ticket.urgency}
-                      </span>
-                      <span className={staCfg.badgeClass}>
+                      </StatusPill>
+                      <StatusPill variant={staCfg.variant} size="sm">
                         {staCfg.label}
-                      </span>
-                      <span className="badge-neutral text-[10px]">
+                      </StatusPill>
+                      <StatusPill variant="neutral" size="sm">
                         {ticket.category}
-                      </span>
+                      </StatusPill>
                     </div>
                     <h3 className="text-sm font-bold text-slate-900 font-display">
                       {ticket.title}
@@ -263,13 +271,14 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                   </div>
                   <div className="shrink-0 flex items-center gap-2">
                     {ticket.status !== 'Resolved' && (
-                      <button
+                      <ShimmerButton
+                        variant="outline"
+                        size="sm"
                         onClick={(e) => { e.stopPropagation(); handleAdvanceStatus(ticket.id); }}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                        rightIcon={<ArrowRight className="w-3 h-3" />}
                       >
                         Advance
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
+                      </ShimmerButton>
                     )}
                     {ticket.status === 'Resolved' && (
                       <span className="p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600">
@@ -309,9 +318,14 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                   </h2>
                   <p className="text-xs text-slate-500">{selected.category} · {selected.urgency}</p>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
+                <ShimmerButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelected(null)}
+                  className="px-2"
+                >
                   <X className="w-5 h-5" />
-                </button>
+                </ShimmerButton>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-5">
@@ -354,63 +368,55 @@ export function MaintenanceBoardView({ tickets, showToast, onUpdateTicket }: Mai
                 </div>
 
                 {/* Contractor assignment */}
-                <div>
-                  <label className="form-label text-xs">
-                    Assign Technician / Contractor
-                  </label>
-                  <input
-                    type="text"
-                    value={contractorInput}
-                    onChange={(e) => setContractorInput(e.target.value)}
-                    placeholder="e.g. Bijay Electricals, Ram Plumber"
-                    className="form-input text-xs"
-                  />
-                </div>
+                <FormInput
+                  label="Assign Technician / Contractor"
+                  type="text"
+                  value={contractorInput}
+                  onChange={(e) => setContractorInput(e.target.value)}
+                  placeholder="e.g. Bijay Electricals, Ram Plumber"
+                  leftIcon={<User className="w-4 h-4" />}
+                />
 
                 {/* Schedule date */}
-                <div>
-                  <label className="form-label text-xs">
-                    Inspection / Repair Date
-                  </label>
-                  <input
-                    type="date"
-                    value={scheduledDate}
-                    onChange={(e) => setScheduledDate(e.target.value)}
-                    className="form-input text-xs"
-                  />
-                </div>
+                <FormInput
+                  label="Inspection / Repair Date"
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  leftIcon={<Clock className="w-4 h-4" />}
+                />
 
                 {/* Landlord notes */}
-                <div>
-                  <label className="form-label text-xs">
-                    Landlord Internal Resolution Notes
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={landlordNotes}
-                    onChange={(e) => setLandlordNotes(e.target.value)}
-                    placeholder="Document parts replaced, contractor invoices, or follow-up notes…"
-                    className="form-input text-xs resize-none"
-                  />
-                </div>
+                <FormTextarea
+                  label="Landlord Internal Resolution Notes"
+                  rows={3}
+                  maxChars={500}
+                  value={landlordNotes}
+                  onChange={(e) => setLandlordNotes(e.target.value)}
+                  placeholder="Document parts replaced, contractor invoices, or follow-up notes…"
+                />
               </div>
 
               <div className="px-6 py-4 border-t border-slate-200 bg-slate-50/75 flex gap-3">
                 {selected.status !== 'Resolved' && (
-                  <button
+                  <ShimmerButton
+                    variant="secondary"
+                    size="md"
                     onClick={() => { handleAdvanceStatus(selected.id); setSelected(null); }}
-                    className="btn-secondary flex-1 py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5"
+                    rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                    className="flex-1"
                   >
                     Advance Status
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  </ShimmerButton>
                 )}
-                <button
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
                   onClick={handleSaveDetail}
-                  className="btn-primary flex-1 py-2.5 text-xs font-bold"
+                  className="flex-1"
                 >
                   Save Dispatch
-                </button>
+                </ShimmerButton>
               </div>
             </motion.div>
           </>

@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Heart, Scale, Check, X } from 'lucide-react';
+import { ShimmerButton, StatusPill } from '@/components/ui';
 import type { PropertyListing } from '@/types/tenant';
 import { PropertyCard } from './PropertyCard';
 
@@ -41,12 +42,13 @@ export function SavedPropertiesView({
           Tap the heart icon on any rental listing to bookmark homes and compare rates, deposits,
           and amenities side-by-side.
         </p>
-        <button
+        <ShimmerButton
+          variant="primary"
           onClick={onBrowseMore}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors mx-auto"
+          className="mx-auto"
         >
           Explore Properties
-        </button>
+        </ShimmerButton>
       </div>
     );
   }
@@ -63,14 +65,14 @@ export function SavedPropertiesView({
         </div>
 
         {savedProperties.length > 1 && (
-          <button
-            type="button"
+          <ShimmerButton
+            variant="outline"
+            size="md"
             onClick={() => setShowComparison((v) => !v)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200/80 transition-colors"
+            leftIcon={<Scale className="w-4 h-4 text-slate-600" />}
           >
-            <Scale className="w-4 h-4 text-slate-600" />
-            <span>{showComparison ? 'Hide Comparison Matrix' : 'Compare Side-by-Side'}</span>
-          </button>
+            {showComparison ? 'Hide Comparison Matrix' : 'Compare Side-by-Side'}
+          </ShimmerButton>
         )}
       </div>
 
@@ -114,9 +116,9 @@ export function SavedPropertiesView({
                 <td className="py-2.5 px-3 font-medium text-slate-500">Units Available</td>
                 {savedProperties.map((p) => (
                   <td key={p.id} className="py-2.5 px-3">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    <StatusPill variant="info" size="sm">
                       {p.availableUnitsCount} available
-                    </span>
+                    </StatusPill>
                   </td>
                 ))}
               </tr>
@@ -160,13 +162,13 @@ export function SavedPropertiesView({
                 <td className="py-2.5 px-3 font-medium text-slate-500">Actions</td>
                 {savedProperties.map((p) => (
                   <td key={p.id} className="py-2.5 px-3">
-                    <button
-                      type="button"
+                    <ShimmerButton
+                      variant="primary"
+                      size="sm"
                       onClick={() => onApplyProperty(p)}
-                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors"
                     >
                       Apply Now
-                    </button>
+                    </ShimmerButton>
                   </td>
                 ))}
               </tr>

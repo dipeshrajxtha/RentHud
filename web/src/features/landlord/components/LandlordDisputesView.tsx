@@ -12,6 +12,7 @@ import {
   FileText, DollarSign, ExternalLink, ChevronRight, ShieldAlert,
 } from 'lucide-react';
 import type { LandlordDispute, TenancyDisputeStatus } from '@/types/landlord';
+import { StatusPill, type StatusPillVariant } from '@/components/ui';
 
 interface LandlordDisputesViewProps {
   disputes: LandlordDispute[];
@@ -20,13 +21,13 @@ interface LandlordDisputesViewProps {
 
 const DISPUTE_STATUS_CONFIG: Record<
   TenancyDisputeStatus,
-  { label: string; badgeClass: string; icon: React.ElementType }
+  { label: string; variant: StatusPillVariant; icon: React.ElementType }
 > = {
-  OPEN: { label: 'Open Claim', badgeClass: 'badge-warning', icon: AlertCircle },
-  IN_MEDIATION: { label: 'In Arbitration', badgeClass: 'badge-info', icon: Clock },
-  RESOLVED_MUTUAL: { label: 'Mutual Settlement', badgeClass: 'badge-success', icon: CheckCircle2 },
-  RESOLVED_ARBITRATED: { label: 'Tribunal Award', badgeClass: 'badge-success', icon: CheckCircle2 },
-  ESCALATED: { label: 'Escalated to Court', badgeClass: 'badge-error', icon: XCircle },
+  OPEN: { label: 'Open Claim', variant: 'warning', icon: AlertCircle },
+  IN_MEDIATION: { label: 'In Arbitration', variant: 'info', icon: Clock },
+  RESOLVED_MUTUAL: { label: 'Mutual Settlement', variant: 'success', icon: CheckCircle2 },
+  RESOLVED_ARBITRATED: { label: 'Tribunal Award', variant: 'success', icon: CheckCircle2 },
+  ESCALATED: { label: 'Escalated to Court', variant: 'danger', icon: XCircle },
 };
 
 export function LandlordDisputesView({ disputes, loading }: LandlordDisputesViewProps) {
@@ -94,12 +95,12 @@ export function LandlordDisputesView({ disputes, loading }: LandlordDisputesView
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span className={cfg.badgeClass}>
+                      <StatusPill variant={cfg.variant} size="sm">
                         {cfg.label}
-                      </span>
-                      <span className="badge-neutral text-[10px]">
+                      </StatusPill>
+                      <StatusPill variant="neutral" size="sm">
                         {dispute.category.replace(/_/g, ' ')}
-                      </span>
+                      </StatusPill>
                     </div>
                     <h3 className="text-base font-bold text-slate-900 font-display">
                       {dispute.title}

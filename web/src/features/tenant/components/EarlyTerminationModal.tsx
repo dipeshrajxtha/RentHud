@@ -14,6 +14,7 @@ import { X, AlertTriangle, Calendar, CheckCircle2, ShieldAlert } from 'lucide-re
 import type { LeaseAgreement } from '@/types/tenant';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
+import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface EarlyTerminationModalProps {
   lease: LeaseAgreement | null;
@@ -75,24 +76,27 @@ export function EarlyTerminationModal({
           className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-lg w-full overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100">
+          <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-200">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-rose-600 bg-rose-50 border border-rose-200 shadow-sm">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-display font-bold text-slate-900">
-                  Request Early Lease Termination
-                </h2>
-                <p className="text-xs font-mono text-slate-400">Lease #{lease.id}</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-display font-bold text-slate-900 tracking-tight">
+                    Early Lease Termination
+                  </h2>
+                  <StatusPill variant="danger" size="sm">Critical</StatusPill>
+                </div>
+                <p className="text-xs text-slate-500">{lease.unitIdentifier}, {lease.propertyTitle}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl transition-colors text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              className="p-1.5 rounded-full transition-colors text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
@@ -112,13 +116,16 @@ export function EarlyTerminationModal({
                 Your landlord ({lease.landlordName}) has been formally notified for key handover and
                 security deposit settlement.
               </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-full mt-4 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors font-display shadow-xs"
-              >
-                Return to Tenancy Dashboard
-              </button>
+              <div className="pt-2">
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
+                  onClick={onClose}
+                  className="w-full"
+                >
+                  Return to Tenancy Dashboard
+                </ShimmerButton>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs text-slate-700">
@@ -145,50 +152,33 @@ export function EarlyTerminationModal({
               </div>
 
               {/* Reason Selector */}
-              <div>
-                <label className="text-xs font-semibold block mb-1.5 font-display text-slate-700">
-                  Primary Reason for Early Termination
-                </label>
-                <select
-                  value={reasonCode}
-                  onChange={(e) => setReasonCode(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                >
-                  {REASON_CODES.map((r) => (
-                    <option key={r.code} value={r.code}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <FormSelect
+                label="Primary Reason for Early Termination"
+                required
+                value={reasonCode}
+                onChange={(e) => setReasonCode(e.target.value)}
+                options={REASON_CODES.map((r) => ({ value: r.code, label: r.label }))}
+              />
 
               {/* Target Move Out */}
-              <div>
-                <label className="text-xs font-semibold block mb-1.5 flex items-center gap-1.5 font-display text-slate-700">
-                  <Calendar className="w-3.5 h-3.5 text-brand-600" /> Proposed Vacancy / Handover Date
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={targetMoveOut}
-                  onChange={(e) => setTargetMoveOut(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                />
-              </div>
+              <FormInput
+                label="Proposed Vacancy / Handover Date"
+                type="date"
+                required
+                leftIcon={<Calendar className="w-4 h-4 text-blue-600" />}
+                value={targetMoveOut}
+                onChange={(e) => setTargetMoveOut(e.target.value)}
+              />
 
               {/* Narrative */}
-              <div>
-                <label className="text-xs font-semibold block mb-1.5 font-display text-slate-700">
-                  Narrative & Handover Statement
-                </label>
-                <textarea
-                  rows={3}
-                  value={narrative}
-                  onChange={(e) => setNarrative(e.target.value)}
-                  placeholder="Explain any details regarding premises handover and outstanding utilities..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 resize-none"
-                />
-              </div>
+              <FormTextarea
+                label="Narrative & Handover Statement"
+                rows={3}
+                value={narrative}
+                onChange={(e) => setNarrative(e.target.value)}
+                placeholder="Explain any details regarding premises handover and outstanding utilities..."
+                maxChars={400}
+              />
 
               {/* Warning Notice */}
               <div className="p-3.5 rounded-xl space-y-1 text-[11px] bg-amber-50 border border-amber-200 text-amber-800">
@@ -202,35 +192,47 @@ export function EarlyTerminationModal({
               </div>
 
               {/* Confirmation checkbox */}
-              <label className="flex items-start gap-2.5 cursor-pointer pt-1">
-                <input
-                  type="checkbox"
-                  checked={acknowledged}
-                  onChange={(e) => setAcknowledged(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                />
-                <span className="leading-normal text-slate-600">
+              <label className="flex items-start gap-3 cursor-pointer pt-1 p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <div className="relative mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={acknowledged}
+                    onChange={(e) => setAcknowledged(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 rounded-md border-2 border-slate-300 peer-checked:border-rose-500 peer-checked:bg-rose-500 transition-all flex items-center justify-center">
+                    {acknowledged && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs leading-normal text-slate-600">
                   I understand that submitting this request updates my tenancy status to{' '}
                   <strong className="text-rose-600">terminated early</strong> and begins the legal handover procedure.
                 </span>
               </label>
 
               {/* Actions */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors font-display"
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                   Cancel
                 </button>
-                <button
+                <ShimmerButton
                   type="submit"
-                  disabled={!acknowledged || isSubmitting}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors font-display shadow-xs disabled:opacity-50"
+                  variant="danger"
+                  size="md"
+                  disabled={!acknowledged}
+                  isLoading={isSubmitting}
+                  className="flex-1"
                 >
-                  {isSubmitting ? 'Recording…' : 'Confirm Early Termination'}
-                </button>
+                  Confirm Early Termination
+                </ShimmerButton>
               </div>
             </form>
           )}

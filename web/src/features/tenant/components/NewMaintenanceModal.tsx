@@ -14,7 +14,7 @@ import { X, Wrench, Clock } from 'lucide-react';
 import type { LeaseAgreement, MaintenanceRequest } from '@/types/tenant';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
-import { FormInput, FormSelect, ShimmerButton, StatusPill } from '@/components/ui';
+import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
 
 interface NewMaintenanceModalProps {
   lease: LeaseAgreement | null;
@@ -205,19 +205,14 @@ export function NewMaintenanceModal({
             />
 
             {/* Description */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-700 tracking-tight">
-                Detailed Description & Location in Unit <span className="text-rose-500 font-bold">*</span>
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe when the issue started, whether water/power is affected..."
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10 transition-all resize-none shadow-sm"
-              />
-            </div>
+            <FormTextarea
+              label="Detailed Description & Location in Unit"
+              required
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe when the issue started, whether water/power is affected..."
+            />
 
             {/* Preferred Time Window */}
             <FormSelect
@@ -230,13 +225,14 @@ export function NewMaintenanceModal({
 
             {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-              <button
+              <ShimmerButton
                 type="button"
+                variant="outline"
+                size="md"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
-              </button>
+              </ShimmerButton>
               <ShimmerButton
                 type="submit"
                 variant="primary"

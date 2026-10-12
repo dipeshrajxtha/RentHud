@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import type { LandlordApplication } from '@/types/landlord';
+import { ShimmerButton, StatusPill, FilterTabs, FormSelect } from '@/components/ui';
 
 type AppFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -81,29 +82,29 @@ export function ApplicationReviewView({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 font-display">
-          {[
-            { id: 'ALL', label: `All (${applications.length})` },
-            { id: 'PENDING', label: `Pending (${applications.filter((a) => a.status === 'pending').length})` },
-            { id: 'APPROVED', label: `Approved (${applications.filter((a) => a.status === 'approved').length})` },
-            { id: 'REJECTED', label: 'Rejected' },
-          ].map((tab) => {
-            const isSelected = filter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setFilter(tab.id as AppFilter)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-brand-600 text-white shadow-xs'
-                    : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+        <div className="font-display">
+          <FilterTabs
+            tabs={[
+              { id: 'ALL', label: 'All', count: applications.length },
+              {
+                id: 'PENDING',
+                label: 'Pending',
+                count: applications.filter((a) => a.status === 'pending').length,
+              },
+              {
+                id: 'APPROVED',
+                label: 'Approved',
+                count: applications.filter((a) => a.status === 'approved').length,
+              },
+              {
+                id: 'REJECTED',
+                label: 'Rejected',
+                count: applications.filter((a) => a.status === 'rejected').length,
+              },
+            ]}
+            activeId={filter}
+            onChange={(id) => setFilter(id as AppFilter)}
+          />
         </div>
       </div>
 
@@ -151,17 +152,14 @@ export function ApplicationReviewView({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-bold text-slate-900 font-display">{app.tenant?.name}</h3>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-display uppercase tracking-wider ${
-                            isApproved
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : isPending
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-rose-100 text-rose-800'
-                          }`}
+                        <StatusPill
+                          size="sm"
+                          variant={
+                            isApproved ? 'success' : isPending ? 'warning' : 'danger'
+                          }
                         >
                           {app.status}
-                        </span>
+                        </StatusPill>
                       </div>
 
                       <p className="text-xs mt-1 text-slate-600">
@@ -216,39 +214,39 @@ export function ApplicationReviewView({
                   <div className="flex items-center gap-2">
                     {isPending && (
                       <>
-                        <button
-                          type="button"
+                        <ShimmerButton
+                          variant="danger"
+                          size="sm"
                           onClick={() => setRejectingApp(app)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors font-display"
                         >
                           Reject
-                        </button>
+                        </ShimmerButton>
                         {app.unit?.availabilityStatus && app.unit.availabilityStatus !== 'AVAILABLE' ? (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 font-display">
+                          <StatusPill variant="warning">
                             Unit {app.unit.availabilityStatus.toLowerCase().replace('_', ' ')}
-                          </span>
+                          </StatusPill>
                         ) : (
-                          <button
-                            type="button"
+                          <ShimmerButton
+                            variant="primary"
+                            size="sm"
                             onClick={() => setSelectedApp(app)}
-                            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors flex items-center gap-1.5 font-display shadow-xs"
+                            leftIcon={<CheckCircle2 className="w-4 h-4" />}
                           >
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>Approve & Generate Lease</span>
-                          </button>
+                            Approve & Generate Lease
+                          </ShimmerButton>
                         )}
                       </>
                     )}
 
                     {isApproved && (
-                      <button
-                        type="button"
+                      <ShimmerButton
+                        variant="outline"
+                        size="sm"
                         onClick={onViewLeases}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-1.5 font-display"
+                        rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
-                        <span>View Lease Status</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                        View Lease Status
+                      </ShimmerButton>
                     )}
                   </div>
                 </div>
@@ -270,12 +268,14 @@ export function ApplicationReviewView({
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-slate-900 font-display">Confirm Application Approval</h3>
-                <button
+                <ShimmerButton
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSelectedApp(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                  className="px-2"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </ShimmerButton>
               </div>
 
               <p className="text-xs leading-relaxed text-slate-600">
@@ -300,21 +300,22 @@ export function ApplicationReviewView({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
+                <ShimmerButton
+                  variant="outline"
+                  size="md"
                   onClick={() => setSelectedApp(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors font-display"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </ShimmerButton>
+                <ShimmerButton
+                  variant="primary"
+                  size="md"
                   disabled={isProcessing}
+                  isLoading={isProcessing}
                   onClick={() => handleConfirmApprove(selectedApp)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors font-display shadow-xs disabled:opacity-50"
                 >
-                  {isProcessing ? 'Generating Lease…' : 'Approve & Issue Lease'}
-                </button>
+                  Approve & Issue Lease
+                </ShimmerButton>
               </div>
             </motion.div>
           </div>
@@ -333,12 +334,14 @@ export function ApplicationReviewView({
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-slate-900 font-display">Reject Application</h3>
-                <button
+                <ShimmerButton
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setRejectingApp(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                  className="px-2"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </ShimmerButton>
               </div>
 
               <p className="text-xs text-slate-600">
@@ -346,38 +349,41 @@ export function ApplicationReviewView({
                 {rejectingApp.unit?.unitIdentifier}.
               </p>
 
-              <div>
-                <label className="text-xs font-semibold block mb-1.5 font-display text-slate-700">
-                  Reason for rejection
-                </label>
-                <select
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                >
-                  <option value="Unit no longer available">Unit no longer available / leased to another tenant</option>
-                  <option value="Incompatible move-in date">Incompatible move-in timeline</option>
-                  <option value="Application qualifications not met">Application qualifications not met</option>
-                  <option value="Other">Other reason</option>
-                </select>
-              </div>
+              <FormSelect
+                label="Reason for rejection"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                options={[
+                  {
+                    value: 'Unit no longer available',
+                    label: 'Unit no longer available / leased to another tenant',
+                  },
+                  { value: 'Incompatible move-in date', label: 'Incompatible move-in timeline' },
+                  {
+                    value: 'Application qualifications not met',
+                    label: 'Application qualifications not met',
+                  },
+                  { value: 'Other', label: 'Other reason' },
+                ]}
+              />
 
               <div className="flex items-center justify-end gap-2.5 pt-2">
-                <button
-                  type="button"
+                <ShimmerButton
+                  variant="outline"
+                  size="md"
                   onClick={() => setRejectingApp(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors font-display"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </ShimmerButton>
+                <ShimmerButton
+                  variant="danger"
+                  size="md"
                   disabled={isProcessing}
+                  isLoading={isProcessing}
                   onClick={handleConfirmReject}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 transition-colors font-display shadow-xs disabled:opacity-50"
                 >
-                  {isProcessing ? 'Rejecting…' : 'Confirm Rejection'}
-                </button>
+                  Confirm Rejection
+                </ShimmerButton>
               </div>
             </motion.div>
           </div>
