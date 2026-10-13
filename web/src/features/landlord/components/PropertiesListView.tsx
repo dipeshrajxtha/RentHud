@@ -13,14 +13,16 @@ import {
   Trash2,
   Edit2,
   Camera,
+  User,
 } from 'lucide-react';
-import type { LandlordProperty, LandlordUnit } from '@/types/landlord';
+import type { LandlordProperty, LandlordUnit, LandlordLease } from '@/types/landlord';
 import { FormInput, StatusPill } from '@/components/ui';
 
 type OccupancyFilter = 'ALL' | 'OCCUPIED' | 'PARTIAL' | 'VACANT';
 
 interface PropertiesListViewProps {
   properties: LandlordProperty[];
+  leases?: LandlordLease[];
   onOpenAddProperty: () => void;
   onOpenEditProperty: (property: LandlordProperty) => void;
   onOpenManagePhotos: (property: LandlordProperty) => void;
@@ -32,6 +34,7 @@ interface PropertiesListViewProps {
 
 export function PropertiesListView({
   properties,
+  leases = [],
   onOpenAddProperty,
   onOpenEditProperty,
   onOpenManagePhotos,
@@ -331,6 +334,9 @@ export function PropertiesListView({
                           {units.map((unit) => {
                             const isAvailable = unit.availabilityStatus === 'AVAILABLE';
                             const isOnRent = unit.availabilityStatus === 'ON_RENT';
+                            const activeLease = leases.find(
+                              (l) => l.unitId === unit.id && l.status === 'active'
+                            );
 
                             return (
                               <div
@@ -376,6 +382,17 @@ export function PropertiesListView({
                                       </span>
                                     )}
                                   </div>
+
+                                  {/* Active Tenant Badge */}
+                                  {isOnRent && activeLease && (
+                                    <div className="mt-2.5 p-2 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center gap-2">
+                                      <User className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                      <div className="text-[11px] truncate">
+                                        <span className="text-emerald-800">Tenant: </span>
+                                        <strong className="text-emerald-950 font-bold">{activeLease.tenantName}</strong>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="pt-2 flex items-center justify-end gap-1.5 border-t border-slate-100">

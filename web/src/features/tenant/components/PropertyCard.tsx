@@ -13,8 +13,9 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Heart, MapPin, Bed, Bath, ShieldCheck, Star, ArrowUpRight, Sparkles } from 'lucide-react';
+import { Heart, MapPin, Bed, Bath, ShieldCheck, Star, ArrowUpRight, Sparkles, Camera } from 'lucide-react';
 import type { PropertyListing } from '@/types/tenant';
+import type { SurveyMatchResult } from '../utils/surveyMatcher';
 
 interface PropertyCardProps {
   property: PropertyListing;
@@ -22,6 +23,7 @@ interface PropertyCardProps {
   onToggleSave: (id: string) => void;
   onSelect: (property: PropertyListing) => void;
   onApply: (property: PropertyListing) => void;
+  surveyMatch?: SurveyMatchResult;
 }
 
 export function PropertyCard({
@@ -30,6 +32,7 @@ export function PropertyCard({
   onToggleSave,
   onSelect,
   onApply,
+  surveyMatch,
 }: PropertyCardProps) {
   const [imageError, setImageError] = useState(false);
   const fallbackImage =
@@ -39,6 +42,7 @@ export function PropertyCard({
   const maxBedrooms = Math.max(...property.units.map((u) => u.bedrooms));
   const bedroomsLabel =
     minBedrooms === maxBedrooms ? `${minBedrooms} BHK` : `${minBedrooms}–${maxBedrooms} BHK`;
+  const photosCount = property.photos?.length || (property.coverPhotoUrl ? 1 : 0);
 
   return (
     <div
@@ -57,8 +61,13 @@ export function PropertyCard({
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
-          {/* Verification Badge */}
-          {property.verificationBadges.length > 0 ? (
+          {/* Survey Match or Verification Badge */}
+          {surveyMatch?.isPerfectMatch ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-sm backdrop-blur-xs">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+              <span>100% Survey Match</span>
+            </span>
+          ) : property.verificationBadges.length > 0 ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90 shadow-xs backdrop-blur-xs">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Verified Title</span>
@@ -91,9 +100,17 @@ export function PropertyCard({
 
         {/* Bottom image overlay pills */}
         <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[11px] font-semibold z-10 pointer-events-none">
-          <span className="px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-xs text-slate-800 border border-slate-200/80 shadow-xs">
-            {property.availableUnitsCount} {property.availableUnitsCount === 1 ? 'unit' : 'units'} left
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur-xs text-slate-800 border border-slate-200/80 shadow-xs">
+              {property.availableUnitsCount} {property.availableUnitsCount === 1 ? 'unit' : 'units'} left
+            </span>
+            {photosCount > 1 && (
+              <span className="px-2 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-white border border-white/20 flex items-center gap-1">
+                <Camera className="w-3 h-3" />
+                <span>{photosCount}</span>
+              </span>
+            )}
+          </div>
           <span className="px-2.5 py-1 rounded-lg bg-slate-900/75 backdrop-blur-xs text-white">
             {property.city}
           </span>

@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Calendar, MessageSquare, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, MessageSquare, ShieldCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { PropertyListing, UnitDetail, RentalApplication } from '@/types/tenant';
 import { tenantService } from '@/features/tenant/tenant.service';
 import { FormInput, FormSelect, FormTextarea, ShimmerButton, StatusPill } from '@/components/ui';
@@ -43,10 +43,12 @@ export function RentalApplicationModal({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedApp, setSubmittedApp] = useState<RentalApplication | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+    setErrorMsg(null);
     setIsSubmitting(true);
 
     try {
@@ -69,8 +71,8 @@ export function RentalApplicationModal({
 
       setSubmittedApp(app);
       onApplicationSubmitted(app);
-    } catch {
-      // Handled
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to submit application');
     } finally {
       setIsSubmitting(false);
     }
@@ -160,6 +162,16 @@ export function RentalApplicationModal({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {errorMsg && (
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold">Cannot Submit Rental Application</p>
+                    <p className="leading-relaxed text-amber-800">{errorMsg}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Property & Unit Card */}
               <div className="p-4 rounded-2xl space-y-3 bg-slate-50/80 border border-slate-200/90">
                 <div className="flex justify-between items-start">

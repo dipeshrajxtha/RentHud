@@ -12,6 +12,7 @@ import {
 } from './tenancy.schemas.js';
 import {
   leaseIdParamSchema,
+  signLeaseSchema,
   leaseQuerySchema,
   terminateLeaseSchema,
   createTenancyDisputeSchema,
@@ -98,6 +99,7 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
   router.post(
     '/leases/:id/sign',
     validate(leaseIdParamSchema, 'params'),
+    validate(signLeaseSchema, 'body'),
     tenancyController.signLeaseAgreement
   );
 

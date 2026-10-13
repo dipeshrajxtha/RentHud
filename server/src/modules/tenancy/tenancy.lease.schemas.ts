@@ -8,6 +8,14 @@ export const leaseIdParamSchema = z.object({
 
 export type LeaseIdParam = z.infer<typeof leaseIdParamSchema>;
 
+/** Request body schema for signing lease with optional signature & biometric PNGs */
+export const signLeaseSchema = z.object({
+  signatureData: z.string().trim().optional(),
+  biometricData: z.string().trim().optional(),
+});
+
+export type SignLeaseInput = z.infer<typeof signLeaseSchema>;
+
 /** Query parameters for listing leases */
 export const leaseQuerySchema = z.object({
   status: z

@@ -18,6 +18,7 @@ import {
 } from './tenancy.service.js';
 import type {
   LeaseIdParam,
+  SignLeaseInput,
   LeaseQuery,
   TerminateLeaseInput,
   CreateTenancyDisputeInput,
@@ -211,7 +212,7 @@ export async function getLeaseAgreementById(
  * Activates the lease atomically when both parties have signed.
  */
 export async function signLeaseAgreement(
-  req: Request<LeaseIdParam>,
+  req: Request<LeaseIdParam, any, SignLeaseInput>,
   res: Response,
   next: NextFunction
 ): Promise<void> {
@@ -221,7 +222,8 @@ export async function signLeaseAgreement(
       db,
       req.params.id,
       req.user!.id,
-      req.user!.roles as UserRole[]
+      req.user!.roles as UserRole[],
+      req.body
     );
     realtimeHub.emitEvent('tenancy:lease_signed', result);
     sendSuccess(res, result, 200);

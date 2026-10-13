@@ -241,10 +241,21 @@ export const landlordService = {
     return request<LandlordLease>(`/api/tenancy/leases/${id}`, { method: 'GET' }, token);
   },
 
-  async signLease(id: string, token: string): Promise<LandlordLease> {
+  async signLease(
+    id: string,
+    token: string,
+    signatureData?: string,
+    biometricData?: string
+  ): Promise<LandlordLease> {
     return request<LandlordLease>(
       `/api/tenancy/leases/${id}/sign`,
-      { method: 'POST' },
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ...(signatureData ? { signatureData } : {}),
+          ...(biometricData ? { biometricData } : {}),
+        }),
+      },
       token
     );
   },

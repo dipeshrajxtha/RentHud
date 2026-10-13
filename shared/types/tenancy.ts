@@ -71,6 +71,10 @@ export interface PublicTenancySummary {
   agreedDeposit: number;
   tenantSignedAt: Date | null;
   landlordSignedAt: Date | null;
+  tenantSignatureUrl?: string | null;
+  tenantBiometricUrl?: string | null;
+  landlordSignatureUrl?: string | null;
+  landlordBiometricUrl?: string | null;
   signedAt: Date | null;
   terminatedAt: Date | null;
   createdAt: Date;

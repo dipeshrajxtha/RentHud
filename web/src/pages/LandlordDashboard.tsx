@@ -212,12 +212,14 @@ export function LandlordDashboard() {
   }, [accessToken, showToast]);
 
   // ── Lease handlers ─────────────────────────────────────────────────────
-  const handleSignLease = useCallback(async (leaseId: string) => {
+  const handleSignLease = useCallback(async (leaseId: string, signatureData?: string, biometricData?: string) => {
     if (!accessToken) return;
-    const updated = await landlordService.signLease(leaseId, accessToken);
+    const updated = await landlordService.signLease(leaseId, accessToken, signatureData, biometricData);
     setLeases((prev) => prev.map((l) => l.id === leaseId ? { ...l, ...updated } : l));
     if (updated.status === 'active') {
       showToast('✓ Both parties have signed — tenancy is now active');
+      void landlordService.getMyProperties(accessToken).then(setProperties);
+      void landlordService.getApplications(accessToken).then(setApplications);
     } else {
       showToast("✓ Lease signed — awaiting tenant's counter-signature");
     }
@@ -318,6 +320,7 @@ export function LandlordDashboard() {
         return (
           <PropertiesListView
             properties={properties}
+            leases={leases}
             onOpenAddProperty={() => setAddPropertyOpen(true)}
             onOpenEditProperty={(p) => setEditingProperty(p)}
             onOpenManagePhotos={(p) => setManagePhotosProperty(p)}
@@ -331,6 +334,7 @@ export function LandlordDashboard() {
         return (
           <ApplicationReviewView
             applications={applications}
+            leases={leases}
             onApprove={handleApproveApp}
             onReject={handleRejectApp}
             onViewLeases={() => setActiveTab('leases')}

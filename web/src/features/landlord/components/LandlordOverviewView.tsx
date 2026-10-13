@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Plus,
   Home,
+  CheckCircle2,
 } from 'lucide-react';
 import { BentoGrid, BentoCard, ShimmerButton, StatusPill } from '@/components/ui';
 import type {
@@ -227,6 +228,77 @@ export function LandlordOverviewView({
                 >
                   Review Application
                 </ShimmerButton>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active Tenancies & Current Residents */}
+      {activeLeases.length > 0 && (
+        <div className="bg-white rounded-3xl border border-emerald-200/90 shadow-xs p-6 sm:p-7 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <h2 className="text-base font-bold text-slate-900 font-display">
+                  Active Tenancies & Current Residents ({activeLeases.length})
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500">
+                Ratified residential agreements currently active under Muluki Civil Code 2074
+              </p>
+            </div>
+            <ShimmerButton
+              variant="outline"
+              size="sm"
+              onClick={() => onNavigateTab('leases')}
+              rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+            >
+              All Leases Hub
+            </ShimmerButton>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {activeLeases.map((lease) => (
+              <div
+                key={lease.id}
+                className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-200/80 flex flex-col justify-between space-y-3 hover:bg-emerald-50/70 transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <StatusPill variant="success" size="sm" icon={<CheckCircle2 className="w-3 h-3" />}>
+                      Active Tenant
+                    </StatusPill>
+                    <span className="font-mono text-[10px] text-slate-400">#{lease.id.slice(0, 8)}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                      {lease.tenantName?.[0] ?? 'T'}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 font-display">{lease.tenantName}</p>
+                      <p className="text-[10px] text-slate-500">Resident</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-slate-800">
+                    {lease.propertyTitle} &middot; <span className="text-blue-700">{lease.unitIdentifier}</span>
+                  </p>
+                  <p className="text-[11px] text-emerald-800 font-bold mt-1">
+                    NPR {lease.agreedMonthlyRent.toLocaleString()} / mo
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenLeaseModal(lease)}
+                  className="w-full py-2 px-3 rounded-xl bg-white hover:bg-emerald-100/50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>View Legal Lease</span>
+                </button>
               </div>
             ))}
           </div>

@@ -176,6 +176,14 @@ export interface TenanciesTable {
   tenant_signed_at: Date | null;
   /** Set when the landlord calls POST /leases/:id/sign. */
   landlord_signed_at: Date | null;
+  /** Uploaded digital signature PNG URL for tenant */
+  tenant_signature_url: string | null;
+  /** Uploaded biometric thumbprint/scan PNG URL for tenant */
+  tenant_biometric_url: string | null;
+  /** Uploaded digital signature PNG URL for landlord */
+  landlord_signature_url: string | null;
+  /** Uploaded biometric thumbprint/scan PNG URL for landlord */
+  landlord_biometric_url: string | null;
   /** Sealed timestamp — written only when both parties have signed. */
   signed_at: Date | null;
   terminated_at: Date | null;

@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   Clock, CheckCircle2, XCircle, AlertTriangle,
   User, Calendar, DollarSign, Pen, ChevronDown, ChevronUp,
-  ShieldAlert, Building2, X,
+  ShieldAlert, Building2, X, Upload, Fingerprint, Trash2, PenTool,
 } from 'lucide-react';
 import type { LandlordLease, TenancyStatus } from '@/types/landlord';
 import {
@@ -31,7 +31,7 @@ type LeaseFilter = 'ALL' | 'pending_signature' | 'active' | 'completed' | 'termi
 interface LandlordLeasesViewProps {
   leases: LandlordLease[];
   loading: boolean;
-  onSignLease: (leaseId: string) => Promise<void>;
+  onSignLease: (leaseId: string, signatureData?: string, biometricData?: string) => Promise<void>;
   onTerminateLease: (leaseId: string, reasonCode: string, narrative: string) => Promise<void>;
 }
 
@@ -91,8 +91,43 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
   const [terminationReason, setTerminationReason] = useState(TERMINATION_REASONS[0]);
   const [terminationNarrative, setTerminationNarrative] = useState('');
   const [signConfirmed, setSignConfirmed] = useState(false);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [biometricData, setBiometricData] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const sigInputRef = React.useRef<HTMLInputElement>(null);
+  const bioInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'signature' | 'biometric'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file (PNG/JPEG).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image size must be under 5MB.');
+      return;
+    }
+
+    setUploadError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      if (type === 'signature') {
+        setSignatureData(result);
+      } else {
+        setBiometricData(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const filtered = leases.filter((l) => {
     if (filter === 'ALL') return true;
@@ -110,10 +145,19 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
   async function handleConfirmSign() {
     if (!signingLease || !signConfirmed) return;
     setIsProcessing(true);
+    setUploadError(null);
     try {
-      await onSignLease(signingLease.id);
+      await onSignLease(
+        signingLease.id,
+        signatureData || undefined,
+        biometricData || undefined
+      );
       setSigningLease(null);
       setSignConfirmed(false);
+      setSignatureData(null);
+      setBiometricData(null);
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to countersign lease');
     } finally {
       setIsProcessing(false);
     }
@@ -301,7 +345,7 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
 
                   {/* Expanded Lease Details */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600 space-y-2">
+                    <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600 space-y-3">
                       <div className="grid sm:grid-cols-3 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
                         <div>
                           <span className="text-slate-400 block text-[11px]">Security Deposit:</span>
@@ -314,6 +358,59 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                         <div>
                           <span className="text-slate-400 block text-[11px]">Statutory Compliance:</span>
                           <span className="text-emerald-700 font-bold">Muluki Civil Code Verified</span>
+                        </div>
+                      </div>
+
+                      {/* Display Signatures & Biometric PNGs if available */}
+                      <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                        {/* Tenant Execution Box */}
+                        <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                          <span className="text-[11px] font-bold text-slate-700 block">
+                            Tenant Execution: {lease.tenantName ?? 'Tenant'}
+                          </span>
+                          <div className="grid grid-cols-2 gap-2 text-center">
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/60 flex flex-col items-center justify-center min-h-[60px]">
+                              <span className="text-[10px] text-slate-400 block mb-1 font-semibold">Digital Sign</span>
+                              {lease.tenantSignatureUrl ? (
+                                <img src={lease.tenantSignatureUrl} alt="Tenant Signature" className="max-h-10 max-w-full object-contain" />
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">{lease.tenantSignedAt ? 'E-Signed' : 'Pending'}</span>
+                              )}
+                            </div>
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/60 flex flex-col items-center justify-center min-h-[60px]">
+                              <span className="text-[10px] text-slate-400 block mb-1 font-semibold">Biometric PNG</span>
+                              {lease.tenantBiometricUrl ? (
+                                <img src={lease.tenantBiometricUrl} alt="Tenant Biometric" className="max-h-10 max-w-full object-contain" />
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">Not Attached</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Landlord Execution Box */}
+                        <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+                          <span className="text-[11px] font-bold text-slate-700 block">
+                            Landlord Execution
+                          </span>
+                          <div className="grid grid-cols-2 gap-2 text-center">
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/60 flex flex-col items-center justify-center min-h-[60px]">
+                              <span className="text-[10px] text-slate-400 block mb-1 font-semibold">Digital Sign</span>
+                              {lease.landlordSignatureUrl ? (
+                                <img src={lease.landlordSignatureUrl} alt="Landlord Signature" className="max-h-10 max-w-full object-contain" />
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">{lease.landlordSignedAt ? 'E-Signed' : 'Pending'}</span>
+                              )}
+                            </div>
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-200/60 flex flex-col items-center justify-center min-h-[60px]">
+                              <span className="text-[10px] text-slate-400 block mb-1 font-semibold">Biometric PNG</span>
+                              {lease.landlordBiometricUrl ? (
+                                <img src={lease.landlordBiometricUrl} alt="Landlord Biometric" className="max-h-10 max-w-full object-contain" />
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">Not Attached</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -377,15 +474,125 @@ export function LandlordLeasesView({ leases, loading, onSignLease, onTerminateLe
                   </div>
                 </div>
 
-                {/* Tenant signed indicator */}
+                {/* Tenant signed indicator & previews */}
                 {signingLease.tenantSignedAt && (
-                  <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl w-full">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="text-xs font-semibold">
-                      Tenant recorded digital signature on {new Date(signingLease.tenantSignedAt).toLocaleDateString()}
-                    </span>
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl w-full space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-xs font-semibold">
+                        Tenant recorded digital signature on {new Date(signingLease.tenantSignedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {(signingLease.tenantSignatureUrl || signingLease.tenantBiometricUrl) && (
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        {signingLease.tenantSignatureUrl && (
+                          <div className="bg-white p-2 rounded-lg border border-emerald-200 text-center">
+                            <span className="text-[10px] text-slate-400 block mb-1">Tenant Signature</span>
+                            <img src={signingLease.tenantSignatureUrl} alt="" className="max-h-12 max-w-full mx-auto object-contain" />
+                          </div>
+                        )}
+                        {signingLease.tenantBiometricUrl && (
+                          <div className="bg-white p-2 rounded-lg border border-emerald-200 text-center">
+                            <span className="text-[10px] text-slate-400 block mb-1">Tenant Biometric Thumbprint</span>
+                            <img src={signingLease.tenantBiometricUrl} alt="" className="max-h-12 max-w-full mx-auto object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
+
+                {/* Landlord Local Device PNG Uploads */}
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 font-display">
+                    <PenTool className="w-3.5 h-3.5 text-blue-600" />
+                    Affix Landlord Digital Signature & Biometric Stamp
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Upload your digital signature PNG and biometric thumbprint scan PNG from your local device.
+                  </p>
+
+                  {uploadError && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                      {uploadError}
+                    </div>
+                  )}
+
+                  {/* Hidden inputs */}
+                  <input
+                    type="file"
+                    ref={sigInputRef}
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, 'signature')}
+                  />
+                  <input
+                    type="file"
+                    ref={bioInputRef}
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, 'biometric')}
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Digital Signature Upload Box */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center min-h-[100px] text-center space-y-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <PenTool className="w-3 h-3 text-blue-500" /> Landlord Signature (PNG)
+                      </span>
+                      {signatureData ? (
+                        <>
+                          <img src={signatureData} alt="Preview" className="max-h-14 max-w-full object-contain" />
+                          <button
+                            type="button"
+                            onClick={() => setSignatureData(null)}
+                            className="text-[10px] text-rose-600 hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => sigInputRef.current?.click()}
+                          className="py-1.5 px-3 rounded-lg border border-dashed border-blue-300 bg-blue-50/60 hover:bg-blue-50 text-blue-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Select Sign PNG</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Biometric Thumbprint Upload Box */}
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center min-h-[100px] text-center space-y-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Fingerprint className="w-3 h-3 text-emerald-600" /> Biometric Thumbprint (PNG)
+                      </span>
+                      {biometricData ? (
+                        <>
+                          <img src={biometricData} alt="Preview" className="max-h-14 max-w-full object-contain" />
+                          <button
+                            type="button"
+                            onClick={() => setBiometricData(null)}
+                            className="text-[10px] text-rose-600 hover:underline flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Remove
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => bioInputRef.current?.click()}
+                          className="py-1.5 px-3 rounded-lg border border-dashed border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50 text-emerald-700 text-[11px] font-semibold flex items-center gap-1.5 transition-colors"
+                        >
+                          <Fingerprint className="w-3.5 h-3.5" />
+                          <span>Select Bio PNG</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Confirmation checkbox */}
                 <label className="flex items-start gap-3 cursor-pointer p-3.5 rounded-2xl border border-blue-200 bg-blue-50/50">

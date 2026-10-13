@@ -369,6 +369,127 @@ export const NEPAL_LOCATIONS: LocationInfo[] = [
     longitude: 85.4410,
     aliases: ['kamalbinayak', 'kamalpokhari bhaktapur'],
   },
+  {
+    name: 'Changunarayan',
+    city: 'Bhaktapur',
+    latitude: 27.7161,
+    longitude: 85.4277,
+    aliases: ['changunarayan', 'changu narayan', 'changu', 'jhaukhel'],
+  },
+  {
+    name: 'Nagarkot',
+    city: 'Bhaktapur',
+    latitude: 27.7174,
+    longitude: 85.5204,
+    aliases: ['nagarkot', 'nagarkot tower', 'telkot'],
+  },
+
+  // ── Eastern & Outskirts Kathmandu ─────────────────────────────
+  {
+    name: 'Sankhu (Sakhu)',
+    city: 'Kathmandu',
+    latitude: 27.7317,
+    longitude: 85.4628,
+    aliases: [
+      'sakhu',
+      'sankhu',
+      'shankharapur',
+      'shankharapur municipality',
+      'sankhu bazar',
+      'sakhu bazar',
+      'salinadi',
+      'sali nadi',
+      'sanku',
+      'sakho',
+      'bajrayogini',
+    ],
+  },
+  {
+    name: 'Sundarijal',
+    city: 'Kathmandu',
+    latitude: 27.7570,
+    longitude: 85.4231,
+    aliases: ['sundarijal', 'shivapuri gate', 'gokarna'],
+  },
+  {
+    name: 'Kapan',
+    city: 'Kathmandu',
+    latitude: 27.7389,
+    longitude: 85.3656,
+    aliases: ['kapan', 'kapan monastery', 'faika'],
+  },
+  {
+    name: 'Golfutar',
+    city: 'Kathmandu',
+    latitude: 27.7511,
+    longitude: 85.3567,
+    aliases: ['golfutar', 'hattigauda', 'pasikot', 'chapali'],
+  },
+  {
+    name: 'Dhapasi',
+    city: 'Kathmandu',
+    latitude: 27.7478,
+    longitude: 85.3289,
+    aliases: ['dhapasi', 'dhapasi height'],
+  },
+  {
+    name: 'Balaju',
+    city: 'Kathmandu',
+    latitude: 27.7344,
+    longitude: 85.3039,
+    aliases: ['balaju', 'balaju bypass', 'banasthali', 'machhapokhari'],
+  },
+
+  // ── Southern Valley & Greater Suburbs ─────────────────────────
+  {
+    name: 'Godawari',
+    city: 'Lalitpur',
+    latitude: 27.5936,
+    longitude: 85.3853,
+    aliases: ['godawari', 'godavari', 'botanical garden', 'badegaun'],
+  },
+  {
+    name: 'Chapagaun',
+    city: 'Lalitpur',
+    latitude: 27.6019,
+    longitude: 85.3283,
+    aliases: ['chapagaun', 'bajrabarahi', 'thecho'],
+  },
+  {
+    name: 'Lubhu',
+    city: 'Lalitpur',
+    latitude: 27.6475,
+    longitude: 85.3683,
+    aliases: ['lubhu', 'tikathali', 'lamatar'],
+  },
+  {
+    name: 'Harisiddhi',
+    city: 'Lalitpur',
+    latitude: 27.6444,
+    longitude: 85.3417,
+    aliases: ['harisiddhi', 'nepal cancer hospital', 'thaiba'],
+  },
+  {
+    name: 'Bungamati',
+    city: 'Lalitpur',
+    latitude: 27.6256,
+    longitude: 85.3006,
+    aliases: ['bungamati', 'khokana', 'chhyasikhel'],
+  },
+  {
+    name: 'Chobhar',
+    city: 'Kathmandu',
+    latitude: 27.6622,
+    longitude: 85.2894,
+    aliases: ['chobhar', 'chovar', 'chobhar gorge', 'jal binayak'],
+  },
+  {
+    name: 'Banepa',
+    city: 'Other',
+    latitude: 27.6297,
+    longitude: 85.5217,
+    aliases: ['banepa', 'kavre', 'dhulikhel', 'panauti'],
+  },
 ];
 
 /**
@@ -396,6 +517,19 @@ export function resolveLocationFromQuery(query: string): LocationInfo | null {
       })
     ) {
       return loc;
+    }
+  }
+
+  // 3. Prefix & partial match for incremental typing (>= 3 chars)
+  if (clean.length >= 3) {
+    for (const loc of NEPAL_LOCATIONS) {
+      if (
+        loc.aliases.some(
+          (a) => a.startsWith(clean) || clean.startsWith(a) || a.includes(clean)
+        )
+      ) {
+        return loc;
+      }
     }
   }
 

@@ -112,7 +112,9 @@ export const tenantService = {
             minMonthlyRent: p.minMonthlyRent ?? (p.units?.[0]?.monthlyRent || 0),
             maxMonthlyRent: p.maxMonthlyRent ?? (p.units?.[0]?.monthlyRent || 0),
             coverPhotoUrl: p.coverPhotoUrl ?? (p.photos?.[0]?.url || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80'),
-            photos: p.photos ?? [],
+            photos: Array.isArray(p.photos) && p.photos.length > 0
+              ? p.photos
+              : (p.coverPhotoUrl ? [{ id: '0', url: p.coverPhotoUrl, isCover: true }] : []),
             amenities: p.amenities ?? [],
             units: (p.units ?? []).map((u: any) => ({
               id: u.id,
@@ -453,6 +455,10 @@ export const tenantService = {
             agreedDeposit: Number(raw.agreedDeposit),
             tenantSignedAt: raw.tenantSignedAt ? String(raw.tenantSignedAt) : null,
             landlordSignedAt: raw.landlordSignedAt ? String(raw.landlordSignedAt) : null,
+            tenantSignatureUrl: raw.tenantSignatureUrl ?? null,
+            tenantBiometricUrl: raw.tenantBiometricUrl ?? null,
+            landlordSignatureUrl: raw.landlordSignatureUrl ?? null,
+            landlordBiometricUrl: raw.landlordBiometricUrl ?? null,
             signedAt: raw.signedAt ? String(raw.signedAt) : null,
             terminatedAt: raw.terminatedAt ? String(raw.terminatedAt) : null,
             createdAt: String(raw.createdAt),
@@ -473,7 +479,12 @@ export const tenantService = {
     return [];
   },
 
-  async signLease(leaseId: string, accessToken?: string | null): Promise<LeaseAgreement> {
+  async signLease(
+    leaseId: string,
+    accessToken?: string | null,
+    signatureData?: string,
+    biometricData?: string
+  ): Promise<LeaseAgreement> {
     if (!accessToken) {
       throw new Error('Authentication required to sign lease');
     }
@@ -485,6 +496,10 @@ export const tenantService = {
         Authorization: `Bearer ${accessToken}`,
       },
       credentials: 'include',
+      body: JSON.stringify({
+        ...(signatureData ? { signatureData } : {}),
+        ...(biometricData ? { biometricData } : {}),
+      }),
     });
 
     const json = await res.json();
@@ -507,6 +522,10 @@ export const tenantService = {
       agreedDeposit: Number(raw.agreedDeposit),
       tenantSignedAt: raw.tenantSignedAt ? String(raw.tenantSignedAt) : null,
       landlordSignedAt: raw.landlordSignedAt ? String(raw.landlordSignedAt) : null,
+      tenantSignatureUrl: raw.tenantSignatureUrl ?? null,
+      tenantBiometricUrl: raw.tenantBiometricUrl ?? null,
+      landlordSignatureUrl: raw.landlordSignatureUrl ?? null,
+      landlordBiometricUrl: raw.landlordBiometricUrl ?? null,
       signedAt: raw.signedAt ? String(raw.signedAt) : null,
       terminatedAt: raw.terminatedAt ? String(raw.terminatedAt) : null,
       createdAt: String(raw.createdAt),

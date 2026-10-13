@@ -131,6 +131,7 @@ function MapController({
 }) {
   const map = useMap();
   const prevCenterRef = useRef<[number, number]>(center);
+  const initialLoadRef = useRef(false);
 
   // When center coordinates change, fly map to new center immediately
   useEffect(() => {
@@ -139,27 +140,25 @@ function MapController({
       prevCenterRef.current[1] !== center[1]
     ) {
       prevCenterRef.current = center;
-      map.flyTo(center, Math.max(map.getZoom(), 13), { duration: 0.8 });
+      map.flyTo(center, 14, { duration: 0.8 });
     }
   }, [center, map]);
 
-  // When properties list changes
+  // When properties list changes initially
   useEffect(() => {
-    if (properties.length > 0) {
+    if (!initialLoadRef.current && properties.length > 0) {
+      initialLoadRef.current = true;
       const validCoords = properties
         .filter((p) => p.location?.latitude && p.location?.longitude)
         .map((p) => [p.location.latitude, p.location.longitude] as [number, number]);
 
       if (validCoords.length > 0) {
-        // Include center so both center radius and properties are framed nicely
         const allPoints: [number, number][] = [...validCoords, center];
         const bounds = L.latLngBounds(allPoints);
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
-    } else {
-      map.setView(center, 13);
     }
-  }, [properties, map, center]);
+  }, [properties, center, map]);
 
   return null;
 }

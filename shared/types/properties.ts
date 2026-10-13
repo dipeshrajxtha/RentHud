@@ -65,6 +65,7 @@ export interface PublicPropertySummary {
   minMonthlyRent: number | null;
   maxMonthlyRent: number | null;
   coverPhotoUrl: string | null;
+  photos?: PublicPhoto[];
   amenities: PublicAmenity[];
   units: PublicUnitSummary[];
 }

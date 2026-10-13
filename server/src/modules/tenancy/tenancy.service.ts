@@ -11,9 +11,11 @@ import type {
   CreateRentalRequestInput,
   RentalRequestQuery,
 } from './tenancy.schemas.js';
-import type {
+import {
   CreateTenancyDisputeInput,
+  SignLeaseInput,
 } from './tenancy.lease.schemas.js';
+import { saveBase64Image } from '../../common/utils/storage.js';
 import type {
   PublicRentalRequestSummary,
   PublicTenancySummary,
@@ -660,6 +662,10 @@ function mapTenancyRow(row: any): PublicTenancySummary {
     agreedDeposit: Number(row.agreed_deposit),
     tenantSignedAt: row.tenant_signed_at,
     landlordSignedAt: row.landlord_signed_at,
+    tenantSignatureUrl: (row as any).tenant_signature_url ?? null,
+    tenantBiometricUrl: (row as any).tenant_biometric_url ?? null,
+    landlordSignatureUrl: (row as any).landlord_signature_url ?? null,
+    landlordBiometricUrl: (row as any).landlord_biometric_url ?? null,
     signedAt: row.signed_at,
     terminatedAt: row.terminated_at,
     createdAt: row.created_at,
@@ -732,6 +738,10 @@ export async function listLeases(
       't.agreed_deposit',
       't.tenant_signed_at',
       't.landlord_signed_at',
+      't.tenant_signature_url',
+      't.tenant_biometric_url',
+      't.landlord_signature_url',
+      't.landlord_biometric_url',
       't.signed_at',
       't.terminated_at',
       't.created_at',
@@ -788,6 +798,10 @@ export async function getLeaseById(
       't.agreed_deposit',
       't.tenant_signed_at',
       't.landlord_signed_at',
+      't.tenant_signature_url',
+      't.tenant_biometric_url',
+      't.landlord_signature_url',
+      't.landlord_biometric_url',
       't.signed_at',
       't.terminated_at',
       't.created_at',
@@ -835,7 +849,8 @@ export async function signLease(
   db: Kysely<Database>,
   leaseId: string,
   userId: string,
-  roles: UserRole[]
+  roles: UserRole[],
+  input?: SignLeaseInput
 ): Promise<PublicTenancySummary> {
   return await db.transaction().execute(async (trx) => {
     // 1. Lock the tenancy row
@@ -873,10 +888,29 @@ export async function signLease(
       throw new ConflictError('You have already signed this lease agreement');
     }
 
-    // 5. Record this party's signature
-    const signatureUpdate = isTenant
-      ? { tenant_signed_at: sql`NOW()` as any }
-      : { landlord_signed_at: sql`NOW()` as any };
+    // Save uploaded signature and biometric images if provided
+    let signatureUrl: string | null = null;
+    let biometricUrl: string | null = null;
+
+    if (input?.signatureData) {
+      signatureUrl = await saveBase64Image(input.signatureData, 'signatures');
+    }
+    if (input?.biometricData) {
+      biometricUrl = await saveBase64Image(input.biometricData, 'biometrics');
+    }
+
+    // 5. Record this party's signature and media
+    const signatureUpdate: Record<string, any> = isTenant
+      ? {
+          tenant_signed_at: sql`NOW()`,
+          ...(signatureUrl ? { tenant_signature_url: signatureUrl } : {}),
+          ...(biometricUrl ? { tenant_biometric_url: biometricUrl } : {}),
+        }
+      : {
+          landlord_signed_at: sql`NOW()`,
+          ...(signatureUrl ? { landlord_signature_url: signatureUrl } : {}),
+          ...(biometricUrl ? { landlord_biometric_url: biometricUrl } : {}),
+        };
 
     await trx
       .updateTable('tenancies')

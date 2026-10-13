@@ -33,6 +33,7 @@ import { PropertyMapView } from '@/features/tenant/components/PropertyMapView';
 import { PropertyFiltersDrawer } from '@/features/tenant/components/PropertyFiltersDrawer';
 import { PropertyCard } from '@/features/tenant/components/PropertyCard';
 import { PropertyDetailsModal } from '@/features/tenant/components/PropertyDetailsModal';
+import { evaluateSurveyMatch, type SurveyMatchResult } from '@/features/tenant/utils/surveyMatcher';
 import { RentalApplicationModal } from '@/features/tenant/components/RentalApplicationModal';
 import { ApplicationTrackingView } from '@/features/tenant/components/ApplicationTrackingView';
 import { TenancyDashboardView } from '@/features/tenant/components/TenancyDashboardView';
@@ -64,6 +65,7 @@ import {
   LogOut,
   Bell,
   Building2,
+  AlertTriangle,
 } from 'lucide-react';
 
 export type TenantTab =
@@ -124,11 +126,13 @@ export function TenantDashboard() {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [applications, setApplications] = useState<RentalApplication[]>([]);
+  const [leases, setLeases] = useState<LeaseAgreement[]>([]);
   const [activeLease, setActiveLease] = useState<LeaseAgreement | null>(null);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [maintenanceTickets, setMaintenanceTickets] = useState<MaintenanceRequest[]>([]);
   const [disputes, setDisputes] = useState<TenancyDispute[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTenancyWarning, setActiveTenancyWarning] = useState(false);
 
   // Filters
   const [filters, setFilters] = useState<SearchFilters>({
@@ -171,7 +175,10 @@ export function TenantDashboard() {
       setProperties(props);
       setSavedIds(saved);
       setApplications(apps);
-      setActiveLease(leases[0] ?? null);
+      setLeases(leases);
+      // Prioritize active tenancy first, then pending signature
+      const active = leases.find((l) => l.status === 'active') || leases[0] || null;
+      setActiveLease(active);
       setPayments(pmts);
       setMaintenanceTickets(maint);
       setDisputes(disps);
@@ -222,6 +229,21 @@ export function TenantDashboard() {
       centerCoords: { latitude: 27.708, longitude: 85.32 },
     });
 
+  const handleInitiateApply = (property: PropertyListing, unit?: UnitDetail) => {
+    // Prevent duplicate booking if tenant already has an active tenancy
+    if (activeLease && activeLease.status === 'active') {
+      setActiveTenancyWarning(true);
+      return;
+    }
+    const targetUnit =
+      unit ||
+      property.units.find((u) => u.availabilityStatus === 'AVAILABLE') ||
+      property.units[0];
+    if (targetUnit) {
+      setApplyModalData({ property, unit: targetUnit });
+    }
+  };
+
   async function handleSignOut() {
     setSigningOut(true);
     try {
@@ -232,6 +254,20 @@ export function TenantDashboard() {
   }
 
   const userPreferences = tenantService.getPreferences();
+
+  const surveyMatches = useMemo(() => {
+    const map = new Map<string, SurveyMatchResult>();
+    for (const p of properties) {
+      map.set(p.id, evaluateSurveyMatch(p, userPreferences));
+    }
+    return map;
+  }, [properties, userPreferences]);
+
+  const recommendedProperties = useMemo(() => {
+    if (!userPreferences) return [];
+    return properties.filter((p) => surveyMatches.get(p.id)?.isPerfectMatch);
+  }, [properties, surveyMatches, userPreferences]);
+
   const pendingPayments = payments.filter((p) => p.status === 'PENDING').length;
   const pendingApps = applications.filter((a) => a.status === 'pending').length;
   const openMaintenance = maintenanceTickets.filter((m) => m.status !== 'RESOLVED').length;
@@ -560,10 +596,7 @@ export function TenantDashboard() {
                     properties={properties}
                     selectedPropertyId={selectedPropertyDetails?.id}
                     onSelectProperty={(p) => setSelectedPropertyDetails(p)}
-                    onApplyProperty={(p) => {
-                      const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                      if (avail) setApplyModalData({ property: p, unit: avail });
-                    }}
+                    onApplyProperty={(p) => handleInitiateApply(p)}
                     radiusKm={filters.radiusKm ?? 10}
                     onRadiusChange={(km) =>
                       setFilters((prev) => ({
@@ -585,10 +618,8 @@ export function TenantDashboard() {
                           isSaved={savedIds.includes(property.id)}
                           onToggleSave={handleToggleSave}
                           onSelect={(p) => setSelectedPropertyDetails(p)}
-                          onApply={(p) => {
-                            const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                            if (avail) setApplyModalData({ property: p, unit: avail });
-                          }}
+                          onApply={(p) => handleInitiateApply(p)}
+                          surveyMatch={surveyMatches.get(property.id)}
                         />
                       ))}
                     </div>
@@ -597,10 +628,7 @@ export function TenantDashboard() {
                         properties={properties}
                         selectedPropertyId={selectedPropertyDetails?.id}
                         onSelectProperty={(p) => setSelectedPropertyDetails(p)}
-                        onApplyProperty={(p) => {
-                          const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                          if (avail) setApplyModalData({ property: p, unit: avail });
-                        }}
+                        onApplyProperty={(p) => handleInitiateApply(p)}
                         radiusKm={filters.radiusKm ?? 10}
                         onRadiusChange={(km) =>
                           setFilters((prev) => ({
@@ -632,20 +660,71 @@ export function TenantDashboard() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {properties.map((property) => (
-                      <PropertyCard
-                        key={property.id}
-                        property={property}
-                        isSaved={savedIds.includes(property.id)}
-                        onToggleSave={handleToggleSave}
-                        onSelect={(p) => setSelectedPropertyDetails(p)}
-                        onApply={(p) => {
-                          const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                          if (avail) setApplyModalData({ property: p, unit: avail });
-                        }}
-                      />
-                    ))}
+                  <div className="space-y-8">
+                    {/* 🌟 100% SURVEY MATCH RECOMMENDATIONS */}
+                    {recommendedProperties.length > 0 && (
+                      <div className="bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white rounded-3xl border border-amber-200/90 p-5 sm:p-6 space-y-4 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                              <Sparkles className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-display font-bold text-slate-900 flex items-center gap-2">
+                                <span>Recommended for You</span>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                  100% Survey Match
+                                </span>
+                              </h3>
+                              <p className="text-xs text-slate-600 mt-0.5">
+                                These verified homes fulfill every criterion from your onboarding survey ({userPreferences?.householdSize}, {userPreferences?.budgetBracket}).
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs font-semibold text-amber-800 bg-amber-100/90 px-3 py-1 rounded-full self-start sm:self-center">
+                            {recommendedProperties.length} {recommendedProperties.length === 1 ? 'property' : 'properties'}
+                          </span>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {recommendedProperties.map((property) => (
+                            <PropertyCard
+                              key={`rec-${property.id}`}
+                              property={property}
+                              isSaved={savedIds.includes(property.id)}
+                              onToggleSave={handleToggleSave}
+                              onSelect={(p) => setSelectedPropertyDetails(p)}
+                              onApply={(p) => handleInitiateApply(p)}
+                              surveyMatch={surveyMatches.get(property.id)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-base font-display font-bold text-slate-900">
+                          All Available Rentals
+                        </h3>
+                        <span className="text-xs text-slate-500">
+                          {properties.length} listings
+                        </span>
+                      </div>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {properties.map((property) => (
+                          <PropertyCard
+                            key={property.id}
+                            property={property}
+                            isSaved={savedIds.includes(property.id)}
+                            onToggleSave={handleToggleSave}
+                            onSelect={(p) => setSelectedPropertyDetails(p)}
+                            onApply={(p) => handleInitiateApply(p)}
+                            surveyMatch={surveyMatches.get(property.id)}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -657,10 +736,7 @@ export function TenantDashboard() {
                 savedProperties={savedProperties}
                 onToggleSave={handleToggleSave}
                 onSelectProperty={(p) => setSelectedPropertyDetails(p)}
-                onApplyProperty={(p) => {
-                  const avail = p.units.find((u) => u.availabilityStatus === 'AVAILABLE') || p.units[0];
-                  if (avail) setApplyModalData({ property: p, unit: avail });
-                }}
+                onApplyProperty={(p) => handleInitiateApply(p)}
                 onBrowseMore={() => setActiveTab('discover')}
               />
             )}
@@ -669,8 +745,11 @@ export function TenantDashboard() {
             {activeTab === 'applications' && (
               <ApplicationTrackingView
                 applications={applications}
+                leases={leases}
+                activeLease={activeLease}
                 onRefresh={loadData}
                 onOpenLeaseModal={() => setIsLeaseModalOpen(true)}
+                onNavigateToResidentHub={() => setActiveTab('tenancy')}
                 onBrowseMore={() => setActiveTab('discover')}
               />
             )}
@@ -777,9 +856,10 @@ export function TenantDashboard() {
         onClose={() => setSelectedPropertyDetails(null)}
         isSaved={selectedPropertyDetails ? savedIds.includes(selectedPropertyDetails.id) : false}
         onToggleSave={handleToggleSave}
+        surveyMatch={selectedPropertyDetails ? surveyMatches.get(selectedPropertyDetails.id) : undefined}
         onSelectUnitToApply={(property, unit) => {
           setSelectedPropertyDetails(null);
-          setApplyModalData({ property, unit });
+          handleInitiateApply(property, unit);
         }}
       />
       {applyModalData && (
@@ -799,9 +879,80 @@ export function TenantDashboard() {
           onClose={() => setIsLeaseModalOpen(false)}
           onSigned={(updated) => {
             setActiveLease(updated);
+            void loadData();
           }}
         />
       )}
+
+      {/* ── Active Tenancy Concurrent Application Warning Modal ─── */}
+      <AnimatePresence>
+        {activeTenancyWarning && activeLease && (
+          <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 14 }}
+              className="relative w-full max-w-md bg-white rounded-3xl border border-amber-200 shadow-2xl p-6 sm:p-7 space-y-5"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-display font-bold text-slate-900">
+                    Active Tenancy In Progress
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Muluki Civil Code 2074 (§§ 379–403) &middot; Single Primary Tenancy Rule
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs space-y-2">
+                <p className="text-amber-950 font-medium leading-relaxed">
+                  You already have an active, binding lease in Kathmandu Valley. Under Nepal tenancy regulations and RentHub policy, you cannot hold concurrent residential leases without terminating your existing tenancy.
+                </p>
+                <div className="pt-2 border-t border-amber-200/80 text-[11px] text-amber-900 space-y-1">
+                  <div>
+                    <strong>Current Home:</strong> {activeLease.propertyTitle} ({activeLease.unitIdentifier})
+                  </div>
+                  <div>
+                    <strong>Monthly Rent:</strong> NPR {activeLease.agreedMonthlyRent.toLocaleString()} / mo
+                  </div>
+                  <div>
+                    <strong>Landlord:</strong> {activeLease.landlordName}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                To lease a new property, please first submit an Early Termination request in your Resident Hub or coordinate with your landlord.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTenancyWarning(false);
+                    setActiveTab('tenancy');
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  <span>Go to Resident Hub</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTenancyWarning(false)}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {isEarlyTerminationModalOpen && (
         <EarlyTerminationModal
           lease={activeLease}

@@ -136,6 +136,10 @@ export interface LandlordLease {
   agreedDeposit: number;
   tenantSignedAt: string | Date | null;
   landlordSignedAt: string | Date | null;
+  tenantSignatureUrl?: string | null;
+  tenantBiometricUrl?: string | null;
+  landlordSignatureUrl?: string | null;
+  landlordBiometricUrl?: string | null;
   signedAt: string | Date | null;
   terminatedAt: string | Date | null;
   createdAt: string | Date;

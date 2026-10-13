@@ -369,13 +369,31 @@ async function fetchMatchingProperties(
 
   const units: PropertyUnit[] = await unitsQ.orderBy('pu.monthly_rent', 'asc').execute();
 
-  // Fetch cover photos
+  // Fetch all property photos for returned properties
   const photos = await db
     .selectFrom('photos')
     .selectAll()
     .where('property_id', 'in', propertyIds)
-    .where('is_cover', '=', true)
+    .orderBy('display_order', 'asc')
     .execute();
+
+  const photosByProperty: Record<string, PublicPhoto[]> = {};
+  for (const ph of photos) {
+    if (ph.property_id) {
+      if (!photosByProperty[ph.property_id]) {
+        photosByProperty[ph.property_id] = [];
+      }
+      photosByProperty[ph.property_id].push({
+        id: ph.id,
+        url: ph.url,
+        caption: ph.caption,
+        isCover: Boolean(ph.is_cover),
+        displayOrder: ph.display_order,
+        propertyId: ph.property_id,
+        unitId: ph.unit_id,
+      });
+    }
+  }
 
   // Fetch building amenities
   const buildingAmenities = await db
@@ -403,7 +421,8 @@ async function fetchMatchingProperties(
       ? propUnits.length
       : propUnits.filter((u: PropertyUnit) => u.availability_status === 'AVAILABLE').length;
 
-    const coverPhoto = photos.find((ph) => ph.property_id === raw.id);
+    const propPhotos = photosByProperty[raw.id] ?? [];
+    const coverPhoto = propPhotos.find((ph) => ph.isCover) ?? propPhotos[0] ?? null;
     const amenities = buildingAmenities
       .filter((ba) => ba.property_id === raw.id)
       .map((ba) => ({
@@ -444,6 +463,7 @@ async function fetchMatchingProperties(
       minMonthlyRent: minRent,
       maxMonthlyRent: maxRent,
       coverPhotoUrl: coverPhoto?.url ?? null,
+      photos: propPhotos,
       amenities,
       units: propUnits.map((u: PropertyUnit) => ({
         id: u.id,

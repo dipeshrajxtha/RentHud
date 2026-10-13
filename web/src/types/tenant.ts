@@ -103,6 +103,10 @@ export interface LeaseAgreement {
   agreedDeposit: number;
   tenantSignedAt: string | null;
   landlordSignedAt: string | null;
+  tenantSignatureUrl?: string | null;
+  tenantBiometricUrl?: string | null;
+  landlordSignatureUrl?: string | null;
+  landlordBiometricUrl?: string | null;
   signedAt: string | null;
   terminatedAt: string | null;
   createdAt: string;

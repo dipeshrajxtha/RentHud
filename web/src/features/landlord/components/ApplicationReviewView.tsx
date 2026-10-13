@@ -9,13 +9,14 @@ import {
   ArrowRight,
   X,
 } from 'lucide-react';
-import type { LandlordApplication } from '@/types/landlord';
+import type { LandlordApplication, LandlordLease } from '@/types/landlord';
 import { ShimmerButton, StatusPill, FilterTabs, FormSelect } from '@/components/ui';
 
 type AppFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
 interface ApplicationReviewViewProps {
   applications: LandlordApplication[];
+  leases?: LandlordLease[];
   onApprove: (applicationId: string) => Promise<void>;
   onReject: (applicationId: string, reason?: string) => Promise<void>;
   onViewLeases: () => void;
@@ -23,6 +24,7 @@ interface ApplicationReviewViewProps {
 
 export function ApplicationReviewView({
   applications,
+  leases = [],
   onApprove,
   onReject,
   onViewLeases,
@@ -128,11 +130,25 @@ export function ApplicationReviewView({
           {filtered.map((app) => {
             const isPending = app.status === 'pending';
             const isApproved = app.status === 'approved';
+            const appLease = leases.find(
+              (l) => l.rentalRequestId === app.id || l.unitId === app.unit?.id
+            );
+            const isLeaseActive = appLease?.status === 'active';
+            const isAwaitingTenant =
+              appLease?.status === 'pending_signature' &&
+              appLease.landlordSignedAt &&
+              !appLease.tenantSignedAt;
+            const isAwaitingLandlord =
+              appLease?.status === 'pending_signature' && !appLease.landlordSignedAt;
 
             return (
               <div
                 key={app.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-4 hover:border-slate-300 transition-all"
+                className={`bg-white rounded-2xl border shadow-xs p-5 sm:p-6 space-y-4 transition-all ${
+                  isLeaseActive
+                    ? 'border-emerald-300 ring-1 ring-emerald-200/60'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
               >
                 {/* Top Applicant & Property Summary */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -152,14 +168,28 @@ export function ApplicationReviewView({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-bold text-slate-900 font-display">{app.tenant?.name}</h3>
-                        <StatusPill
-                          size="sm"
-                          variant={
-                            isApproved ? 'success' : isPending ? 'warning' : 'danger'
-                          }
-                        >
-                          {app.status}
-                        </StatusPill>
+                        {isLeaseActive ? (
+                          <StatusPill size="sm" variant="success" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
+                            Active Tenant
+                          </StatusPill>
+                        ) : isAwaitingTenant ? (
+                          <StatusPill size="sm" variant="info">
+                            Awaiting Tenant Sign
+                          </StatusPill>
+                        ) : isAwaitingLandlord ? (
+                          <StatusPill size="sm" variant="warning">
+                            Awaiting Countersign
+                          </StatusPill>
+                        ) : (
+                          <StatusPill
+                            size="sm"
+                            variant={
+                              isApproved ? 'info' : isPending ? 'warning' : 'danger'
+                            }
+                          >
+                            {app.status}
+                          </StatusPill>
+                        )}
                       </div>
 
                       <p className="text-xs mt-1 text-slate-600">
@@ -240,12 +270,12 @@ export function ApplicationReviewView({
 
                     {isApproved && (
                       <ShimmerButton
-                        variant="outline"
+                        variant={isLeaseActive ? 'primary' : 'outline'}
                         size="sm"
                         onClick={onViewLeases}
                         rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
                       >
-                        View Lease Status
+                        {isLeaseActive ? 'View Active Tenancy' : 'View Lease Status'}
                       </ShimmerButton>
                     )}
                   </div>
