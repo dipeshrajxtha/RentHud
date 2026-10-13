@@ -77,8 +77,12 @@ export function ApplicationTrackingView({
     if (app.status === 'rejected' || app.status === 'cancelled') {
       return 0;
     }
-    if (lease && lease.status === 'active') {
-      return 4; // Step 5: Active Tenancy complete!
+    if (lease && (lease.status === 'active' || lease.status === 'terminated_early')) {
+      return 4; // Step 5: Active Tenancy complete (or was active before termination)
+    }
+    // Both parties signed but status may not have refreshed yet
+    if (lease && lease.tenantSignedAt && lease.landlordSignedAt) {
+      return 4;
     }
     if (app.status === 'approved') {
       return 3; // Step 4: Lease Offer complete
@@ -123,7 +127,7 @@ export function ApplicationTrackingView({
           const isCancelled = app.status === 'cancelled';
           const isRejected = app.status === 'rejected';
           const isApproved = app.status === 'approved';
-          const isLeaseActive = associatedLease?.status === 'active';
+          const isLeaseActive = associatedLease?.status === 'active' || associatedLease?.status === 'terminated_early';
           const isTenantSigned = Boolean(associatedLease?.tenantSignedAt);
           const isLandlordSigned = Boolean(associatedLease?.landlordSignedAt);
           const isAwaitingLandlord = isTenantSigned && !isLandlordSigned;
