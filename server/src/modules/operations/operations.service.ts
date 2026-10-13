@@ -4,7 +4,7 @@ import { NotFoundError, ForbiddenError, BadRequestError } from '../../common/err
 
 export interface CreateMaintenanceInput {
   tenancyId?: string;
-  propertyId: string;
+  propertyId?: string;
   unitId?: string;
   category: string;
   urgency?: 'Emergency' | 'High' | 'Normal' | 'Low';
@@ -24,11 +24,43 @@ export async function createMaintenanceTicket(
   userId: string,
   input: CreateMaintenanceInput
 ) {
+  let propertyId = input.propertyId;
+  let unitId = input.unitId;
+
+  // If propertyId not directly supplied, resolve from tenancy or unit
+  if (!propertyId && input.tenancyId) {
+    const t = await db
+      .selectFrom('tenancies as t')
+      .innerJoin('property_units as pu', 'pu.id', 't.unit_id')
+      .select(['pu.property_id', 'pu.id as resolved_unit_id'])
+      .where('t.id', '=', input.tenancyId)
+      .executeTakeFirst();
+    if (t) {
+      propertyId = t.property_id;
+      unitId = unitId ?? t.resolved_unit_id;
+    }
+  }
+
+  if (!propertyId && unitId) {
+    const u = await db
+      .selectFrom('property_units')
+      .select(['property_id'])
+      .where('id', '=', unitId)
+      .executeTakeFirst();
+    if (u) {
+      propertyId = u.property_id;
+    }
+  }
+
+  if (!propertyId) {
+    throw new BadRequestError('Property ID or active Tenancy ID is required to file a maintenance request');
+  }
+
   // Verify property exists
   const prop = await db
     .selectFrom('properties')
     .select(['id', 'title'])
-    .where('id', '=', input.propertyId)
+    .where('id', '=', propertyId)
     .executeTakeFirst();
 
   if (!prop) {
@@ -38,9 +70,9 @@ export async function createMaintenanceTicket(
   const [ticket] = await db
     .insertInto('maintenance_requests')
     .values({
-      property_id: input.propertyId,
+      property_id: propertyId,
       tenancy_id: input.tenancyId ?? null,
-      unit_id: input.unitId ?? null,
+      unit_id: unitId ?? null,
       reported_by_id: userId,
       category: input.category,
       urgency: input.urgency ?? 'Normal',

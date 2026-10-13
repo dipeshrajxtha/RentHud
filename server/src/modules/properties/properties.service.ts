@@ -640,7 +640,7 @@ export async function getPropertyById(
   });
 
   const propertyPhotos: PublicPhoto[] = photos
-    .filter((ph) => ph.property_id === propertyId)
+    .filter((ph) => ph.property_id === propertyId || (ph.unit_id && unitIds.includes(ph.unit_id)))
     .map((ph) => ({
       id: ph.id,
       url: ph.url,
