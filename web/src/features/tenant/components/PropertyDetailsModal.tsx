@@ -30,18 +30,9 @@ import {
   Camera,
   Layers,
   Square,
-  Compass,
   Check,
   Shield,
-  Clock,
-  Droplets,
-  Zap,
-  Wifi,
   Car,
-  FileText,
-  Building,
-  Info,
-  Maximize2,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -84,7 +75,6 @@ export function PropertyDetailsModal({
   const [currentProperty, setCurrentProperty] = useState<PropertyListing>(property);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'units' | 'amenities' | 'legal'>('overview');
 
   // Sync state and fetch fresh details from API if available
   useEffect(() => {

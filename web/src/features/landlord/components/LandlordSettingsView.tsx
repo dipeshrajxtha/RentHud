@@ -14,7 +14,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   User,
-  Shield,
   ShieldCheck,
   ShieldAlert,
   ShieldX,
@@ -24,7 +23,6 @@ import {
   Building,
   Clock,
   Upload,
-  Info,
   Edit2,
   Save,
   Sparkles,
@@ -36,9 +34,8 @@ import {
   Bell,
   Scale,
   MapPin,
-  Check,
   Lock,
-  ArrowRight,
+  Calendar,
 } from 'lucide-react';
 import { landlordService } from '@/features/landlord/landlord.service';
 import type { LandlordProfile } from '@/types/landlord';

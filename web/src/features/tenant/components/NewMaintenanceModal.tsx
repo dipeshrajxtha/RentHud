@@ -21,10 +21,7 @@ import {
   Lock,
   Building,
   Upload,
-  Image as ImageIcon,
   Trash2,
-  AlertTriangle,
-  Sparkles,
   Check,
 } from 'lucide-react';
 import type { LeaseAgreement, MaintenanceRequest } from '@/types/tenant';

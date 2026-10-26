@@ -16,14 +16,11 @@ import {
   User,
   Mail,
   Phone,
-  Shield,
   ShieldCheck,
   RotateCcw,
-  Check,
   Save,
   LogOut,
   Bell,
-  SlidersHorizontal,
   Home,
   CheckCircle2,
   Sparkles,
@@ -33,11 +30,7 @@ import {
   Calendar,
   DollarSign,
   MapPin,
-  Heart,
-  FileText,
   AlertCircle,
-  ToggleLeft,
-  ToggleRight,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tenantService } from '@/features/tenant/tenant.service';
@@ -60,7 +53,7 @@ export function ProfileSettingsView({ onRetakeOnboarding }: ProfileSettingsViewP
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [name, setName] = useState(user?.name ?? '');
-  const [phone, setPhone] = useState(user?.phone ?? '+977 9860001136');
+  const [phone, setPhone] = useState((user as { phone?: string })?.phone ?? '+977 9860001136');
   const [emergencyContact, setEmergencyContact] = useState('Anil Shrestha (+977 9841234567)');
   const [permanentAddress, setPermanentAddress] = useState('Kathmandu Metropolitan City, Ward 10');
   const [isSaving, setIsSaving] = useState(false);

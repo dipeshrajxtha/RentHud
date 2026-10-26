@@ -23,11 +23,7 @@ import {
   Wind,
   Lock,
   Building,
-  User,
   Calendar,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
 } from 'lucide-react';
 import { ShimmerButton, StatusPill, FilterTabs } from '@/components/ui';
 import type { MaintenanceRequest, LeaseAgreement } from '@/types/tenant';

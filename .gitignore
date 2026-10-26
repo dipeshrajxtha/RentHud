@@ -86,3 +86,7 @@ haikei-generated/
 *.temp
 *.bak
 *.swp
+
+# ── Local Uploads ──
+uploads/
+server/uploads/

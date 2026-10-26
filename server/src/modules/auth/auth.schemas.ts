@@ -8,6 +8,7 @@ export const googleAuthSchema = z
   })
   .refine((data) => Boolean(data.idToken || data.accessToken), {
     message: 'Either idToken or accessToken must be provided',
+    path: ['idToken'],
   });
 
 /** POST /api/auth/refresh (mobile clients send body — web uses cookie) */
