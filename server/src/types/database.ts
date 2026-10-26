@@ -80,6 +80,7 @@ export interface UsersTable {
   phone: string | null;
   /** TEXT[] — CHECK (roles <@ ARRAY['tenant','landlord','admin']) */
   roles: string[];
+  preferences?: ColumnType<Record<string, unknown> | null, string | Record<string, unknown> | null, string | Record<string, unknown> | null>;
   is_active: Generated<boolean>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;

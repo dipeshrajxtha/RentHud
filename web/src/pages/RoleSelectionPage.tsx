@@ -126,7 +126,7 @@ const AMENITY_OPTIONS = [
 ];
 
 export function RoleSelectionPage() {
-  const { user, completeOnboarding, error, clearError } = useAuth();
+  const { user, completeOnboarding, error, clearError, accessToken } = useAuth();
   const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
   const [currentStep, setCurrentStep] = useState<'role' | 'mcq' | 'summary'>('role');
   const [mcqIndex, setMcqIndex] = useState(0);
@@ -160,10 +160,13 @@ export function RoleSelectionPage() {
     setIsSubmitting(true);
     try {
       if (selectedRole === 'tenant') {
-        tenantService.savePreferences({
-          ...preferences,
-          completedAt: new Date().toISOString(),
-        });
+        tenantService.savePreferences(
+          {
+            ...preferences,
+            completedAt: new Date().toISOString(),
+          },
+          accessToken
+        );
       }
       await completeOnboarding(selectedRole);
     } catch {

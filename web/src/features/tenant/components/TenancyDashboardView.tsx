@@ -9,7 +9,7 @@
  * - Early termination workflow
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   FileText,
@@ -30,7 +30,9 @@ import {
   Home,
   Key,
 } from 'lucide-react';
-import type { LeaseAgreement, PaymentRecord, MaintenanceRequest } from '@/types/tenant';
+import type { LeaseAgreement, PaymentRecord, MaintenanceRequest, PropertyReview } from '@/types/tenant';
+import { WriteReviewModal } from './WriteReviewModal';
+import { tenantService } from '../tenant.service';
 
 interface TenancyDashboardViewProps {
   lease: LeaseAgreement | null;
@@ -42,6 +44,8 @@ interface TenancyDashboardViewProps {
   onOpenDisputeModal: () => void;
   onOpenEarlyTerminationModal: () => void;
   onBrowseListings: () => void;
+  accessToken?: string | null;
+  onReviewSubmitted?: (review: PropertyReview) => void;
 }
 
 function ProgressRing({
@@ -169,8 +173,24 @@ export function TenancyDashboardView({
   onOpenDisputeModal,
   onOpenEarlyTerminationModal,
   onBrowseListings,
+  accessToken,
+  onReviewSubmitted,
 }: TenancyDashboardViewProps) {
   const [covenantsOpen, setCovenantsOpen] = useState(true);
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [reviewEligibility, setReviewEligibility] = useState<{
+    canReview: boolean;
+    alreadyReviewed: boolean;
+    review?: PropertyReview;
+  }>({ canReview: false, alreadyReviewed: false });
+
+  useEffect(() => {
+    if (lease?.id && accessToken) {
+      tenantService.getTenancyReviewEligibility(lease.id, accessToken).then((res) => {
+        setReviewEligibility(res);
+      });
+    }
+  }, [lease?.id, accessToken]);
 
   if (!lease) {
     return (
@@ -387,6 +407,62 @@ export function TenancyDashboardView({
             </button>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Verified Resident Review Callout */}
+      <AnimatePresence>
+        {reviewEligibility.alreadyReviewed && reviewEligibility.review ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-50/70 border border-amber-200/90 shadow-xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-100 text-amber-700">
+                <Star className="w-5 h-5 fill-amber-500 text-amber-500" />
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-amber-950 block">
+                  Verified Resident Review Published
+                </span>
+                <span className="text-amber-800">
+                  You rated this home {reviewEligibility.review.rating} / 5 stars. Thank you for contributing to tenant transparency in Nepal!
+                </span>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 shrink-0">
+              ★ {reviewEligibility.review.rating}.0 Published
+            </span>
+          </motion.div>
+        ) : reviewEligibility.canReview ? (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-50 via-orange-50/40 to-amber-50 border border-amber-300 shadow-xs"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-amber-500 text-white shadow-xs">
+                <Star className="w-6 h-6 fill-white text-white" />
+              </div>
+              <div className="text-xs">
+                <h4 className="text-sm font-bold text-amber-950">
+                  Rate & Review Your Experience at {lease.propertyTitle}
+                </h4>
+                <p className="text-amber-800 mt-0.5">
+                  Share verified feedback on cleanliness, water availability, and landlord responsiveness to help other Nepali residents.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsWriteReviewOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 shadow-xs transition-colors flex items-center gap-2"
+            >
+              <Star className="w-4 h-4 fill-white" />
+              <span>Write a Review →</span>
+            </button>
+          </motion.div>
+        ) : null}
       </AnimatePresence>
 
       {/* Stat Cards Bento Grid */}
@@ -616,6 +692,26 @@ export function TenancyDashboardView({
           </div>
         </div>
       </div>
+
+      {/* Write Review Modal */}
+      {lease && (
+        <WriteReviewModal
+          isOpen={isWriteReviewOpen}
+          onClose={() => setIsWriteReviewOpen(false)}
+          propertyId={lease.propertyId}
+          propertyTitle={lease.propertyTitle}
+          tenancyId={lease.id}
+          accessToken={accessToken ?? null}
+          onSuccess={(review) => {
+            setReviewEligibility({
+              canReview: false,
+              alreadyReviewed: true,
+              review,
+            });
+            onReviewSubmitted?.(review);
+          }}
+        />
+      )}
     </motion.div>
   );
 }

@@ -7,6 +7,9 @@ import type {
   TenancyDispute,
   SearchFilters,
   TenantPreferences,
+  PropertyReview,
+  PropertyReviewsResponse,
+  CreateReviewInput,
 } from '@/types/tenant';
 import { matchesLocationSynonym } from './utils/locationResolver';
 
@@ -71,8 +74,23 @@ export const tenantService = {
     return getStoredJson<TenantPreferences | null>(STORAGE_KEYS.PREFERENCES, null);
   },
 
-  savePreferences(prefs: TenantPreferences): void {
+  savePreferences(prefs: TenantPreferences, accessToken?: string | null): void {
     setStoredJson(STORAGE_KEYS.PREFERENCES, prefs);
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+    fetch('/api/users/me', {
+      method: 'PATCH',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({ preferences: prefs }),
+    }).catch((err) => console.warn('Could not sync preferences to server:', err));
+  },
+
+  syncPreferencesFromUser(userPreferences: any): void {
+    if (userPreferences && typeof userPreferences === 'object') {
+      setStoredJson(STORAGE_KEYS.PREFERENCES, userPreferences);
+    }
   },
 
   // ── Properties Discovery (Real PostgreSQL Database) ───────────────────
@@ -858,5 +876,109 @@ export const tenantService = {
       credentials: 'include',
       body: JSON.stringify(data),
     });
+  },
+
+  // ── Verified Property Reviews ───────────────────────────────────────────
+  async getPropertyReviews(propertyId: string): Promise<PropertyReviewsResponse> {
+    try {
+      const res = await fetch(`/api/properties/${propertyId}/reviews`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          return {
+            reviews: (json.data.reviews || []).map((r: any) => ({
+              id: r.id,
+              tenancyId: r.tenancyId,
+              propertyId: r.propertyId,
+              authorId: r.authorId,
+              authorName: r.authorName,
+              authorAvatarUrl: r.authorAvatarUrl,
+              rating: r.rating,
+              cleanlinessRating: r.cleanlinessRating,
+              communicationRating: r.communicationRating,
+              reviewText: r.reviewText,
+              amenitiesFeedback: r.amenitiesFeedback,
+              createdAt: r.createdAt,
+            })),
+            summary: {
+              averageRating: json.data.summary?.averageRating ?? null,
+              cleanlinessAverage: json.data.summary?.cleanlinessAverage ?? null,
+              communicationAverage: json.data.summary?.communicationAverage ?? null,
+              totalReviews: json.data.summary?.totalReviews ?? 0,
+              distribution: json.data.summary?.distribution ?? { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            },
+          };
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch property reviews:', err);
+    }
+
+    return {
+      reviews: [],
+      summary: {
+        averageRating: null,
+        cleanlinessAverage: null,
+        communicationAverage: null,
+        totalReviews: 0,
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      },
+    };
+  },
+
+  async createPropertyReview(
+    propertyId: string,
+    data: CreateReviewInput,
+    accessToken?: string | null
+  ): Promise<PropertyReview> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+    const res = await fetch(`/api/properties/${propertyId}/reviews`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error?.message || 'Failed to submit review');
+    }
+
+    return json.data;
+  },
+
+  async getTenancyReviewEligibility(
+    tenancyId: string,
+    accessToken?: string | null
+  ): Promise<{ canReview: boolean; alreadyReviewed: boolean; review?: PropertyReview }> {
+    if (!accessToken) return { canReview: false, alreadyReviewed: false };
+
+    try {
+      const res = await fetch(`/api/tenancy/leases/${tenancyId}/review-eligibility`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          return json.data;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to check review eligibility:', err);
+    }
+
+    return { canReview: false, alreadyReviewed: false };
   },
 };

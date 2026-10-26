@@ -62,10 +62,20 @@ export function PropertyCard({
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
           {/* Survey Match or Verification Badge */}
-          {surveyMatch?.isPerfectMatch ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-sm backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-              <span>100% Survey Match</span>
+          {surveyMatch && surveyMatch.matchScore >= 70 ? (
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-xs ${
+                surveyMatch.matchScore >= 90
+                  ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                  : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+              }`}
+            >
+              <Sparkles
+                className={`w-3.5 h-3.5 ${
+                  surveyMatch.matchScore >= 90 ? 'text-amber-600 animate-pulse' : 'text-indigo-600'
+                }`}
+              />
+              <span>{surveyMatch.matchScore}% Match</span>
             </span>
           ) : property.verificationBadges.length > 0 ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/90 shadow-xs backdrop-blur-xs">
@@ -134,7 +144,7 @@ export function PropertyCard({
               <span className="text-xs font-normal text-slate-500"> / mo</span>
             </div>
 
-            {property.reviewsSummary.totalReviews > 0 ? (
+            {property.reviewsSummary && property.reviewsSummary.totalReviews > 0 && property.reviewsSummary.averageRating ? (
               <div className="flex items-center gap-1 text-xs font-bold shrink-0 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/80">
                 <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                 <span>{property.reviewsSummary.averageRating.toFixed(1)}</span>

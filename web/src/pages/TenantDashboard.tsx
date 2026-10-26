@@ -253,6 +253,12 @@ export function TenantDashboard() {
     }
   }
 
+  useEffect(() => {
+    if ((user as any)?.preferences) {
+      tenantService.syncPreferencesFromUser((user as any).preferences);
+    }
+  }, [user]);
+
   const userPreferences = tenantService.getPreferences();
 
   const surveyMatches = useMemo(() => {
@@ -265,7 +271,12 @@ export function TenantDashboard() {
 
   const recommendedProperties = useMemo(() => {
     if (!userPreferences) return [];
-    return properties.filter((p) => surveyMatches.get(p.id)?.isPerfectMatch);
+    // Prioritize properties matching at least 60%, sorted descending by match score
+    return properties
+      .map((p) => ({ property: p, score: surveyMatches.get(p.id)?.matchScore ?? 0 }))
+      .filter((item) => item.score >= 60)
+      .sort((a, b) => b.score - a.score)
+      .map((item) => item.property);
   }, [properties, surveyMatches, userPreferences]);
 
   const pendingPayments = payments.filter((p) => p.status === 'PENDING').length;
@@ -661,7 +672,7 @@ export function TenantDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {/* 🌟 100% SURVEY MATCH RECOMMENDATIONS */}
+                    {/* 🌟 SURVEY MATCH RECOMMENDATIONS */}
                     {recommendedProperties.length > 0 && (
                       <div className="bg-gradient-to-br from-amber-50/80 via-orange-50/40 to-white rounded-3xl border border-amber-200/90 p-5 sm:p-6 space-y-4 shadow-xs">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -673,11 +684,11 @@ export function TenantDashboard() {
                               <h3 className="text-base font-display font-bold text-slate-900 flex items-center gap-2">
                                 <span>Recommended for You</span>
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                  100% Survey Match
+                                  Top Survey Matches
                                 </span>
                               </h3>
                               <p className="text-xs text-slate-600 mt-0.5">
-                                These verified homes fulfill every criterion from your onboarding survey ({userPreferences?.householdSize}, {userPreferences?.budgetBracket}).
+                                Verified homes matched to your onboarding preferences ({userPreferences?.householdSize}, {userPreferences?.budgetBracket}).
                               </p>
                             </div>
                           </div>
@@ -769,6 +780,8 @@ export function TenantDashboard() {
                 onOpenDisputeModal={() => setIsNewDisputeModalOpen(true)}
                 onOpenEarlyTerminationModal={() => setIsEarlyTerminationModalOpen(true)}
                 onBrowseListings={() => setActiveTab('discover')}
+                accessToken={accessToken}
+                onReviewSubmitted={() => loadData()}
               />
             )}
 

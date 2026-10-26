@@ -51,7 +51,7 @@ export interface PropertyListing {
   amenities: { id: string; name: string; slug: string; category: string; icon?: string }[];
   units: UnitDetail[];
   verificationBadges: { code: string; name: string; description: string }[];
-  reviewsSummary: { averageRating: number; totalReviews: number };
+  reviewsSummary: { averageRating: number | null; totalReviews: number };
 }
 
 export interface RentalApplication {
@@ -182,3 +182,39 @@ export interface SearchFilters {
   radiusKm?: number;
   centerCoords?: { latitude: number; longitude: number };
 }
+
+export interface PropertyReview {
+  id: string;
+  tenancyId: string;
+  propertyId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  rating: number;
+  cleanlinessRating?: number | null;
+  communicationRating?: number | null;
+  reviewText?: string | null;
+  amenitiesFeedback?: string | null;
+  createdAt: string;
+}
+
+export interface PropertyReviewsResponse {
+  reviews: PropertyReview[];
+  summary: {
+    averageRating: number | null;
+    cleanlinessAverage: number | null;
+    communicationAverage: number | null;
+    totalReviews: number;
+    distribution: Record<number, number>;
+  };
+}
+
+export interface CreateReviewInput {
+  tenancy_id: string;
+  rating: number;
+  cleanliness_rating?: number | null;
+  communication_rating?: number | null;
+  review_text?: string | null;
+  amenities_feedback?: string | null;
+}
+

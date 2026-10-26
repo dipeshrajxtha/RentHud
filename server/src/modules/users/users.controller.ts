@@ -21,6 +21,14 @@ function getDb(req: Request): Kysely<Database> {
 
 function userPayload(user: Awaited<ReturnType<typeof findActiveUserById>>) {
   if (!user) throw new NotFoundError('User not found');
+  let preferences: any = (user as any).preferences;
+  if (typeof preferences === 'string') {
+    try {
+      preferences = JSON.parse(preferences);
+    } catch {
+      preferences = null;
+    }
+  }
   return {
     id: user.id,
     email: user.email,
@@ -28,6 +36,7 @@ function userPayload(user: Awaited<ReturnType<typeof findActiveUserById>>) {
     avatarUrl: user.avatar_url,
     phone: user.phone,
     roles: user.roles as UserRole[],
+    preferences: preferences ?? null,
     isNewUser: ((user.roles as string[]) ?? []).length === 0,
     createdAt: user.created_at,
   };

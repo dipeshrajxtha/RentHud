@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Kysely } from 'kysely';
 import type { Database } from '../../types/database.js';
 import * as tenancyController from './tenancy.controller.js';
+import * as reviewsController from '../reviews/reviews.controller.js';
 import { authenticate } from '../../common/middleware/authenticate.js';
 import { requireTenant, requireLandlord } from '../../common/middleware/requireRole.js';
 import { validate } from '../../common/middleware/validate.js';
@@ -109,6 +110,13 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
     validate(leaseIdParamSchema, 'params'),
     validate(terminateLeaseSchema, 'body'),
     tenancyController.terminateLeaseAgreement
+  );
+
+  // Review eligibility check for lease
+  router.get(
+    '/leases/:id/review-eligibility',
+    validate(leaseIdParamSchema, 'params'),
+    reviewsController.getReviewEligibility
   );
 
   // ── Tenancy Disputes endpoints ──────────────────────────────────────────

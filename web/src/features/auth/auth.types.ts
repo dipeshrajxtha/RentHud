@@ -14,6 +14,7 @@ export interface AuthUser {
   name: string;
   avatarUrl: string | null;
   roles: UserRole[];
+  preferences?: Record<string, any> | null;
   /** True if this is a brand-new account with no roles set yet */
   isNewUser: boolean;
 }

@@ -33,12 +33,14 @@ import {
   Check,
   Shield,
   Car,
+  Star,
+  ThumbsUp,
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { ShimmerButton, StatusPill } from '@/components/ui';
-import type { PropertyListing, UnitDetail } from '@/types/tenant';
+import type { PropertyListing, UnitDetail, PropertyReviewsResponse } from '@/types/tenant';
 import { tenantService } from '../tenant.service';
 import type { SurveyMatchResult } from '../utils/surveyMatcher';
 
@@ -75,6 +77,8 @@ export function PropertyDetailsModal({
   const [currentProperty, setCurrentProperty] = useState<PropertyListing>(property);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [selectedUnitId, setSelectedUnitId] = useState<string>('');
+  const [reviewsData, setReviewsData] = useState<PropertyReviewsResponse | null>(null);
+  const [loadingReviews, setLoadingReviews] = useState<boolean>(false);
 
   // Sync state and fetch fresh details from API if available
   useEffect(() => {
@@ -95,6 +99,12 @@ export function PropertyDetailsModal({
             setSelectedUnitId(firstAvail.id);
           }
         }
+      });
+
+      setLoadingReviews(true);
+      tenantService.getPropertyReviews(property.id).then((res) => {
+        setReviewsData(res);
+        setLoadingReviews(false);
       });
     }
   }, [property?.id]);
@@ -597,6 +607,167 @@ export function PropertyDetailsModal({
                         </Marker>
                       </MapContainer>
                     </div>
+                  </div>
+
+                  {/* ── Verified Resident Reviews & Ratings ── */}
+                  <div className="space-y-4 pt-4 border-t border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                          <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                          <span>Verified Resident Reviews</span>
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Authentic ratings exclusively written by tenants with signed agreements at this property.
+                        </p>
+                      </div>
+
+                      {reviewsData && reviewsData.summary.totalReviews > 0 && (
+                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-2xl shrink-0">
+                          <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                          <span className="text-sm font-extrabold text-amber-950">
+                            {reviewsData.summary.averageRating?.toFixed(1) ?? '5.0'}
+                          </span>
+                          <span className="text-xs text-amber-800 font-medium">
+                            ({reviewsData.summary.totalReviews} {reviewsData.summary.totalReviews === 1 ? 'review' : 'reviews'})
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Breakdown Cards */}
+                    {reviewsData && reviewsData.summary.totalReviews > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                          <span className="text-[11px] font-semibold text-slate-500 block">
+                            Overall Rating
+                          </span>
+                          <div className="flex items-baseline gap-1 mt-1">
+                            <span className="text-lg font-extrabold text-slate-900">
+                              {reviewsData.summary.averageRating?.toFixed(1) ?? '—'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">/ 5.0</span>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                          <span className="text-[11px] font-semibold text-slate-500 block">
+                            Cleanliness
+                          </span>
+                          <div className="flex items-baseline gap-1 mt-1">
+                            <span className="text-lg font-extrabold text-slate-900">
+                              {reviewsData.summary.cleanlinessAverage?.toFixed(1) ?? '—'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">/ 5.0</span>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 col-span-2 sm:col-span-1">
+                          <span className="text-[11px] font-semibold text-slate-500 block">
+                            Landlord Comms
+                          </span>
+                          <div className="flex items-baseline gap-1 mt-1">
+                            <span className="text-lg font-extrabold text-slate-900">
+                              {reviewsData.summary.communicationAverage?.toFixed(1) ?? '—'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">/ 5.0</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reviews List */}
+                    {loadingReviews ? (
+                      <div className="p-8 text-center text-xs text-slate-400">
+                        Loading verified reviews…
+                      </div>
+                    ) : reviewsData && reviewsData.reviews.length > 0 ? (
+                      <div className="space-y-3.5">
+                        {reviewsData.reviews.map((rev) => (
+                          <div
+                            key={rev.id}
+                            className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2.5"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-2.5">
+                                {rev.authorAvatarUrl ? (
+                                  <img
+                                    src={rev.authorAvatarUrl}
+                                    alt={rev.authorName}
+                                    className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200"
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                                    {rev.authorName?.[0] ?? 'T'}
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-slate-900">
+                                      {rev.authorName}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                      Verified Resident
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400">
+                                    {new Date(rev.createdAt).toLocaleDateString(undefined, {
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${
+                                      s <= rev.rating
+                                        ? 'fill-amber-400 text-amber-400'
+                                        : 'text-slate-200 fill-slate-100'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {rev.amenitiesFeedback && (
+                              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                {rev.amenitiesFeedback.split(',').map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700"
+                                  >
+                                    ✓ {tag.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {rev.reviewText && (
+                              <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">
+                                {rev.reviewText}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                          <Star className="w-5 h-5 fill-amber-400" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-800">
+                          No verified reviews published yet
+                        </p>
+                        <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                          Be the first resident to write an authentic review after your lease is sealed!
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

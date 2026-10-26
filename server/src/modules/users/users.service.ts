@@ -38,6 +38,9 @@ export async function updateUserProfile(
   if (data.name !== undefined) updates.name = data.name;
   if (data.phone !== undefined) updates.phone = data.phone;
   if (data.avatar_url !== undefined) updates.avatar_url = data.avatar_url;
+  if (data.preferences !== undefined) {
+    updates.preferences = data.preferences ? JSON.stringify(data.preferences) : null;
+  }
 
   return await db
     .updateTable('users')

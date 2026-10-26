@@ -410,6 +410,26 @@ async function fetchMatchingProperties(
     .where('pa.property_id', 'in', propertyIds)
     .execute();
 
+  // Fetch review summaries for returned properties
+  const reviewStats = await db
+    .selectFrom('tenancy_reviews')
+    .select([
+      'property_id',
+      sql<number>`ROUND(AVG(rating)::numeric, 1)`.as('avg_rating'),
+      sql<number>`COUNT(id)`.as('review_count'),
+    ])
+    .where('property_id', 'in', propertyIds)
+    .groupBy('property_id')
+    .execute();
+
+  const reviewsByProperty: Record<string, { averageRating: number | null; totalReviews: number }> = {};
+  for (const st of reviewStats) {
+    reviewsByProperty[st.property_id] = {
+      averageRating: st.avg_rating ? Number(st.avg_rating) : null,
+      totalReviews: Number(st.review_count ?? 0),
+    };
+  }
+
   const results: PublicPropertySummary[] = [];
 
   for (const raw of rawProperties) {
@@ -465,6 +485,10 @@ async function fetchMatchingProperties(
       coverPhotoUrl: coverPhoto?.url ?? null,
       photos: propPhotos,
       amenities,
+      reviewsSummary: reviewsByProperty[raw.id] ?? {
+        averageRating: null,
+        totalReviews: 0,
+      },
       units: propUnits.map((u: PropertyUnit) => ({
         id: u.id,
         propertyId: u.property_id,

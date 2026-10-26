@@ -50,6 +50,11 @@ export interface PublicUnitSummary {
   photos: PublicPhoto[];
 }
 
+export interface PropertyReviewsSummary {
+  averageRating: number | null;
+  totalReviews: number;
+}
+
 export interface PublicPropertySummary {
   id: string;
   title: string;
@@ -68,15 +73,15 @@ export interface PublicPropertySummary {
   photos?: PublicPhoto[];
   amenities: PublicAmenity[];
   units: PublicUnitSummary[];
+  reviewsSummary?: PropertyReviewsSummary;
+  matchScore?: number;
+  matchReasons?: string[];
 }
 
 export interface PublicPropertyDetail extends PublicPropertySummary {
   photos: PublicPhoto[];
   verificationBadges: PublicVerificationBadge[];
-  reviewsSummary: {
-    averageRating: number | null;
-    totalReviews: number;
-  };
+  reviewsSummary: PropertyReviewsSummary;
 }
 
 export interface SpatialSearchMetadata {
