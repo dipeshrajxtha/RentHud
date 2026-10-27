@@ -48,6 +48,10 @@ import { DisputesView } from '@/features/tenant/components/DisputesView';
 import { NewDisputeModal } from '@/features/tenant/components/NewDisputeModal';
 import { SavedPropertiesView } from '@/features/tenant/components/SavedPropertiesView';
 import { ProfileSettingsView } from '@/features/tenant/components/ProfileSettingsView';
+import { KycStatusBanner } from '@/components/common/KycStatusBanner';
+import { KycSubmissionModal } from '@/components/common/KycSubmissionModal';
+import { kycService, type KycSubmissionData } from '@/features/kyc/kyc.service';
+import { RecommendedPropertiesPopup } from '@/features/tenant/components/RecommendedPropertiesPopup';
 
 import { useNavigate } from 'react-router-dom';
 import {
@@ -66,6 +70,7 @@ import {
   Bell,
   Building2,
   AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 
 export type TenantTab =
@@ -160,6 +165,27 @@ export function TenantDashboard() {
   const [isNewMaintenanceModalOpen, setIsNewMaintenanceModalOpen] = useState(false);
   const [isNewDisputeModalOpen, setIsNewDisputeModalOpen] = useState(false);
 
+  // KYC & Recommendations State
+  const [myKyc, setMyKyc] = useState<KycSubmissionData | null>(null);
+  const [isKycModalOpen, setIsKycModalOpen] = useState(false);
+  const [kycWarningOpen, setKycWarningOpen] = useState(false);
+  const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
+  const [hasAutoOpenedRecs, setHasAutoOpenedRecs] = useState(false);
+
+  const loadKyc = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const kyc = await kycService.getMyKyc(accessToken);
+      setMyKyc(kyc);
+    } catch (err) {
+      console.error('Failed to load KYC:', err);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    void loadKyc();
+  }, [loadKyc]);
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -190,6 +216,30 @@ export function TenantDashboard() {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  const hasActiveRental = Boolean(
+    (activeLease && activeLease.status === 'active') ||
+    leases.some((l) => l.status === 'active')
+  );
+
+  // Auto-open recommendations popup on first visit if available AND tenant does not have an active rental
+  useEffect(() => {
+    if (properties.length > 0 && !hasAutoOpenedRecs && !hasActiveRental) {
+      const hasSeen = sessionStorage.getItem('rh_recs_seen');
+      if (!hasSeen) {
+        setIsRecommendationsOpen(true);
+        setHasAutoOpenedRecs(true);
+        sessionStorage.setItem('rh_recs_seen', '1');
+      }
+    }
+  }, [properties, hasAutoOpenedRecs, hasActiveRental]);
+
+  // If tenant already rented a house, ensure recommendations popup stays closed
+  useEffect(() => {
+    if (hasActiveRental) {
+      setIsRecommendationsOpen(false);
+    }
+  }, [hasActiveRental]);
 
   const handleToggleSave = (id: string) => {
     const isNowSaved = tenantService.toggleSaveProperty(id);
@@ -230,6 +280,11 @@ export function TenantDashboard() {
     });
 
   const handleInitiateApply = (property: PropertyListing, unit?: UnitDetail) => {
+    // KYC Verification Guard: Unverified tenants cannot apply for properties
+    if (!myKyc || myKyc.status !== 'approved') {
+      setKycWarningOpen(true);
+      return;
+    }
     // Prevent duplicate booking if tenant already has an active tenancy
     if (activeLease && activeLease.status === 'active') {
       setActiveTenancyWarning(true);
@@ -270,14 +325,14 @@ export function TenantDashboard() {
   }, [properties, userPreferences]);
 
   const recommendedProperties = useMemo(() => {
-    if (!userPreferences) return [];
+    if (!userPreferences || hasActiveRental) return [];
     // Prioritize properties matching at least 60%, sorted descending by match score
     return properties
       .map((p) => ({ property: p, score: surveyMatches.get(p.id)?.matchScore ?? 0 }))
       .filter((item) => item.score >= 60)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.property);
-  }, [properties, surveyMatches, userPreferences]);
+  }, [properties, surveyMatches, userPreferences, hasActiveRental]);
 
   const pendingPayments = payments.filter((p) => p.status === 'PENDING').length;
   const pendingApps = applications.filter((a) => a.status === 'pending').length;
@@ -378,6 +433,19 @@ export function TenantDashboard() {
                 <span className="text-[10px] text-slate-500 font-medium">Tenant</span>
               </div>
             </div>
+
+            {/* Curated Recommendations Trigger — only for tenants actively looking (no active rental) */}
+            {!hasActiveRental && (
+              <button
+                type="button"
+                onClick={() => setIsRecommendationsOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-indigo-200/80 rounded-xl transition-all shadow-xs cursor-pointer"
+                title="View Curated Property Recommendations"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+                <span className="hidden md:inline">Recommendations</span>
+              </button>
+            )}
 
             {/* Sign Out Button */}
             <button
@@ -503,6 +571,13 @@ export function TenantDashboard() {
 
       {/* ── MAIN CONTENT WORKSPACE ───────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        {/* KYC Verification Status Banner */}
+        <KycStatusBanner
+          kycStatus={myKyc ? myKyc.status : 'none'}
+          rejectionReason={myKyc?.rejectionReason}
+          onStartKyc={() => setIsKycModalOpen(true)}
+          isLandlord={false}
+        />
         {/* STATS OVERVIEW CARDS (Visible on Explore & Resident Hub) */}
         {(activeTab === 'discover' || activeTab === 'tenancy') && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -545,8 +620,8 @@ export function TenantDashboard() {
           </div>
         )}
 
-        {/* PERSONALIZATION BANNER (If questionnaire completed) */}
-        {activeTab === 'discover' && userPreferences && (
+        {/* PERSONALIZATION BANNER (Only if questionnaire completed AND tenant does not have an active rental) */}
+        {activeTab === 'discover' && userPreferences && !hasActiveRental && (
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
@@ -561,13 +636,23 @@ export function TenantDashboard() {
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setActiveTab('settings')}
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800 self-start sm:self-center"
-            >
-              Adjust Preferences →
-            </button>
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <button
+                type="button"
+                onClick={() => setIsRecommendationsOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>View Recommendations</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('settings')}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+              >
+                Preferences →
+              </button>
+            </div>
           </div>
         )}
 
@@ -1007,6 +1092,91 @@ export function TenantDashboard() {
           onCreated={(dispute) => {
             setDisputes((prev) => [dispute, ...prev]);
           }}
+        />
+      )}
+      {/* ── KYC Verification Modal ── */}
+      <KycSubmissionModal
+        isOpen={isKycModalOpen}
+        onClose={() => setIsKycModalOpen(false)}
+        currentKyc={myKyc}
+        onSubmitted={() => {
+          setIsKycModalOpen(false);
+          void loadKyc();
+        }}
+      />
+
+      {/* ── KYC Unverified Application Guard Modal ── */}
+      <AnimatePresence>
+        {kycWarningOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 14 }}
+              className="relative w-full max-w-md bg-white rounded-3xl border border-blue-200 shadow-2xl p-6 sm:p-7 space-y-5"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-display font-bold text-slate-900">
+                    KYC Verification Required
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Muluki Civil Code 2074 &middot; Verified Tenant Trust Policy
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-xs space-y-2">
+                <p className="text-blue-950 font-medium leading-relaxed">
+                  To protect landlords and ensure safe tenancies across Kathmandu Valley, RentHub requires identity verification before applying for rental properties.
+                </p>
+                <div className="pt-2 border-t border-blue-200/80 text-[11px] text-blue-900 space-y-1">
+                  <div>✓ Upload front & back of citizenship certificate</div>
+                  <div>✓ Upload recent police clearance report</div>
+                  <div>✓ Fast admin verification within 24 hours</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setKycWarningOpen(false);
+                    setIsKycModalOpen(true);
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Verify Identity Now</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKycWarningOpen(false)}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Event-Search Style Recommended Properties Popup (only for prospective tenants without active rental) ── */}
+      {!hasActiveRental && (
+        <RecommendedPropertiesPopup
+          isOpen={isRecommendationsOpen}
+          onClose={() => setIsRecommendationsOpen(false)}
+          properties={properties}
+          preferences={userPreferences}
+          savedPropertyIds={savedIds}
+          onToggleSave={handleToggleSave}
+          onSelectProperty={setSelectedPropertyDetails}
+          onApplyProperty={handleInitiateApply}
+          onOpenPreferences={() => setActiveTab('settings')}
         />
       )}
     </div>

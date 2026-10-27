@@ -18,6 +18,7 @@ import { createTenancyRouter } from './modules/tenancy/index.js';
 import { createOperationsRouter } from './modules/operations/index.js';
 import { createRealtimeRouter } from './modules/realtime/index.js';
 import { createAdminRouter } from './modules/admin/admin.routes.js';
+import { createKycRouter } from './modules/kyc/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
@@ -87,6 +88,7 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/tenancy', createTenancyRouter(overrideDb));
   app.use('/api', createOperationsRouter(overrideDb));
   app.use('/api/admin', createAdminRouter());
+  app.use('/api/kyc', createKycRouter());
   app.use('/api/realtime', createRealtimeRouter());
   app.use('/api/events', createRealtimeRouter());
 

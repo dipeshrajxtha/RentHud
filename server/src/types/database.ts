@@ -436,6 +436,38 @@ export type NewRentPayment = Insertable<RentPaymentsTable>;
 export type RentPaymentUpdate = Updateable<RentPaymentsTable>;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TABLE: kyc_submissions
+// ─────────────────────────────────────────────────────────────────────────────
+export type KycStatus = 'pending' | 'approved' | 'rejected';
+
+export interface KycSubmissionsTable {
+  id: Generated<string>;
+  user_id: string;
+  /** Which role this KYC is for — determines required documents */
+  user_role: 'tenant' | 'landlord';
+  /** Front of citizenship card (required for both roles) */
+  citizenship_front_url: string;
+  /** Back of citizenship card (required for both roles) */
+  citizenship_back_url: string;
+  /** Police report document (required for tenants) */
+  police_report_url: string | null;
+  /** Property ownership / land revenue document (required for landlords) */
+  ownership_document_url: string | null;
+  /** Business registration certificate (optional for landlords) */
+  business_registration_url: string | null;
+  status: Generated<KycStatus>;
+  reviewed_by: string | null;
+  reviewed_at: Date | null;
+  rejection_reason: string | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export type KycSubmission = Selectable<KycSubmissionsTable>;
+export type NewKycSubmission = Insertable<KycSubmissionsTable>;
+export type KycSubmissionUpdate = Updateable<KycSubmissionsTable>;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Composite Database interface — maps table names to Kysely table types
 // ─────────────────────────────────────────────────────────────────────────────
 export interface Database {
@@ -456,4 +488,5 @@ export interface Database {
   verifications: VerificationsTable;
   maintenance_requests: MaintenanceRequestsTable;
   rent_payments: RentPaymentsTable;
+  kyc_submissions: KycSubmissionsTable;
 }

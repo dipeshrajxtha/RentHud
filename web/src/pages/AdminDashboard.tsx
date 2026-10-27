@@ -20,6 +20,7 @@ import {
   FormTextarea,
   ModernModal,
 } from '@/components/ui';
+import { AdminKycReviewView } from '@/features/kyc/components/AdminKycReviewView';
 import {
   Users,
   Building,
@@ -47,6 +48,7 @@ interface PlatformStats {
   payments: { totalPaid: number; totalPending: number; totalOverdue: number };
   maintenance: { total: number; open: number };
   verifications: { pending: number };
+  kyc?: { pending: number };
 }
 
 interface AdminUserRecord {
@@ -172,6 +174,8 @@ export function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const [pendingKycCount, setPendingKycCount] = useState<number>(0);
+
   // Filters & Modals
   const [userSearch, setUserSearch] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<'all' | 'tenant' | 'landlord' | 'admin'>('all');
@@ -196,6 +200,7 @@ export function AdminDashboard() {
       setUsers(usersData);
       setDisputes(disputesData);
       setVerifications(verificationsData);
+      setPendingKycCount(statsData.kyc?.pending ?? verificationsData.filter(v => v.status === 'PENDING').length);
     } catch (err: any) {
       setLoadError(err.message || 'Failed to load admin data');
     } finally {
@@ -234,27 +239,6 @@ export function AdminDashboard() {
     } catch {}
   };
 
-  const handleApproveVerification = async (id: string) => {
-    if (!accessToken) return;
-    try {
-      await adminFetch(`/api/admin/verifications/${id}/approve`, accessToken, { method: 'PATCH' });
-      const data = await adminFetch<AdminVerification[]>('/api/admin/verifications', accessToken);
-      setVerifications(data);
-    } catch {}
-  };
-
-  const handleRejectVerification = async (id: string) => {
-    if (!accessToken) return;
-    try {
-      await adminFetch(`/api/admin/verifications/${id}/reject`, accessToken, {
-        method: 'PATCH',
-        body: JSON.stringify({ reason: 'Rejected by admin' }),
-      });
-      const data = await adminFetch<AdminVerification[]>('/api/admin/verifications', accessToken);
-      setVerifications(data);
-    } catch {}
-  };
-
   // Filtered Users
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -272,7 +256,7 @@ export function AdminDashboard() {
   const navItems = [
     { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard, count: null },
     { id: 'users' as const, label: 'Users', icon: Users, count: users.length },
-    { id: 'kyc' as const, label: 'Verification', icon: FileCheck2, count: pendingVerifications.length },
+    { id: 'kyc' as const, label: 'Identity KYC', icon: FileCheck2, count: pendingKycCount },
     { id: 'disputes' as const, label: 'Disputes', icon: Scale, count: stats?.disputes.open ?? 0 },
     { id: 'escrow' as const, label: 'Financials', icon: DollarSign, count: null },
   ];
@@ -665,92 +649,12 @@ export function AdminDashboard() {
             </div>
           )}
 
-          {/* ── VIEW 3: VERIFICATION DESK ── */}
+          {/* ── VIEW 3: VERIFICATION DESK (KYC) ── */}
           {activeTab === 'kyc' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-                  Verification Desk
-                </h1>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  {verifications.length} total verifications — {pendingVerifications.length} pending review.
-                </p>
-              </div>
-
-              {verifications.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-                  <FileCheck2 className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                  <p className="text-sm text-slate-400">No verifications submitted yet.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {verifications.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-5 rounded-2xl border border-slate-200 bg-white space-y-4 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-mono text-indigo-500 font-bold uppercase tracking-wide">
-                            {item.badge_name || item.badge_code || 'Verification'}
-                          </span>
-                          <h3 className="text-base font-bold text-slate-800">{item.user_name || 'Unknown User'}</h3>
-                          <p className="text-xs text-slate-400">{item.user_email}</p>
-                        </div>
-                        <StatusPill
-                          variant={
-                            item.status === 'VERIFIED'
-                              ? 'success'
-                              : item.status === 'REJECTED'
-                              ? 'danger'
-                              : 'warning'
-                          }
-                          size="sm"
-                        >
-                          {item.status}
-                        </StatusPill>
-                      </div>
-
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs font-mono">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">ID:</span>
-                          <span className="text-slate-600 font-bold truncate max-w-[200px]">{item.id}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Submitted:</span>
-                          <span className="text-slate-600">{new Date(item.created_at).toLocaleDateString()}</span>
-                        </div>
-                        {item.document_url && (
-                          <div className="flex justify-between">
-                            <span className="text-slate-400">Document:</span>
-                            <a href={item.document_url} className="text-indigo-500 hover:underline truncate max-w-[200px]" target="_blank" rel="noreferrer">View</a>
-                          </div>
-                        )}
-                      </div>
-
-                      {item.status === 'PENDING' && (
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                          <button
-                            type="button"
-                            onClick={() => handleRejectVerification(item.id)}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors shadow-sm"
-                          >
-                            Reject
-                          </button>
-                          <ShimmerButton
-                            size="sm"
-                            variant="primary"
-                            onClick={() => handleApproveVerification(item.id)}
-                          >
-                            Approve
-                          </ShimmerButton>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AdminKycReviewView
+              accessToken={accessToken!}
+              onKycCountChange={setPendingKycCount}
+            />
           )}
 
           {/* ── VIEW 4: DISPUTE ARBITRATION ── */}

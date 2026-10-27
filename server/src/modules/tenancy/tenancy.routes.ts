@@ -5,6 +5,7 @@ import * as tenancyController from './tenancy.controller.js';
 import * as reviewsController from '../reviews/reviews.controller.js';
 import { authenticate } from '../../common/middleware/authenticate.js';
 import { requireTenant, requireLandlord } from '../../common/middleware/requireRole.js';
+import { requireVerified } from '../../common/middleware/requireVerified.js';
 import { validate } from '../../common/middleware/validate.js';
 import {
   createRentalRequestSchema,
@@ -34,10 +35,11 @@ export function createTenancyRouter(dbInstance?: Kysely<Database>): Router {
   // All tenancy/application operations require an authenticated session
   router.use(authenticate);
 
-  // Tenant submits application
+  // Tenant submits application (KYC verification required)
   router.post(
     '/requests',
     requireTenant,
+    requireVerified(),
     validate(createRentalRequestSchema),
     tenancyController.createRentalApplication
   );

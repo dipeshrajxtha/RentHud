@@ -39,7 +39,10 @@ import type {
   UpdateUnitDto,
 } from '@/types/landlord';
 import { useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, ShieldCheck } from 'lucide-react';
+import { KycStatusBanner } from '@/components/common/KycStatusBanner';
+import { KycSubmissionModal } from '@/components/common/KycSubmissionModal';
+import { kycService, type KycSubmissionData } from '@/features/kyc/kyc.service';
 
 
 
@@ -67,6 +70,33 @@ export function LandlordDashboard() {
   const [addUnitForProperty, setAddUnitForProperty] = useState<LandlordProperty | null>(null);
   const [editUnitCtx, setEditUnitCtx] = useState<{ property: LandlordProperty; unit: LandlordUnit } | null>(null);
   const [managePhotosProperty, setManagePhotosProperty] = useState<LandlordProperty | null>(null);
+
+  // ── KYC state ───────────────────────────────────────────────────────────
+  const [myKyc, setMyKyc] = useState<KycSubmissionData | null>(null);
+  const [isKycModalOpen, setIsKycModalOpen] = useState(false);
+  const [kycWarningOpen, setKycWarningOpen] = useState(false);
+
+  const loadKyc = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const kyc = await kycService.getMyKyc(accessToken);
+      setMyKyc(kyc);
+    } catch (err) {
+      console.error('Failed to load landlord KYC:', err);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    void loadKyc();
+  }, [loadKyc]);
+
+  const handleOpenAddProperty = useCallback(() => {
+    if (!myKyc || myKyc.status !== 'approved') {
+      setKycWarningOpen(true);
+      return;
+    }
+    setAddPropertyOpen(true);
+  }, [myKyc]);
 
   // ── Toast ──────────────────────────────────────────────────────────────
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -311,7 +341,7 @@ export function LandlordDashboard() {
             leases={leases}
             maintenanceTickets={maintenance}
             onNavigateTab={setActiveTab}
-            onOpenAddProperty={() => setAddPropertyOpen(true)}
+            onOpenAddProperty={handleOpenAddProperty}
             onReviewApplication={() => setActiveTab('applications')}
             onOpenLeaseModal={() => setActiveTab('leases')}
           />
@@ -321,7 +351,7 @@ export function LandlordDashboard() {
           <PropertiesListView
             properties={properties}
             leases={leases}
-            onOpenAddProperty={() => setAddPropertyOpen(true)}
+            onOpenAddProperty={handleOpenAddProperty}
             onOpenEditProperty={(p) => setEditingProperty(p)}
             onOpenManagePhotos={(p) => setManagePhotosProperty(p)}
             onOpenAddUnit={(p) => setAddUnitForProperty(p)}
@@ -494,7 +524,15 @@ export function LandlordDashboard() {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {/* KYC Status Banner */}
+          <KycStatusBanner
+            kycStatus={myKyc ? myKyc.status : 'none'}
+            rejectionReason={myKyc?.rejectionReason}
+            onStartKyc={() => setIsKycModalOpen(true)}
+            isLandlord={true}
+          />
+
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -580,6 +618,76 @@ export function LandlordDashboard() {
               <X className="w-3.5 h-3.5" />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ── KYC Verification Modal ── */}
+      <KycSubmissionModal
+        isOpen={isKycModalOpen}
+        onClose={() => setIsKycModalOpen(false)}
+        currentKyc={myKyc}
+        onSubmitted={() => {
+          setIsKycModalOpen(false);
+          void loadKyc();
+        }}
+      />
+
+      {/* ── KYC Unverified Landlord Guard Modal ── */}
+      <AnimatePresence>
+        {kycWarningOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto modal-overlay flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 14 }}
+              className="relative w-full max-w-md bg-white rounded-3xl border border-emerald-200 shadow-2xl p-6 sm:p-7 space-y-5"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-display font-bold text-slate-900">
+                    Landlord Verification Required
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Muluki Civil Code 2074 &middot; Verified Property Ownership Rule
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-2">
+                <p className="text-emerald-950 font-medium leading-relaxed">
+                  Under Nepal tenancy regulations and RentHub trust standards, you must complete landlord KYC verification before uploading and listing residential units.
+                </p>
+                <div className="pt-2 border-t border-emerald-200/80 text-[11px] text-emerald-900 space-y-1">
+                  <div>✓ Upload front & back of citizenship certificate</div>
+                  <div>✓ Upload property ownership deed or land revenue receipt (Lal Purja / Malpot)</div>
+                  <div>✓ Fast review by RentHub trust & safety admin</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setKycWarningOpen(false);
+                    setIsKycModalOpen(true);
+                  }}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Verify Landlord Identity</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKycWarningOpen(false)}
+                  className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

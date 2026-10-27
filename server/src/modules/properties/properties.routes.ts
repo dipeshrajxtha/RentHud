@@ -5,6 +5,7 @@ import * as propertiesController from './properties.controller.js';
 import { createReviewsRouter } from '../reviews/reviews.routes.js';
 import { authenticate } from '../../common/middleware/authenticate.js';
 import { requireLandlord } from '../../common/middleware/requireRole.js';
+import { requireVerified } from '../../common/middleware/requireVerified.js';
 import { validate } from '../../common/middleware/validate.js';
 import {
   propertySearchQuerySchema,
@@ -41,11 +42,12 @@ export function createPropertiesRouter(dbInstance?: Kysely<Database>): Router {
 
   // ── Landlord Property Management Endpoints ─────────────────────────────────
 
-  // Landlord creates a new property asset
+  // Landlord creates a new property asset (KYC verification required)
   router.post(
     '/',
     authenticate,
     requireLandlord,
+    requireVerified(),
     validate(createPropertySchema, 'body'),
     propertiesController.createPropertyHandler
   );

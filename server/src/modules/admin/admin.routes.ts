@@ -11,6 +11,11 @@ import {
   approveVerification,
   rejectVerification,
 } from './admin.controller.js';
+import {
+  adminListKyc,
+  adminApproveKyc,
+  adminRejectKyc,
+} from '../kyc/kyc.controller.js';
 
 /**
  * Builds and returns the /api/admin router.
@@ -38,6 +43,11 @@ export function createAdminRouter(): Router {
   router.get('/verifications', getVerifications);
   router.patch('/verifications/:id/approve', approveVerification);
   router.patch('/verifications/:id/reject', rejectVerification);
+
+  // KYC document review
+  router.get('/kyc', adminListKyc);
+  router.patch('/kyc/:id/approve', adminApproveKyc);
+  router.patch('/kyc/:id/reject', adminRejectKyc);
 
   return router;
 }

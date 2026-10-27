@@ -93,6 +93,13 @@ export async function getStats(
       .execute();
     const pendingVerifications = verificationsResult.filter(v => v.status === 'PENDING').length;
 
+    // KYC counts
+    const kycResult = await db
+      .selectFrom('kyc_submissions')
+      .select(['status'])
+      .execute();
+    const pendingKyc = kycResult.filter(k => k.status === 'pending').length;
+
     sendSuccess(res, {
       users: { total: totalUsers, active: activeUsers, tenants, landlords, admins },
       properties: { total: totalProperties },
@@ -101,6 +108,7 @@ export async function getStats(
       payments: { totalPaid, totalPending, totalOverdue },
       maintenance: { total: totalMaintenance, open: openMaintenance },
       verifications: { pending: pendingVerifications },
+      kyc: { pending: pendingKyc },
     });
   } catch (err) {
     next(err);
@@ -122,6 +130,14 @@ export async function getUsers(
       .select(['id', 'email', 'name', 'avatar_url', 'roles', 'is_active', 'created_at', 'phone'])
       .orderBy('created_at', 'desc')
       .execute();
+
+    // Fetch all approved KYC submissions for fast lookup
+    const approvedKycUsers = await db
+      .selectFrom('kyc_submissions')
+      .select('user_id')
+      .where('status', '=', 'approved')
+      .execute();
+    const verifiedUserIds = new Set(approvedKycUsers.map(k => k.user_id));
 
     // For each user, count properties (if landlord) and tenancies (if tenant)
     const enrichedUsers = await Promise.all(
@@ -153,7 +169,7 @@ export async function getUsers(
           email: u.email,
           roles: u.roles,
           status: u.is_active ? 'active' : 'suspended',
-          verified: roles.includes('landlord') ? propertiesCount > 0 : true,
+          verified: verifiedUserIds.has(u.id),
           joinedAt: u.created_at,
           propertiesCount,
           tenanciesCount,
