@@ -3,8 +3,7 @@
  * Shows a prominent banner when user is unverified, pending, or rejected.
  */
 
-import React from 'react';
-import { ShieldCheck, Clock, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Clock, AlertTriangle, ShieldAlert } from 'lucide-react';
 
 interface KycStatusBannerProps {
   kycStatus: 'none' | 'pending' | 'approved' | 'rejected';

@@ -63,6 +63,12 @@ const envSchema = z.object({
   // CORS — allowed client origin. CORS_ORIGIN takes precedence over CLIENT_URL.
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
+
+  // AI Assistant Configuration
+  GEMINI_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  AI_PROVIDER: z.enum(['auto', 'gemini', 'openai', 'mock', 'rule_based']).default('auto'),
+  AI_MODEL: z.string().default('gemini-1.5-flash'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;
@@ -134,6 +140,12 @@ export const config = {
   cors: {
     // CORS_ORIGIN takes precedence over CLIENT_URL
     origin: env.CORS_ORIGIN !== 'http://localhost:5173' ? env.CORS_ORIGIN : env.CLIENT_URL,
+  },
+  ai: {
+    geminiApiKey: env.GEMINI_API_KEY,
+    openaiApiKey: env.OPENAI_API_KEY,
+    provider: env.AI_PROVIDER,
+    model: env.AI_MODEL,
   },
 } as const;
 

@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   X,
   Star,
@@ -18,9 +18,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  ThumbsUp,
-  MessageSquare,
-  Home,
 } from 'lucide-react';
 import { tenantService } from '../tenant.service';
 import type { PropertyReview, CreateReviewInput } from '@/types/tenant';

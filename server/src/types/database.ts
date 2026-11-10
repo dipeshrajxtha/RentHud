@@ -468,6 +468,45 @@ export type NewKycSubmission = Insertable<KycSubmissionsTable>;
 export type KycSubmissionUpdate = Updateable<KycSubmissionsTable>;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TABLE: chatbot_conversations & chatbot_messages
+// ─────────────────────────────────────────────────────────────────────────────
+export type ChatbotMode =
+  | 'discovery'
+  | 'tenant_support'
+  | 'maintenance'
+  | 'financial'
+  | 'general';
+
+export interface ChatbotConversationsTable {
+  id: Generated<string>;
+  user_id: string | null;
+  session_id: string | null;
+  title: Generated<string>;
+  current_mode: Generated<ChatbotMode>;
+  context_data: ColumnType<Record<string, any>, string | Record<string, any>, string | Record<string, any>>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
+export type ChatbotConversation = Selectable<ChatbotConversationsTable>;
+export type NewChatbotConversation = Insertable<ChatbotConversationsTable>;
+export type ChatbotConversationUpdate = Updateable<ChatbotConversationsTable>;
+
+export interface ChatbotMessagesTable {
+  id: Generated<string>;
+  conversation_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  mode: string | null;
+  metadata: ColumnType<Record<string, any>, string | Record<string, any>, string | Record<string, any>>;
+  created_at: Generated<Date>;
+}
+
+export type ChatbotMessage = Selectable<ChatbotMessagesTable>;
+export type NewChatbotMessage = Insertable<ChatbotMessagesTable>;
+export type ChatbotMessageUpdate = Updateable<ChatbotMessagesTable>;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Composite Database interface — maps table names to Kysely table types
 // ─────────────────────────────────────────────────────────────────────────────
 export interface Database {
@@ -489,4 +528,6 @@ export interface Database {
   maintenance_requests: MaintenanceRequestsTable;
   rent_payments: RentPaymentsTable;
   kyc_submissions: KycSubmissionsTable;
+  chatbot_conversations: ChatbotConversationsTable;
+  chatbot_messages: ChatbotMessagesTable;
 }

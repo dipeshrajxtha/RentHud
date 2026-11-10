@@ -19,6 +19,7 @@ import { createOperationsRouter } from './modules/operations/index.js';
 import { createRealtimeRouter } from './modules/realtime/index.js';
 import { createAdminRouter } from './modules/admin/admin.routes.js';
 import { createKycRouter } from './modules/kyc/index.js';
+import { createChatbotRouter } from './modules/chatbot/index.js';
 import type { Database } from './types/database.js';
 
 export function createApp(overrideDb?: Kysely<Database>): Application {
@@ -91,6 +92,7 @@ export function createApp(overrideDb?: Kysely<Database>): Application {
   app.use('/api/kyc', createKycRouter());
   app.use('/api/realtime', createRealtimeRouter());
   app.use('/api/events', createRealtimeRouter());
+  app.use('/api/chatbot', createChatbotRouter(overrideDb));
 
   // ── 404 for unmatched routes — forwarded to centralized error handler
   app.use((_req: Request, _res: Response, next) => {
