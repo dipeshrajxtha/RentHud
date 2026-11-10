@@ -71,8 +71,53 @@ export class ChatbotService {
 
     if (!user) return undefined;
 
-    // Fetch active tenancy if user is a tenant
-    const activeTenancy = await db
+    // Fetch active tenancy if user is a tenant — optional, never crash if schema differs
+    let activeTenancy: Awaited<ReturnType<typeof this._fetchActiveTenancy>> = undefined;
+    let openMaintenanceTicketsCount = 0;
+    let pendingPaymentsCount = 0;
+
+    try {
+      activeTenancy = await this._fetchActiveTenancy(db, userId);
+    } catch (err) {
+      console.warn('[Chatbot] activeTenancy query failed (non-fatal):', (err as Error).message);
+    }
+
+    try {
+      const openTickets = await db
+        .selectFrom('maintenance_requests')
+        .select(db.fn.count('id').as('count'))
+        .where('reported_by_id', '=', userId)
+        .where('status', 'in', ['Reported', 'Scheduled', 'In Progress'])
+        .executeTakeFirst();
+      openMaintenanceTicketsCount = Number(openTickets?.count ?? 0);
+    } catch (err) {
+      console.warn('[Chatbot] openTickets query failed (non-fatal):', (err as Error).message);
+    }
+
+    try {
+      const pendingPayments = await db
+        .selectFrom('rent_payments')
+        .select(db.fn.count('id').as('count'))
+        .where('tenant_id', '=', userId)
+        .where('status', '=', 'PENDING')
+        .executeTakeFirst();
+      pendingPaymentsCount = Number(pendingPayments?.count ?? 0);
+    } catch (err) {
+      console.warn('[Chatbot] pendingPayments query failed (non-fatal):', (err as Error).message);
+    }
+
+    return {
+      userId: user.id,
+      userName: user.name,
+      roles: user.roles,
+      activeTenancy: activeTenancy ?? null,
+      openMaintenanceTicketsCount,
+      pendingPaymentsCount,
+    };
+  }
+
+  private async _fetchActiveTenancy(db: Kysely<Database>, userId: string) {
+    const row = await db
       .selectFrom('tenancies as t')
       .innerJoin('property_units as pu', 'pu.id', 't.unit_id')
       .innerJoin('properties as p', 'p.id', 'pu.property_id')
@@ -92,40 +137,17 @@ export class ChatbotService {
       .where('t.status', '=', 'active')
       .executeTakeFirst();
 
-    // Fetch counts of open maintenance tickets and pending payments
-    const openTickets = await db
-      .selectFrom('maintenance_requests')
-      .select(db.fn.count('id').as('count'))
-      .where('reported_by_id', '=', userId)
-      .where('status', 'in', ['Reported', 'Scheduled', 'In Progress'])
-      .executeTakeFirst();
-
-    const pendingPayments = await db
-      .selectFrom('rent_payments')
-      .select(db.fn.count('id').as('count'))
-      .where('tenant_id', '=', userId)
-      .where('status', '=', 'PENDING')
-      .executeTakeFirst();
-
+    if (!row) return undefined;
     return {
-      userId: user.id,
-      userName: user.name,
-      roles: user.roles,
-      activeTenancy: activeTenancy
-        ? {
-            id: activeTenancy.id,
-            propertyTitle: activeTenancy.property_title,
-            unitIdentifier: activeTenancy.unit_identifier,
-            address: activeTenancy.address,
-            city: activeTenancy.city,
-            landlordName: activeTenancy.landlord_name,
-            monthlyRent: activeTenancy.agreed_monthly_rent,
-            startDate: new Date(activeTenancy.start_date).toLocaleDateString(),
-            endDate: new Date(activeTenancy.end_date).toLocaleDateString(),
-          }
-        : null,
-      openMaintenanceTicketsCount: Number(openTickets?.count ?? 0),
-      pendingPaymentsCount: Number(pendingPayments?.count ?? 0),
+      id: row.id,
+      propertyTitle: row.property_title,
+      unitIdentifier: row.unit_identifier,
+      address: row.address,
+      city: row.city,
+      landlordName: row.landlord_name,
+      monthlyRent: row.agreed_monthly_rent,
+      startDate: new Date(row.start_date).toLocaleDateString(),
+      endDate: new Date(row.end_date).toLocaleDateString(),
     };
   }
 
@@ -188,8 +210,13 @@ export class ChatbotService {
       .returningAll()
       .execute();
 
-    // Insert initial greeting message
-    const userContext = await this.getUserContext(db, userId);
+    // Insert initial greeting message — getUserContext is best-effort; never fail createConversation over it
+    let userContext: Awaited<ReturnType<typeof this.getUserContext>> = undefined;
+    try {
+      userContext = await this.getUserContext(db, userId);
+    } catch (err) {
+      console.warn('[Chatbot] getUserContext failed during createConversation (non-fatal):', err);
+    }
     let initialGreeting = `Hello! I am your RentHub AI Assistant. I can help you discover ideal rental properties across Nepal or assist with your tenancy.`;
 
     if (userContext?.activeTenancy) {
@@ -329,7 +356,12 @@ export class ChatbotService {
     // 2. Perform Natural Language Understanding
     const detectedIntent = detectIntent(input.message);
     const extractedCriteria = extractAllCriteria(input.message);
-    const userContext = await this.getUserContext(db, userId);
+    let userContext: Awaited<ReturnType<typeof this.getUserContext>> = undefined;
+    try {
+      userContext = await this.getUserContext(db, userId);
+    } catch (err) {
+      console.warn('[Chatbot] getUserContext failed during processUserMessage (non-fatal):', err);
+    }
 
     // Merge accumulated criteria into contextData
     if (extractedCriteria.location) {
@@ -579,7 +611,12 @@ export class ChatbotService {
       }
 
       const payload = input.payload;
-      const userContext = await this.getUserContext(db, userId);
+      let userContext: Awaited<ReturnType<typeof this.getUserContext>> = undefined;
+      try {
+        userContext = await this.getUserContext(db, userId);
+      } catch (err) {
+        console.warn('[Chatbot] getUserContext failed during executeAction (non-fatal):', err);
+      }
 
       const ticket = await createMaintenanceTicket(db, userId, {
         tenancyId: payload.tenancyId || userContext?.activeTenancy?.id,
