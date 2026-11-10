@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { Kysely } from 'kysely';
 import type { Database } from '../../types/database.js';
+import { db as defaultDb } from '../../../config/database.js';
 import { sendSuccess } from '../../common/utils/response.js';
 import {
   createConversationSchema,
@@ -10,7 +11,7 @@ import {
 import { chatbotService } from './chatbot.service.js';
 
 function getDb(req: Request): Kysely<Database> {
-  return req.app.locals.db;
+  return (req.app?.locals?.db as Kysely<Database>) ?? defaultDb;
 }
 
 function getSessionId(req: Request): string | undefined {
